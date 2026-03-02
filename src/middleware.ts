@@ -14,6 +14,11 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   const { request, locals, redirect } = context;
   const url = new URL(request.url);
 
+  // Skip middleware for the 404 page to prevent rewrite loops
+  if (url.pathname === '/404') {
+    return next();
+  }
+
   // 1. Resolve merchant from hostname
   const slug = resolveMerchantSlug(
     url.hostname,
@@ -56,7 +61,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 
   // 6. Add cache headers with auth/personalization guards
   const isCacheable = CACHEABLE_PATTERNS.some(p => p.test(url.pathname));
-  const hasAuthCookie = request.headers.get('cookie')?.includes('auth_token');
+  const hasAuthCookie = context.cookies.has('auth_token');
   const responseSetsCookie = response.headers.has('set-cookie');
 
   if (isCacheable && !hasAuthCookie && !responseSetsCookie) {

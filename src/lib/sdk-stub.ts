@@ -4,11 +4,28 @@
  * Replace with real SDK import once Gate 1 is resolved.
  */
 
+export interface ApiError {
+  status: number;
+  statusText: string;
+}
+
+export type ApiResult<T = unknown> =
+  | { data: T; error: null }
+  | { data: null; error: ApiError | Error };
+
+export interface RequestOptions {
+  params?: {
+    query?: Record<string, string | number | boolean | undefined>;
+    path?: Record<string, string | number>;
+  };
+  body?: unknown;
+}
+
 export interface StorefrontClient {
-  GET: (path: string, options?: any) => Promise<{ data: any; error: any }>;
-  POST: (path: string, options?: any) => Promise<{ data: any; error: any }>;
-  PATCH: (path: string, options?: any) => Promise<{ data: any; error: any }>;
-  DELETE: (path: string, options?: any) => Promise<{ data: any; error: any }>;
+  GET: (path: string, options?: RequestOptions) => Promise<ApiResult>;
+  POST: (path: string, options?: RequestOptions) => Promise<ApiResult>;
+  PATCH: (path: string, options?: RequestOptions) => Promise<ApiResult>;
+  DELETE: (path: string, options?: RequestOptions) => Promise<ApiResult>;
 }
 
 export interface CreateClientOptions {
@@ -31,7 +48,7 @@ export function createStorefrontClient(options: CreateClientOptions): Storefront
 
   const customFetch = options.fetch ?? globalThis.fetch;
 
-  async function request(method: string, path: string, requestOptions?: any) {
+  async function request(method: string, path: string, requestOptions?: RequestOptions): Promise<ApiResult> {
     const url = new URL(path, options.baseUrl);
     const params = requestOptions?.params?.query;
     if (params) {
@@ -40,7 +57,6 @@ export function createStorefrontClient(options: CreateClientOptions): Storefront
       }
     }
 
-    // Replace path params like {id} with actual values
     let resolvedPath = url.pathname;
     const pathParams = requestOptions?.params?.path;
     if (pathParams) {
@@ -65,7 +81,7 @@ export function createStorefrontClient(options: CreateClientOptions): Storefront
       const data = await res.json();
       return { data, error: null };
     } catch (err) {
-      return { data: null, error: err };
+      return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
     }
   }
 

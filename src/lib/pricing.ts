@@ -1,13 +1,10 @@
 import { formatPrice } from './currency';
 
-export interface Discount {
-  type: 'percentage' | 'fixed' | 'bogo' | 'tiered';
-  value?: number;
-  buyQuantity?: number;
-  getQuantity?: number;
-  quantity?: number;
-  price?: number;
-}
+export type Discount =
+  | { type: 'percentage'; value: number }
+  | { type: 'fixed'; value: number }
+  | { type: 'bogo'; buyQuantity: number; getQuantity: number }
+  | { type: 'tiered'; quantity: number; price: number };
 
 export interface PricedItem {
   price: string;
@@ -33,14 +30,11 @@ export function getEffectivePrice(item: PricedItem): number {
 
   switch (item.discount.type) {
     case 'percentage':
-      return round2(base * (1 - (item.discount.value ?? 0) / 100));
+      return round2(base * (1 - item.discount.value / 100));
     case 'fixed':
-      return round2(Math.max(0, base - (item.discount.value ?? 0)));
+      return round2(Math.max(0, base - item.discount.value));
     case 'bogo':
     case 'tiered':
-      // These discounts apply at line level, not unit level
-      return base;
-    default:
       return base;
   }
 }
@@ -57,13 +51,11 @@ export function getDiscountLabel(item: PricedItem, currency: string, locale: str
     case 'percentage':
       return `-${item.discount.value}%`;
     case 'fixed':
-      return `${formatPrice(String(item.discount.value ?? 0), currency, locale)} off`;
+      return `${formatPrice(String(item.discount.value), currency, locale)} off`;
     case 'bogo':
       return `Buy ${item.discount.buyQuantity} Get ${item.discount.getQuantity} Free`;
     case 'tiered':
-      return `${item.discount.quantity} for ${formatPrice(String(item.discount.price ?? 0), currency, locale)}`;
-    default:
-      return '';
+      return `${item.discount.quantity} for ${formatPrice(String(item.discount.price), currency, locale)}`;
   }
 }
 
@@ -75,26 +67,27 @@ function getModifierTotal(modifiers?: Modifier[]): number {
 export function getLineTotal(item: PricedItem, qty: number, modifiers?: Modifier[]): number {
   const modTotal = getModifierTotal(modifiers);
 
-  if (item.discount) {
-    switch (item.discount.type) {
-      case 'bogo': {
-        const buy = item.discount.buyQuantity ?? 1;
-        const get = item.discount.getQuantity ?? 1;
-        const paidItems = qty - Math.floor(qty / (buy + get)) * get;
-        return round2((getOriginalPrice(item) + modTotal) * paidItems);
-      }
-      case 'tiered': {
-        if (qty >= (item.discount.quantity ?? 0)) {
-          return round2(item.discount.price ?? 0);
-        }
-        return round2((getOriginalPrice(item) + modTotal) * qty);
-      }
-      default:
-        return round2((getEffectivePrice(item) + modTotal) * qty);
+  switch (item.discount?.type) {
+    case 'bogo': {
+      const buy = item.discount.buyQuantity;
+      const get = item.discount.getQuantity;
+      const paidItems = qty - Math.floor(qty / (buy + get)) * get;
+      return round2((getOriginalPrice(item) + modTotal) * paidItems);
     }
+    case 'tiered': {
+      const threshold = item.discount.quantity;
+      const tierPrice = item.discount.price;
+      const bundles = Math.floor(qty / threshold);
+      const remainder = qty % threshold;
+      return round2(
+        bundles * tierPrice +
+        remainder * getOriginalPrice(item) +
+        qty * modTotal,
+      );
+    }
+    default:
+      return round2((getEffectivePrice(item) + modTotal) * qty);
   }
-
-  return round2((getOriginalPrice(item) + modTotal) * qty);
 }
 
 export function getLineSavings(item: PricedItem, qty: number, modifiers?: Modifier[]): number {

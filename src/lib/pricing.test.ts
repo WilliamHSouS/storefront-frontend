@@ -8,10 +8,12 @@ import {
   getLineSavings,
 } from './pricing';
 
-function makeItem(overrides = {}) {
+import type { PricedItem } from './pricing';
+
+function makeItem(overrides: Partial<PricedItem> = {}): PricedItem {
   return {
     price: '10.00',
-    discount: null as any,
+    discount: null,
     ...overrides,
   };
 }
@@ -113,6 +115,21 @@ describe('getLineTotal', () => {
     const item = makeItem({ discount: { type: 'tiered', quantity: 2, price: 15 } });
     expect(getLineTotal(item, 1)).toBe(10.0);
     expect(getLineTotal(item, 2)).toBe(15.0);
+  });
+
+  it('applies tiered pricing across multiple bundles', () => {
+    const item = makeItem({ discount: { type: 'tiered', quantity: 2, price: 15 } });
+    // 3 items: 1 bundle (15) + 1 remainder at regular (10) = 25
+    expect(getLineTotal(item, 3)).toBe(25.0);
+    // 4 items: 2 bundles (30) + 0 remainder = 30
+    expect(getLineTotal(item, 4)).toBe(30.0);
+  });
+
+  it('applies tiered pricing with modifiers', () => {
+    const item = makeItem({ discount: { type: 'tiered', quantity: 2, price: 15 } });
+    const modifiers = [{ price: '1.00', quantity: 1 }];
+    // 2 items: 1 bundle (15) + 2 * modifier (2) = 17
+    expect(getLineTotal(item, 2, modifiers)).toBe(17.0);
   });
 
   it('adds modifier prices', () => {
