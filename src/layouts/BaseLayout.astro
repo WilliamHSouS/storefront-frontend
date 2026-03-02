@@ -24,9 +24,21 @@ const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
     {description && <meta name="description" content={description} />}
     <link rel="preconnect" href={import.meta.env.PUBLIC_API_BASE_URL} />
     {themeCSS && <style set:html={`:root { ${themeCSS} }`} />}
+    {/* PostHog queue stub — events pushed before SDK loads are replayed on init */}
+    <script is:inline>
+      !function(){var p=window.posthog=window.posthog||[];if(!p.__loaded){p._i=[];
+      p.init=function(k,o){p._i.push([k,o])};
+      p.capture=function(){p.push(Array.prototype.slice.call(arguments))};
+      p.identify=function(){p.push(['$identify'].concat(Array.prototype.slice.call(arguments)))};
+      }}();
+    </script>
     <slot name="head" />
   </head>
   <body>
     <slot />
+    <script>
+      import { initAnalytics } from '@/analytics';
+      initAnalytics();
+    </script>
   </body>
 </html>

@@ -1,0 +1,30 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/astro/Header.astro';
+import Footer from '@/components/astro/Footer.astro';
+import SEOHead from '@/components/astro/SEOHead.astro';
+import CartDrawer from '@/components/interactive/CartDrawer';
+import ProductDetail from '@/components/interactive/ProductDetail';
+import type { MerchantConfig } from '@/types/merchant';
+
+const merchant = Astro.locals.merchant as MerchantConfig;
+const lang = Astro.locals.lang as string;
+---
+
+<BaseLayout title={`${merchant.name} — Cart`}>
+  <SEOHead slot="head" page="cart" merchant={merchant} lang={lang} />
+  <Header merchant={merchant} lang={lang} />
+
+  <main class="mx-auto min-h-[60vh] max-w-screen-md px-4 py-8">
+    <CartDrawer client:load lang={lang} inline />
+  </main>
+
+  <ProductDetail client:load lang={lang} />
+  <Footer merchant={merchant} lang={lang} />
+</BaseLayout>
+
+<script>
+  import { $isCartOpen } from '@/stores/ui';
+  // Cart page always shows cart content
+  $isCartOpen.set(true);
+</script>

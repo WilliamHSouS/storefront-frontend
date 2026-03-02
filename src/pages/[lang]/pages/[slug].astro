@@ -1,0 +1,41 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/astro/Header.astro';
+import Footer from '@/components/astro/Footer.astro';
+import SEOHead from '@/components/astro/SEOHead.astro';
+import type { MerchantConfig } from '@/types/merchant';
+
+const merchant = Astro.locals.merchant as MerchantConfig;
+const lang = Astro.locals.lang as string;
+const sdk = Astro.locals.sdk as any;
+const { slug } = Astro.params;
+
+// Fetch CMS page content
+const { data: page } = await sdk.GET(`/api/v1/pages/{slug}/`, {
+  params: { path: { slug } },
+});
+
+if (!page) {
+  return Astro.redirect(`/${lang}/`);
+}
+
+// CMS pages are heavily cached — content changes infrequently
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, s-maxage=3600, stale-while-revalidate=86400',
+);
+---
+
+<BaseLayout title={`${(page as any).title} — ${merchant.name}`} description={(page as any).meta_description}>
+  <SEOHead slot="head" page="cms" merchant={merchant} lang={lang} title={(page as any).title} />
+  <Header merchant={merchant} lang={lang} />
+
+  <main class="mx-auto max-w-screen-md px-4 py-8">
+    <article class="prose prose-sm max-w-none text-foreground prose-headings:font-heading prose-headings:text-foreground prose-a:text-primary">
+      <h1 class="font-heading text-2xl font-bold">{(page as any).title}</h1>
+      <div set:html={(page as any).content} />
+    </article>
+  </main>
+
+  <Footer merchant={merchant} lang={lang} />
+</BaseLayout>
