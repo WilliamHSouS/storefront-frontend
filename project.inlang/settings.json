@@ -1,0 +1,9 @@
+{
+  "$schema": "https://inlang.com/schema/project-settings",
+  "sourceLanguageTag": "nl",
+  "languageTags": ["nl", "en", "de"],
+  "modules": [],
+  "plugin.inlang.messageFormat": {
+    "pathPattern": "./src/i18n/messages/{languageTag}.json"
+  }
+}
