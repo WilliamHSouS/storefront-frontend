@@ -1,0 +1,55 @@
+src/lib/pricing.test.ts
+  8e43396926610d37 11-13,120-134
+src/lib/pricing.ts
+  8e43396926610d37 3-7,33,35,54,58,70,72-73,78-81,83-85,88-89
+src/middleware.ts
+  8e43396926610d37 17-21,64
+src/lib/sdk-stub.ts
+  8e43396926610d37 7-23,25-28,51,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "e36140215469e8b8d57194a01064807063de2abd",
+  "prompts": {
+    "15c884cfc8fc454a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "71898716-7950-4a56-9eed-9cc629fc645f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1167,
+      "overriden_lines": 0
+    },
+    "49de6705db611b76": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019caf4f-dc70-7731-8bb7-d9cbff8d9bdf",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "8e43396926610d37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a97c42e-9363-4055-8008-9329089d0b99",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 76,
+      "total_deletions": 45,
+      "accepted_lines": 68,
+      "overriden_lines": 0
+    }
+  }
+}
