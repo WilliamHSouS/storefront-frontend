@@ -1,0 +1,54 @@
+src/stores/cart.integration.test.ts
+  8e43396926610d37 1-94
+.github/workflows/bundle-size.yml
+  8e43396926610d37 1-17
+src/components/interactive/ProductDetail.tsx
+  8e43396926610d37 226,326,335
+src/lib/resolve-merchant.integration.test.ts
+  8e43396926610d37 1-55
+src/components/interactive/CartDrawer.tsx
+  8e43396926610d37 86
+src/lib/fetch-all.integration.test.ts
+  8e43396926610d37 1-139
+package.json
+  8e43396926610d37 12-14,16-23
+src/components/interactive/SearchBar.tsx
+  8e43396926610d37 116,121,123
+lighthouserc.json
+  8e43396926610d37 1-18
+src/components/interactive/QuantitySelector.tsx
+  8e43396926610d37 39,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "6f1680835698a1b0158d11aa4d6dd02dcecc5a75",
+  "prompts": {
+    "15c884cfc8fc454a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "71898716-7950-4a56-9eed-9cc629fc645f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1167,
+      "overriden_lines": 0
+    },
+    "8e43396926610d37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a97c42e-9363-4055-8008-9329089d0b99",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 343,
+      "total_deletions": 10,
+      "accepted_lines": 343,
+      "overriden_lines": 0
+    }
+  }
+}
