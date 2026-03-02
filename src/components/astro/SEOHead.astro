@@ -1,0 +1,61 @@
+---
+import type { MerchantConfig } from '@/types/merchant';
+
+interface Props {
+  page: 'menu' | 'category' | 'product' | 'cart' | 'checkout' | 'orders' | 'login' | 'cms';
+  merchant: MerchantConfig;
+  lang: string;
+  title?: string;
+  description?: string;
+  canonicalUrl?: string;
+  image?: string;
+}
+
+const { page, merchant, lang, title, description, canonicalUrl, image } = Astro.props;
+
+const pageTitle = title
+  ? merchant.seo.titleTemplate.replace('%s', title)
+  : merchant.name;
+const pageDescription = description ?? merchant.seo.defaultDescription;
+
+const noIndexPages = new Set(['cart', 'checkout', 'orders', 'login']);
+const shouldNoIndex = noIndexPages.has(page);
+
+const ogImage = image ?? merchant.heroImage;
+
+// Generate hreflang alternates
+const currentPath = Astro.url.pathname.replace(`/${lang}`, '');
+const alternates = merchant.languages.map((l) => ({
+  lang: l,
+  href: `${Astro.url.origin}/${l}${currentPath}`,
+}));
+---
+
+<title>{pageTitle}</title>
+<meta name="description" content={pageDescription} />
+{shouldNoIndex && <meta name="robots" content="noindex, nofollow" />}
+{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+{/* Open Graph */}
+<meta property="og:type" content="website" />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={pageDescription} />
+{ogImage && <meta property="og:image" content={ogImage} />}
+{canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+
+{/* Twitter Card */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={pageDescription} />
+{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+{/* Hreflang alternates */}
+{alternates.map((alt) => (
+  <link rel="alternate" hreflang={alt.lang} href={alt.href} />
+))}
+<link rel="alternate" hreflang="x-default" href={`${Astro.url.origin}/${merchant.defaultLanguage}${currentPath}`} />
+
+{/* Hero image preload for menu page */}
+{page === 'menu' && merchant.heroImage && (
+  <link rel="preload" as="image" href={merchant.heroImage} />
+)}

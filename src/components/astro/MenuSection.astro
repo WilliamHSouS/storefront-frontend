@@ -1,0 +1,29 @@
+---
+import ProductGrid from './ProductGrid.astro';
+import ProductList from './ProductList.astro';
+
+interface Props {
+  category: { id: string; name: string; slug?: string };
+  products: Array<Record<string, unknown>>;
+  lang: string;
+  currency: string;
+  layout?: 'grid' | 'list';
+}
+
+const { category, products, lang, currency, layout = 'grid' } = Astro.props;
+---
+
+{products.length > 0 && (
+  <section id={`category-${category.id}`} class="scroll-mt-28 px-4 py-6" data-category-id={category.id}>
+    <div class="mx-auto max-w-screen-xl">
+      <h2 class="font-heading text-lg font-bold text-foreground">{category.name}</h2>
+      <div class="mt-3">
+        {layout === 'list' ? (
+          <ProductList products={products} lang={lang} currency={currency} />
+        ) : (
+          <ProductGrid products={products} lang={lang} currency={currency} />
+        )}
+      </div>
+    </div>
+  </section>
+)}

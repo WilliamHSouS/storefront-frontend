@@ -1,0 +1,72 @@
+---
+import type { MerchantConfig } from '@/types/merchant';
+import { t } from '@/i18n';
+
+interface Props {
+  merchant: MerchantConfig;
+  lang: string;
+}
+
+const { merchant, lang } = Astro.props;
+const socialEntries = Object.entries(merchant.social);
+---
+
+<footer class="border-t border-border bg-muted/50 px-4 py-8">
+  <div class="mx-auto grid max-w-screen-xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
+    <div>
+      <h3 class="font-heading text-sm font-semibold uppercase tracking-wider text-foreground">
+        {merchant.name}
+      </h3>
+      <p class="mt-2 text-sm text-muted-foreground">{merchant.description}</p>
+    </div>
+
+    <div>
+      <h3 class="font-heading text-sm font-semibold uppercase tracking-wider text-foreground">
+        Contact
+      </h3>
+      <ul class="mt-2 space-y-1 text-sm text-muted-foreground">
+        <li>{merchant.contact.address}</li>
+        <li>
+          <a href={`tel:${merchant.contact.phone.replace(/\s/g, '')}`} class="hover:text-foreground">
+            {merchant.contact.phone}
+          </a>
+        </li>
+        <li>
+          <a href={`mailto:${merchant.contact.email}`} class="hover:text-foreground">
+            {merchant.contact.email}
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="font-heading text-sm font-semibold uppercase tracking-wider text-foreground">
+        {t('menu', lang)}
+      </h3>
+      <ul class="mt-2 space-y-1 text-sm text-muted-foreground">
+        {merchant.hours.map((h) => (
+          <li>{h.days}: {h.open} – {h.close}</li>
+        ))}
+      </ul>
+      {socialEntries.length > 0 && (
+        <div class="mt-4 flex gap-3">
+          {socialEntries.map(([platform, url]) => (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-muted-foreground hover:text-foreground"
+              aria-label={platform}
+            >
+              {platform}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+  <div class="mx-auto mt-8 max-w-screen-xl border-t border-border pt-4 text-center text-xs text-muted-foreground">
+    {t('poweredBy', lang)} <a href="https://poweredbysous.com" class="underline hover:text-foreground" target="_blank" rel="noopener noreferrer">Sous</a>
+  </div>
+</footer>
