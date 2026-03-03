@@ -1,0 +1,109 @@
+.github/workflows/ci.yml
+  934c12111b58ddd2 1-85
+package.json
+  934c12111b58ddd2 17-21,24-32
+.github/workflows/preview.yml
+  934c12111b58ddd2 1-37
+.husky/pre-commit
+  934c12111b58ddd2 1
+src/components/astro/StructuredData.astro
+  934c12111b58ddd2 13
+e2e/helpers/test-utils.ts
+  934c12111b58ddd2 69,75
+src/pages/[lang]/product/[slug].astro
+  934c12111b58ddd2 39,43-44,61,84-91,94,97-99,101-107,109-110,322-323,338-340
+src/lib/structured-data.test.ts
+  934c12111b58ddd2 4-8,63,79
+src/analytics/context.ts
+  934c12111b58ddd2 45
+eslint.config.mjs
+  934c12111b58ddd2 1-55
+src/analytics/posthog.ts
+  860acf88680c2385 49
+  934c12111b58ddd2 40-47
+src/components/interactive/ProductDetail.tsx
+  934c12111b58ddd2 4,249
+src/analytics/snapshots.ts
+  934c12111b58ddd2 8,32-33
+playwright.config.ts
+  934c12111b58ddd2 18,24-26
+src/pages/[lang]/pages/[slug].astro
+  934c12111b58ddd2 16,21-22,28,34,37-41,48,60-61,65-68,106-107,109
+tsconfig.json
+  934c12111b58ddd2 10-11
+src/components/interactive/CartBar.tsx
+  934c12111b58ddd2 3,28
+src/lib/sdk-stub.ts
+  934c12111b58ddd2 44-50,64,80,87
+e2e/navigation.spec.ts
+  934c12111b58ddd2 31
+vitest.config.ts
+  934c12111b58ddd2 13-25
+src/components/interactive/CartDrawer.tsx
+  934c12111b58ddd2 169
+src/pages/sitemap.xml.ts
+  934c12111b58ddd2 64-65,68,72
+e2e/mobile.spec.ts
+  934c12111b58ddd2 13
+e2e/menu.spec.ts
+  934c12111b58ddd2 48,50
+.prettierignore
+  934c12111b58ddd2 1-8
+e2e/product-detail.spec.ts
+  934c12111b58ddd2 44,133,160
+src/lib/normalize.ts
+  934c12111b58ddd2 142
+.prettierrc
+  934c12111b58ddd2 1-9
+src/env.d.ts
+  934c12111b58ddd2 1,7,9
+src/components/astro/MenuSection.astro
+  934c12111b58ddd2 3,7
+src/components/astro/Footer.astro
+  934c12111b58ddd2 18
+src/components/interactive/SearchBar.tsx
+  934c12111b58ddd2 123
+src/layouts/BaseLayout.astro
+  934c12111b58ddd2 37
+e2e/seo.spec.ts
+  934c12111b58ddd2 54,56-57,69
+lighthouserc.json
+  934c12111b58ddd2 4-5,15-18,20-21
+src/components/interactive/ConfirmRemoveDialog.tsx
+  934c12111b58ddd2 22,27
+.gitignore
+  934c12111b58ddd2 33-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "8bc82eef581f8c2c75b5a5fd30998a8ecc180ff3",
+  "prompts": {
+    "860acf88680c2385": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cb46a-f230-7172-9ae2-5470529fae72",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 9,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "934c12111b58ddd2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5802a2dc-3ee2-4935-ac34-d5fef9a54e47",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 399,
+      "total_deletions": 131,
+      "accepted_lines": 353,
+      "overriden_lines": 1
+    }
+  }
+}
