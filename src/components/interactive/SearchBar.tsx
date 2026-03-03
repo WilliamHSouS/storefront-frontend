@@ -1,17 +1,27 @@
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
 import { $merchant } from '@/stores/merchant';
-import { $selectedProduct } from '@/stores/ui';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { t } from '@/i18n';
 import { getClient } from '@/lib/api';
+import { slugify } from '@/lib/normalize';
 
 interface SearchResult {
-  id: string;
+  id: string | number;
   name: string;
   price: string;
   image?: string | null;
-  slug?: string;
+}
+
+/** Normalize a raw API product to SearchResult shape. */
+function toSearchResult(raw: Record<string, unknown>): SearchResult {
+  const images = raw.images as Array<{ image_url: string }> | undefined;
+  return {
+    id: raw.id as string | number,
+    name: (raw.title ?? raw.name ?? '') as string,
+    price: (raw.price ?? '0') as string,
+    image: images?.[0]?.image_url ?? (raw.image as string | null) ?? null,
+  };
 }
 
 interface Props {
@@ -48,8 +58,8 @@ export default function SearchBar({ lang }: Props) {
         params: { query: { q } },
       });
       if (data) {
-        const page = data as { results: SearchResult[] };
-        setResults(page.results ?? []);
+        const page = data as { results: Array<Record<string, unknown>> };
+        setResults((page.results ?? []).map(toSearchResult));
       }
     } finally {
       setLoading(false);
@@ -63,8 +73,8 @@ export default function SearchBar({ lang }: Props) {
   };
 
   const handleSelect = (result: SearchResult) => {
-    $selectedProduct.set({ id: result.id, name: result.name });
     closeSearch();
+    window.location.href = `/${lang}/product/${slugify(result.name)}`;
   };
 
   // Close on escape
@@ -99,7 +109,7 @@ export default function SearchBar({ lang }: Props) {
     <div class="fixed inset-0 z-50">
       <div class="absolute inset-0 bg-foreground/20 backdrop-blur-sm" onClick={closeSearch} />
 
-      <div class="mx-auto mt-16 w-full max-w-lg px-4">
+      <div class="relative mx-auto mt-16 w-full max-w-lg px-4">
         <div class="overflow-hidden rounded-lg bg-card shadow-xl">
           <div class="flex items-center border-b border-border px-3">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-muted-foreground"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -115,6 +125,14 @@ export default function SearchBar({ lang }: Props) {
             {loading && (
               <div class="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent motion-reduce:animate-none" role="status" aria-label={t('loading', lang)} />
             )}
+            <button
+              type="button"
+              onClick={closeSearch}
+              class="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={t('close', lang)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
           </div>
 
           {results.length > 0 && (
@@ -145,9 +163,16 @@ export default function SearchBar({ lang }: Props) {
 
           {query.length >= 2 && results.length === 0 && !loading && (
             <div class="px-3 py-6 text-center text-sm text-muted-foreground">
-              No results
+              {t('noResults', lang)}
             </div>
           )}
+
+          <div class="flex items-center justify-end border-t border-border px-3 py-2">
+            <span class="text-xs text-muted-foreground">
+              <kbd class="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd>
+              {' '}{t('close', lang)}
+            </span>
+          </div>
         </div>
       </div>
     </div>

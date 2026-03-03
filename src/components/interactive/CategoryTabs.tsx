@@ -3,7 +3,7 @@ import { useEffect, useRef, useCallback } from 'preact/hooks';
 import { $activeCategory } from '@/stores/ui';
 
 interface Category {
-  id: string;
+  id: string | number;
   name: string;
 }
 
@@ -34,7 +34,7 @@ export default function CategoryTabs({ categories }: Props) {
   // Scroll-based active category tracking via IntersectionObserver
   useEffect(() => {
     const sections = categories.map((c) =>
-      document.getElementById(`category-${c.id}`),
+      document.getElementById(`collection-${c.id}`),
     ).filter(Boolean) as HTMLElement[];
 
     if (sections.length === 0) return;
@@ -69,7 +69,7 @@ export default function CategoryTabs({ categories }: Props) {
   // Set initial active category
   useEffect(() => {
     if (!activeCategory && categories.length > 0) {
-      $activeCategory.set(categories[0].id);
+      $activeCategory.set(String(categories[0].id));
     }
   }, [categories, activeCategory]);
 
@@ -77,7 +77,7 @@ export default function CategoryTabs({ categories }: Props) {
     isUserClick.current = true;
     $activeCategory.set(categoryId);
 
-    const section = document.getElementById(`category-${categoryId}`);
+    const section = document.getElementById(`collection-${categoryId}`);
     if (section) {
       section.scrollIntoView({ behavior: 'smooth', block: 'start' });
       // Re-enable scroll tracking after smooth scroll completes
@@ -95,9 +95,9 @@ export default function CategoryTabs({ categories }: Props) {
 
     e.preventDefault();
     const nextCat = categories[nextIndex];
-    const tab = tabRefs.current.get(nextCat.id);
+    const tab = tabRefs.current.get(String(nextCat.id));
     tab?.focus();
-    handleTabClick(nextCat.id);
+    handleTabClick(String(nextCat.id));
   };
 
   return (
@@ -119,15 +119,15 @@ export default function CategoryTabs({ categories }: Props) {
           {categories.map((cat, i) => (
             <button
               key={cat.id}
-              ref={(el) => { if (el) tabRefs.current.set(cat.id, el); }}
+              ref={(el) => { if (el) tabRefs.current.set(String(cat.id), el); }}
               role="tab"
               type="button"
-              aria-selected={activeCategory === cat.id}
-              tabIndex={activeCategory === cat.id ? 0 : -1}
-              onClick={() => handleTabClick(cat.id)}
+              aria-selected={activeCategory === String(cat.id)}
+              tabIndex={activeCategory === String(cat.id) ? 0 : -1}
+              onClick={() => handleTabClick(String(cat.id))}
               onKeyDown={(e) => handleKeyDown(e, i)}
               class={`relative z-10 shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                activeCategory === cat.id
+                activeCategory === String(cat.id)
                   ? 'text-accent-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}

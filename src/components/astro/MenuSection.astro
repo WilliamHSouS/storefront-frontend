@@ -2,7 +2,7 @@
 import ProductCard from './ProductCard.astro';
 
 interface Props {
-  category: { id: string; name: string; slug?: string };
+  category: { id: string | number; name: string; slug?: string };
   products: Array<Record<string, unknown>>;
   lang: string;
   currency: string;
@@ -13,7 +13,7 @@ const { category, products, lang, currency, layout = 'grid' } = Astro.props;
 ---
 
 {products.length > 0 && (
-  <section id={`category-${category.id}`} class="scroll-mt-28 px-4 py-6" data-category-id={category.id}>
+  <section id={`collection-${category.id}`} class="scroll-mt-28 px-4 py-6" data-category-id={category.id}>
     <div class="mx-auto max-w-screen-xl">
       <h2 class="font-heading text-lg font-bold text-foreground">{category.name}</h2>
       <div class:list={['mt-3', layout === 'list' ? 'flex flex-col gap-3' : 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4']}>

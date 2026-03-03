@@ -7,13 +7,13 @@ import { t } from '@/i18n';
 
 interface Props {
   product: {
-    id: string;
+    id: number | string;
+    slug: string;
     name: string;
-    description?: string;
+    description?: string | null;
     price: string;
     compare_at_price?: string | null;
     image?: string | null;
-    slug?: string;
     sold_out?: boolean;
     discount?: PricedItem['discount'];
     modifier_groups?: unknown[];
@@ -68,7 +68,9 @@ const isGrid = variant === 'grid';
     <div>
       <div class="flex items-start justify-between gap-2">
         <h3 class="font-heading text-sm font-semibold leading-tight text-card-foreground">
-          {product.name}
+          <a href={`/${lang}/product/${product.slug}`} class="after:absolute after:inset-0">
+            {product.name}
+          </a>
         </h3>
         {product.discount && (
           <PromoBadge item={pricedItem} currency={currency} locale={locale} />
@@ -93,14 +95,16 @@ const isGrid = variant === 'grid';
         )}
       </div>
 
-      <AddToCartButton
-        client:visible
-        productId={product.id}
-        productName={product.name}
-        hasModifiers={hasModifiers}
-        soldOut={product.sold_out ?? false}
-        lang={lang}
-      />
+      <div class="relative z-10">
+        <AddToCartButton
+          client:visible
+          productId={String(product.id)}
+          productName={product.name}
+          hasModifiers={hasModifiers}
+          soldOut={product.sold_out ?? false}
+          lang={lang}
+        />
+      </div>
     </div>
   </div>
 </article>

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import type { MerchantConfig } from '@/types/merchant';
-import { fetchAllProducts } from '@/lib/fetch-all';
+import { flattenCategories, slugify } from '@/lib/normalize';
 
 function escapeXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
@@ -21,26 +21,23 @@ export const GET: APIRoute = async ({ locals, url }) => {
   // Fetch products and categories — use allSettled so one failure
   // doesn't prevent the other resource from appearing in the sitemap
   let products: Record<string, unknown>[] = [];
-  let categories: Record<string, unknown>[] = [];
+  let categories: Array<{ id: number | string; slug: string }> = [];
 
   try {
     const [productsResult, categoriesResult] = await Promise.allSettled([
-      fetchAllProducts(sdk, {
-        vendorId: merchant.merchantId,
-        language: defaultLang,
-        baseUrl: import.meta.env.API_BASE_URL,
-      }),
+      sdk.GET('/api/v1/products/'),
       sdk.GET('/api/v1/categories/'),
     ]);
 
     if (productsResult.status === 'fulfilled') {
-      products = productsResult.value;
+      products = productsResult.value?.data?.results ?? [];
     } else {
       console.error('sitemap: failed to fetch products', productsResult.reason);
     }
 
     if (categoriesResult.status === 'fulfilled') {
-      categories = categoriesResult.value?.data?.results ?? [];
+      const rawCats = categoriesResult.value?.data?.results ?? [];
+      categories = flattenCategories(rawCats);
     } else {
       console.error('sitemap: failed to fetch categories', categoriesResult.reason);
     }
@@ -65,17 +62,19 @@ export const GET: APIRoute = async ({ locals, url }) => {
   // Category pages
   for (const cat of categories) {
     urls.push({
-      loc: `/category/${escapeXml(String((cat as any).slug ?? (cat as any).id))}`,
+      loc: `/collection/${escapeXml(cat.slug)}`,
       langs: languages,
     });
   }
 
   // Product pages
   for (const product of products) {
+    const raw = product as any;
+    const productSlug = raw.slug ?? slugify(raw.title ?? raw.name ?? String(raw.id));
     urls.push({
-      loc: `/product/${escapeXml(String((product as any).slug ?? (product as any).id))}`,
+      loc: `/product/${escapeXml(productSlug)}`,
       langs: languages,
-      lastmod: (product as any).updated_at,
+      lastmod: raw.updated_at,
     });
   }
 

@@ -6,37 +6,34 @@ import MenuSection from '@/components/astro/MenuSection.astro';
 import Footer from '@/components/astro/Footer.astro';
 import SEOHead from '@/components/astro/SEOHead.astro';
 import StructuredData from '@/components/astro/StructuredData.astro';
-import { fetchAllProducts } from '@/lib/fetch-all';
+import { normalizeProduct, flattenCategories } from '@/lib/normalize';
 
 // Interactive Preact islands
 import CategoryTabs from '@/components/interactive/CategoryTabs';
-import CartBar from '@/components/interactive/CartBar';
-import CartDrawer from '@/components/interactive/CartDrawer';
-import ProductDetail from '@/components/interactive/ProductDetail';
-import SearchBar from '@/components/interactive/SearchBar';
 import FreshnessProvider from '@/components/interactive/FreshnessProvider';
 
 const { merchant, lang, sdk } = Astro.locals;
-const baseUrl = import.meta.env.API_BASE_URL;
 
-const [categoriesResult, products] = await Promise.all([
-  sdk.GET('/api/v1/categories/'),
-  fetchAllProducts(sdk, {
-    vendorId: merchant.merchantId,
-    language: lang,
-    baseUrl,
+// Fetch categories, then products per leaf category
+const categoriesResult = await sdk.GET('/api/v1/categories/');
+const rawCategories = (categoriesResult.data as { results: Array<Record<string, unknown>> } | null)?.results ?? [];
+const categories = flattenCategories(rawCategories);
+
+// Fetch products per category in parallel
+const categoryProducts = await Promise.all(
+  categories.map(async (cat) => {
+    const result = await sdk.GET('/api/v1/products/', {
+      params: { query: { category: String(cat.id) } },
+    });
+    const raw = (result.data as { results: Array<Record<string, unknown>> } | null)?.results ?? [];
+    return { category: cat, products: raw.map(normalizeProduct) };
   }),
-]);
+);
 
-const categories = (categoriesResult.data as { results: Array<{ id: string; name: string; slug?: string }> } | null)?.results ?? [];
-
-// Group products by category, preserving category order
-const sections = categories.map((cat) => ({
-  category: cat,
-  products: products.filter((p) => (p as Record<string, unknown>).category_id === cat.id),
-}));
-
-const productIds = products.map((p) => String((p as Record<string, unknown>).id));
+// Filter out empty categories
+const sections = categoryProducts.filter((s) => s.products.length > 0);
+const allProducts = sections.flatMap((s) => s.products);
+const productIds = allProducts.map((p) => String(p.id));
 ---
 
 <BaseLayout title={merchant.name} description={merchant.seo.defaultDescription}>
@@ -52,14 +49,6 @@ const productIds = products.map((p) => String((p as Record<string, unknown>).id)
   <Header merchant={merchant} lang={lang} />
   <HeroSection merchant={merchant} />
 
-  {/* Wire header cart trigger to open CartDrawer */}
-  <script>
-    import { $isCartOpen } from '@/stores/ui';
-    document.querySelectorAll('[data-cart-trigger]').forEach((el) => {
-      el.addEventListener('click', () => $isCartOpen.set(true));
-    });
-  </script>
-
   <CategoryTabs client:load categories={categories} />
 
   <main>
@@ -74,17 +63,7 @@ const productIds = products.map((p) => String((p as Record<string, unknown>).id)
     ))}
   </main>
 
-  <CartBar client:load lang={lang} />
-  <CartDrawer client:load lang={lang} />
-  <ProductDetail client:load lang={lang} />
-  <SearchBar client:idle lang={lang} />
   <FreshnessProvider client:idle productIds={productIds} />
-
-  {/* Hydrate merchant store for Preact islands */}
-  <script define:vars={{ merchantJSON: JSON.stringify(merchant), langValue: lang }}>
-    window.__MERCHANT__ = JSON.parse(merchantJSON);
-    window.__LANG__ = langValue;
-  </script>
 
   <Footer merchant={merchant} lang={lang} />
 </BaseLayout>

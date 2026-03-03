@@ -3,6 +3,12 @@ import { themeToCSS } from '@/lib/theme';
 import type { MerchantConfig } from '@/types/merchant';
 import '@/styles/global.css';
 
+// Shared interactive islands — available on every page
+import CartBar from '@/components/interactive/CartBar';
+import CartDrawer from '@/components/interactive/CartDrawer';
+import ProductDetail from '@/components/interactive/ProductDetail';
+import SearchBar from '@/components/interactive/SearchBar';
+
 interface Props {
   title: string;
   description?: string;
@@ -12,6 +18,8 @@ const { title, description } = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
+const merchantJSON = merchant ? JSON.stringify(merchant) : '';
+const langValue = lang ?? 'en';
 ---
 
 <!doctype html>
@@ -35,7 +43,27 @@ const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
     <slot name="head" />
   </head>
   <body>
+    {merchantJSON && (
+      <script define:vars={{ merchantJSON, langValue }}>
+        window.__MERCHANT__ = JSON.parse(merchantJSON);
+        window.__LANG__ = langValue;
+      </script>
+    )}
     <slot />
+
+    {/* Shared islands: cart, product detail modal, search */}
+    <CartBar client:load lang={langValue} />
+    <CartDrawer client:load lang={langValue} />
+    <ProductDetail client:load lang={langValue} />
+    <SearchBar client:idle lang={langValue} />
+
+    {/* Wire header cart trigger to open CartDrawer */}
+    <script>
+      import { $isCartOpen } from '@/stores/ui';
+      document.querySelectorAll('[data-cart-trigger]').forEach((el) => {
+        el.addEventListener('click', () => $isCartOpen.set(true));
+      });
+    </script>
     <script>
       import { initAnalytics } from '@/analytics';
       initAnalytics().catch((err) => {

@@ -17,7 +17,7 @@
   "youSave": "You save",
   "nextCheckout": "Next: Checkout",
   "poweredBy": "Powered by",
-  "allCategories": "All categories",
+  "allCategories": "All",
   "menu": "Menu",
   "deliveryPickup": "Delivery or pickup",
   "delivery": "Delivery",
@@ -35,6 +35,7 @@
   "chooseRequired": "Choose an option",
   "frequentlyCombined": "Frequently combined with",
   "addToOrder": "Add to order",
+  "hours": "Hours",
   "loading": "Loading",
   "noResults": "No results found"
 }

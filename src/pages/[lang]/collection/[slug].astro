@@ -5,34 +5,31 @@ import MenuSection from '@/components/astro/MenuSection.astro';
 import Footer from '@/components/astro/Footer.astro';
 import SEOHead from '@/components/astro/SEOHead.astro';
 import StructuredData from '@/components/astro/StructuredData.astro';
-import { fetchAllProducts } from '@/lib/fetch-all';
+import { normalizeProduct, flattenCategories } from '@/lib/normalize';
 
 const { merchant, lang, sdk } = Astro.locals;
 const { slug } = Astro.params;
-const baseUrl = import.meta.env.API_BASE_URL;
 
-// Fetch categories and products in parallel
-const [categoriesResult, allProducts] = await Promise.all([
-  sdk.GET('/api/v1/categories/'),
-  fetchAllProducts(sdk, {
-    vendorId: merchant.merchantId,
-    language: lang,
-    baseUrl,
-  }),
-]);
-
-const categories = (categoriesResult.data as { results: Array<{ id: string; name: string; slug?: string }> } | null)?.results ?? [];
+// Fetch categories to find the one matching this slug
+const categoriesResult = await sdk.GET('/api/v1/categories/');
+const rawCategories = (categoriesResult.data as { results: Array<Record<string, unknown>> } | null)?.results ?? [];
+const categories = flattenCategories(rawCategories);
 const category = categories.find((c) => c.slug === slug);
 
 if (!category) {
   return Astro.redirect(`/${lang}/`);
 }
 
-const products = allProducts.filter((p) => (p as Record<string, unknown>).category_id === category.id);
+// Fetch products for this category
+const productsResult = await sdk.GET('/api/v1/products/', {
+  params: { query: { category: String(category.id) } },
+});
+const rawProducts = (productsResult.data as { results: Array<Record<string, unknown>> } | null)?.results ?? [];
+const products = rawProducts.map(normalizeProduct);
 
 const breadcrumbs = [
   { name: merchant.name, url: `/${lang}/` },
-  { name: category.name, url: `/${lang}/category/${slug}` },
+  { name: category.name, url: `/${lang}/collection/${slug}` },
 ];
 ---
 
@@ -43,7 +40,7 @@ const breadcrumbs = [
     merchant={merchant}
     lang={lang}
     title={category.name}
-    canonicalUrl={`${Astro.url.origin}/${lang}/category/${slug}`}
+    canonicalUrl={`${Astro.url.origin}/${lang}/collection/${slug}`}
   />
   <StructuredData slot="head" type="breadcrumb" merchant={merchant} breadcrumbs={breadcrumbs} />
 

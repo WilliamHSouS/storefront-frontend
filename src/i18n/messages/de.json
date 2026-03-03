@@ -17,7 +17,7 @@
   "youSave": "Du sparst",
   "nextCheckout": "Weiter: Zur Kasse",
   "poweredBy": "Powered by",
-  "allCategories": "Alle Kategorien",
+  "allCategories": "Alle",
   "menu": "Speisekarte",
   "deliveryPickup": "Lieferung oder Abholung",
   "delivery": "Lieferung",
@@ -35,6 +35,7 @@
   "chooseRequired": "Option wählen",
   "frequentlyCombined": "Häufig kombiniert mit",
   "addToOrder": "Zur Bestellung hinzufügen",
+  "hours": "Öffnungszeiten",
   "loading": "Wird geladen",
   "noResults": "Keine Ergebnisse gefunden"
 }
