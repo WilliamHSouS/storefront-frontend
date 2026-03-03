@@ -38,6 +38,30 @@ const hasModifiers = product.modifier_groups.length > 0;
 const galleryImages = [...product.images].sort((a, b) => a.position - b.position);
 const hasGallery = galleryImages.length > 1;
 
+// Process attribute values for display in the template
+interface DisplayAttribute {
+  name: string;
+  value: string;
+}
+const displayAttributes: DisplayAttribute[] = [];
+if (Array.isArray(product.attribute_values)) {
+  for (const attr of product.attribute_values as Array<Record<string, any>>) {
+    let display: string | null = null;
+    if (attr.input_type === 'multiselect' && attr.selected_choices?.length > 0) {
+      display = attr.selected_choices.map((c: { value: string }) => c.value).join(', ');
+    } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
+      display = attr.value_boolean ? 'Yes' : 'No';
+    } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
+      display = String(Math.round(Number(attr.value_numeric)));
+    } else if (attr.value_text) {
+      display = attr.value_text;
+    }
+    if (display) {
+      displayAttributes.push({ name: attr.attribute_name, value: display });
+    }
+  }
+}
+
 const breadcrumbs = [
   { name: merchant.name, url: `/${lang}/` },
   { name: product.name, url: `/${lang}/product/${product.slug}` },
@@ -161,6 +185,18 @@ const breadcrumbs = [
             </span>
           )}
         </div>
+
+        {/* Attributes (allergens, storage, etc.) */}
+        {displayAttributes.length > 0 && (
+          <div class="mt-4 space-y-1.5">
+            {displayAttributes.map((attr) => (
+              <div class="flex gap-2 text-sm">
+                <span class="font-medium text-muted-foreground">{attr.name}:</span>
+                <span class="text-foreground">{attr.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div class="mt-6">
           <AddToCartButton

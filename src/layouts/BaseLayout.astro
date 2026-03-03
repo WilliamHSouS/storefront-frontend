@@ -57,13 +57,6 @@ const langValue = lang ?? 'en';
     <ProductDetail client:load lang={langValue} />
     <SearchBar client:idle lang={langValue} />
 
-    {/* Wire header cart trigger to open CartDrawer */}
-    <script>
-      import { $isCartOpen } from '@/stores/ui';
-      document.querySelectorAll('[data-cart-trigger]').forEach((el) => {
-        el.addEventListener('click', () => $isCartOpen.set(true));
-      });
-    </script>
     <script>
       import { initAnalytics } from '@/analytics';
       initAnalytics().catch((err) => {

@@ -86,7 +86,12 @@ export default function AddToCartButton({
 
       if (error) {
         $cart.set(prevCart);
-        console.error('Failed to add to cart:', error);
+        if ('status' in error && error.status === 400) {
+          // Product likely requires modifiers — open the detail modal
+          $selectedProduct.set({ id: productId, name: productName });
+        } else {
+          console.error('Failed to add to cart:', error);
+        }
       } else if (data) {
         const cartData = data as typeof cart;
         $cart.set(cartData);

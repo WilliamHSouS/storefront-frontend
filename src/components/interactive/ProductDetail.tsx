@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { $selectedProduct } from '@/stores/ui';
-import { $cart, $cartLoading } from '@/stores/cart';
+import { $cart, $cartLoading, ensureCart, setStoredCartId } from '@/stores/cart';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
@@ -24,6 +24,16 @@ interface ModifierGroup {
   options: ModifierOption[];
 }
 
+interface AttributeValue {
+  attribute_name: string;
+  attribute_slug: string;
+  input_type: string;
+  value_text: string;
+  value_numeric: string | null;
+  value_boolean: boolean | null;
+  selected_choices: Array<{ value: string }>;
+}
+
 interface ProductData {
   id: string | number;
   name: string;
@@ -31,12 +41,36 @@ interface ProductData {
   price: string;
   image?: string | null;
   modifier_groups?: ModifierGroup[];
+  attribute_values?: AttributeValue[];
   cross_sells?: Array<{ id: string; name: string; price: string; image?: string | null }>;
+}
+
+/** Map API modifier group to the shape this component expects. */
+function mapModifierGroup(raw: Record<string, unknown>): ModifierGroup {
+  const selectionType = raw.selection_type as string | undefined;
+  const modifiers = (raw.modifiers ?? raw.options ?? []) as Array<Record<string, unknown>>;
+
+  return {
+    id: String(raw.id),
+    name: (raw.title ?? raw.name ?? '') as string,
+    type: selectionType === 'multiple' ? 'checkbox' : 'radio',
+    required: (raw.required as boolean) ?? (raw.min_selections as number) > 0,
+    max_selections: raw.max_selections as number | undefined,
+    options: modifiers
+      .filter((m) => m.is_available !== false)
+      .map((m) => ({
+        id: String(m.id),
+        name: (m.title ?? m.name ?? '') as string,
+        price: (m.price_modifier ?? m.price ?? '0') as string,
+      })),
+  };
 }
 
 /** Normalize raw API product detail to ProductData shape. */
 function toProductData(raw: Record<string, unknown>): ProductData {
   const images = raw.images as Array<{ image_url: string }> | undefined;
+  const rawGroups = (raw.modifier_groups ?? []) as Array<Record<string, unknown>>;
+
   return {
     ...raw,
     id: raw.id as string | number,
@@ -44,7 +78,8 @@ function toProductData(raw: Record<string, unknown>): ProductData {
     description: raw.description as string | undefined,
     price: (raw.price ?? '0') as string,
     image: images?.[0]?.image_url ?? (raw.image as string | null) ?? null,
-    modifier_groups: raw.modifier_groups as ModifierGroup[] | undefined,
+    modifier_groups: rawGroups.map(mapModifierGroup),
+    attribute_values: raw.attribute_values as ProductData['attribute_values'],
   } as ProductData;
 }
 
@@ -176,7 +211,7 @@ export default function ProductDetail({ lang }: Props) {
 
     $cartLoading.set(true);
     try {
-      const modifiers: Array<{ option_id: string; quantity: number }> = [];
+      const options: Array<{ option_id: number; option_group_id: number; quantity: number }> = [];
 
       for (const group of product.modifier_groups ?? []) {
         const selected = selections[group.id] ?? [];
@@ -184,27 +219,33 @@ export default function ProductDetail({ lang }: Props) {
 
         for (const opt of group.options) {
           if (group.type === 'quantity' && (groupQtys[opt.id] ?? 0) > 0) {
-            modifiers.push({ option_id: opt.id, quantity: groupQtys[opt.id] });
+            options.push({ option_id: Number(opt.id), option_group_id: Number(group.id), quantity: groupQtys[opt.id] });
           } else if (selected.includes(opt.id)) {
-            modifiers.push({ option_id: opt.id, quantity: 1 });
+            options.push({ option_id: Number(opt.id), option_group_id: Number(group.id), quantity: 1 });
           }
         }
       }
 
       const client = getClient();
-      const { data } = await client.POST('/api/v1/cart/items/', {
+      const cartId = await ensureCart(client);
+      const { data } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
+        params: { path: { cart_id: cartId } },
         body: {
           product_id: product.id,
           quantity,
-          modifiers,
+          options: options.length > 0 ? options : undefined,
           notes: notes || undefined,
         },
       });
 
       if (data) {
-        $cart.set(data as any);
+        const cartData = data as any;
+        $cart.set(cartData);
+        if (cartData?.id) setStoredCartId(cartData.id);
         close();
       }
+    } catch (err) {
+      console.error('[ProductDetail] add to cart error:', err);
     } finally {
       $cartLoading.set(false);
     }
@@ -265,6 +306,30 @@ export default function ProductDetail({ lang }: Props) {
               <p class="mt-2 text-lg font-semibold text-card-foreground">
                 {formatPrice(product.price, currency, locale)}
               </p>
+
+              {/* Attributes */}
+              {product.attribute_values && product.attribute_values.length > 0 && (
+                <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                  {product.attribute_values.map((attr) => {
+                    let display: string | null = null;
+                    if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
+                      display = attr.selected_choices.map((c) => c.value).join(', ');
+                    } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
+                      display = attr.value_boolean ? 'Yes' : 'No';
+                    } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
+                      display = String(Math.round(Number(attr.value_numeric)));
+                    } else if (attr.value_text) {
+                      display = attr.value_text;
+                    }
+                    if (!display) return null;
+                    return (
+                      <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
+                        <span class="font-medium">{attr.attribute_name}:</span> {display}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Modifier groups */}
               {(product.modifier_groups ?? []).map((group) => (
