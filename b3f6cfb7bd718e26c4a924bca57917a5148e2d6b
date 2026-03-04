@@ -1,0 +1,45 @@
+src/components/interactive/CartSuggestions.tsx
+  e58abce968143b6d 1-94
+e2e/product-detail.spec.ts
+  e58abce968143b6d 162,167-172
+e2e/helpers/mock-api.ts
+  e58abce968143b6d 9,149-150,205-211
+src/i18n/messages/nl.json
+  e58abce968143b6d 40-43
+src/stores/cart.ts
+  e58abce968143b6d 3,5-12,97-113
+src/components/interactive/ProductDetail.tsx
+  e58abce968143b6d 9-13,110-112,121,130-132,140-144,146-149,272-274,276,339-340,357-375,377-402,404-407,546-547,553,555,558,561,570-571,573,576-591,618-619,627-644,664
+src/components/interactive/CartDrawer.tsx
+  e58abce968143b6d 10,155,294
+e2e/upsells.spec.ts
+  e58abce968143b6d 1-242
+src/i18n/messages/en.json
+  e58abce968143b6d 40-43
+src/i18n/messages/de.json
+  e58abce968143b6d 40-43
+e2e/fixtures/products.ts
+  e58abce968143b6d 88-138
+src/types/merchant.ts
+  e58abce968143b6d 52-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "b3f6cfb7bd718e26c4a924bca57917a5148e2d6b",
+  "prompts": {
+    "e58abce968143b6d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dfc0575c-55b2-43b1-abcf-09294c200e47",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1050,
+      "total_deletions": 93,
+      "accepted_lines": 982,
+      "overriden_lines": 0
+    }
+  }
+}
