@@ -1,0 +1,25 @@
+src/lib/__tests__/normalize.test.ts
+  d545c629d3dd72a4 1-155
+src/lib/normalize.ts
+  d545c629d3dd72a4 9-10,205-255
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "5cfff7851348561b8e0acd9c642a84678bede42e",
+  "prompts": {
+    "d545c629d3dd72a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "691042d3-6640-49a9-a058-cf4959e91213",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 208,
+      "total_deletions": 0,
+      "accepted_lines": 758,
+      "overriden_lines": 0
+    }
+  }
+}
