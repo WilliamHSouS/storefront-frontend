@@ -346,7 +346,7 @@ export default function ProductDetail({ lang }: Props) {
                     if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
                       display = attr.selected_choices.map((c) => c.value).join(', ');
                     } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
-                      display = attr.value_boolean ? 'Yes' : 'No';
+                      display = attr.value_boolean ? t('yes', lang) : t('no', lang);
                     } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
                       display = String(Math.round(Number(attr.value_numeric)));
                     } else if (attr.value_text) {
