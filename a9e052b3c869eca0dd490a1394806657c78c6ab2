@@ -1,0 +1,27 @@
+src/components/interactive/CartDrawer.tsx
+  d545c629d3dd72a4 4,44,61
+src/stores/cart.ts
+  d545c629d3dd72a4 3,76-78,84
+src/components/interactive/ProductDetail.tsx
+  d545c629d3dd72a4 4-5,250
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "a9e052b3c869eca0dd490a1394806657c78c6ab2",
+  "prompts": {
+    "d545c629d3dd72a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "691042d3-6640-49a9-a058-cf4959e91213",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 32,
+      "total_deletions": 27,
+      "accepted_lines": 580,
+      "overriden_lines": 0
+    }
+  }
+}
