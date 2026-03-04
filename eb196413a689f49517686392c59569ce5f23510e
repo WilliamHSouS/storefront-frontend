@@ -1,0 +1,25 @@
+docs/plans/2026-03-04-cart-improvements.md
+  9c00098c844830a3 1-1224
+e2e/helpers/test-utils.ts
+  9c00098c844830a3 136-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "eb196413a689f49517686392c59569ce5f23510e",
+  "prompts": {
+    "9c00098c844830a3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bfbb100-ed07-4ed0-80d7-e5d417e3384c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 7,
+      "accepted_lines": 1234,
+      "overriden_lines": 0
+    }
+  }
+}
