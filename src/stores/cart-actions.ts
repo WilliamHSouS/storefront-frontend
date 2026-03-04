@@ -2,6 +2,7 @@ import { getClient } from '@/lib/api';
 import { $cart, $cartLoading, $eligiblePromotions, errorDetail } from '@/stores/cart';
 import type { Cart, EligiblePromotion } from '@/stores/cart';
 import type { StorefrontClient } from '@/lib/sdk-stub';
+import type { MessageKey } from '@/i18n';
 
 /**
  * Update the quantity of a line item in the cart.
@@ -31,11 +32,6 @@ export async function updateCartItemQuantity(
   }
 }
 
-/**
- * Remove a line item from the cart.
- * Sets $cartLoading during the request and updates $cart on success.
- * Accepts an optional `client` parameter for testability; defaults to getClient().
- */
 /**
  * Set cart item quantity, removing the item if quantity is 0 or less.
  * Unifies the zero-quantity check so callers don't need to branch.
@@ -81,7 +77,7 @@ export async function checkPromotionEligibility(
 }
 
 /** Map backend error detail strings to i18n keys. */
-export const DISCOUNT_ERROR_MAP: Record<string, string> = {
+export const DISCOUNT_ERROR_MAP: Record<string, MessageKey> = {
   'Invalid discount code': 'discountInvalid',
   'Discount code expired': 'discountExpired',
   'Minimum order amount not met': 'discountMinOrder',

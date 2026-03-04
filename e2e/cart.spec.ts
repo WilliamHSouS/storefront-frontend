@@ -355,22 +355,22 @@ test.describe('Cart — discount codes', () => {
     await waitForHydration(page);
 
     await addSimpleProductToCart(page, falafel.id);
-    await openCartDrawer(page);
+    const drawer = await openCartDrawer(page);
 
     // Fill in discount code
-    const input = page.getByLabel('Kortingscode');
+    const input = drawer.getByLabel('Kortingscode');
     await input.fill('SAVE10');
 
     // Apply discount
     const applyResponse = page.waitForResponse(
       (resp) => resp.url().includes('/apply-discount/') && resp.request().method() === 'POST',
     );
-    await page.getByRole('button', { name: 'Toepassen' }).click();
+    await drawer.getByRole('button', { name: 'Toepassen' }).click();
     await applyResponse;
 
     // Discount should be visible in the footer
-    await expect(page.getByText('SAVE10')).toBeVisible();
-    const removeBtn = page.getByRole('button', { name: 'Verwijderen', exact: true });
+    await expect(drawer.getByText('SAVE10')).toBeVisible();
+    const removeBtn = drawer.getByRole('button', { name: 'Verwijderen', exact: true });
     await expect(removeBtn).toBeVisible();
 
     // Remove discount
@@ -381,7 +381,7 @@ test.describe('Cart — discount codes', () => {
     await removeResponse;
 
     // Input should reappear
-    await expect(page.getByLabel('Kortingscode')).toBeVisible();
+    await expect(drawer.getByLabel('Kortingscode')).toBeVisible();
   });
 
   test('shows error for invalid discount code', async ({ page }) => {
@@ -389,18 +389,18 @@ test.describe('Cart — discount codes', () => {
     await waitForHydration(page);
 
     await addSimpleProductToCart(page, falafel.id);
-    await openCartDrawer(page);
+    const drawer = await openCartDrawer(page);
 
-    const input = page.getByLabel('Kortingscode');
+    const input = drawer.getByLabel('Kortingscode');
     await input.fill('INVALID');
 
     const applyResponse = page.waitForResponse(
       (resp) => resp.url().includes('/apply-discount/') && resp.request().method() === 'POST',
     );
-    await page.getByRole('button', { name: 'Toepassen' }).click();
+    await drawer.getByRole('button', { name: 'Toepassen' }).click();
     await applyResponse;
 
-    // Toast should show invalid code message (Dutch)
+    // Toast should show invalid code message (Dutch) — rendered outside drawer via portal
     await expect(page.getByText('Ongeldige kortingscode')).toBeVisible({ timeout: 5_000 });
   });
 });
