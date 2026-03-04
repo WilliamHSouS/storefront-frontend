@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/preact';
 import { useRef } from 'preact/hooks';
 import { $cart, $cartTotal, $cartLoading } from '@/stores/cart';
+import { normalizeCart } from '@/lib/normalize';
 import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
@@ -40,7 +41,7 @@ export default function CartDrawer({ lang, inline = false }: Props) {
         params: { path: { cart_id: cartId, id: itemId } },
         body: { quantity: newQuantity },
       });
-      if (data) $cart.set(data as typeof cart);
+      if (data) $cart.set(normalizeCart(data as Record<string, unknown>));
     } catch (err) {
       console.error('[cart] failed to update quantity:', err);
     } finally {
@@ -57,7 +58,7 @@ export default function CartDrawer({ lang, inline = false }: Props) {
       const { data } = await client.DELETE(`/api/v1/cart/{cart_id}/items/{id}/`, {
         params: { path: { cart_id: cartId, id: itemId } },
       });
-      if (data) $cart.set(data as typeof cart);
+      if (data) $cart.set(normalizeCart(data as Record<string, unknown>));
     } catch (err) {
       console.error('[cart] failed to remove item:', err);
     } finally {

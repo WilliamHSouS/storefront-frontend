@@ -1,5 +1,6 @@
 import { atom, computed } from 'nanostores';
 import type { StorefrontClient } from '@/lib/sdk-stub';
+import { normalizeCart } from '@/lib/normalize';
 
 export interface CartLineItem {
   id: string;
@@ -72,14 +73,15 @@ export async function ensureCart(client: StorefrontClient): Promise<string> {
       params: { path: { id: storedId } },
     });
     if (data) {
-      $cart.set(data as Cart);
-      return (data as Cart).id;
+      const cart = normalizeCart(data as Record<string, unknown>);
+      $cart.set(cart);
+      return cart.id;
     }
   }
 
   const { data } = await client.POST('/api/v1/cart/');
   if (!data) throw new Error('Failed to create cart');
-  const newCart = data as Cart;
+  const newCart = normalizeCart(data as Record<string, unknown>);
   $cart.set(newCart);
   setStoredCartId(newCart.id);
   return newCart.id;

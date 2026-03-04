@@ -1,7 +1,8 @@
 import { useStore } from '@nanostores/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { $selectedProduct } from '@/stores/ui';
-import { $cart, $cartLoading, ensureCart, setStoredCartId, type Cart } from '@/stores/cart';
+import { $cart, $cartLoading, ensureCart, setStoredCartId } from '@/stores/cart';
+import { normalizeCart } from '@/lib/normalize';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
@@ -246,7 +247,7 @@ export default function ProductDetail({ lang }: Props) {
       });
 
       if (data) {
-        const cartData = data as Cart;
+        const cartData = normalizeCart(data as Record<string, unknown>);
         $cart.set(cartData);
         if (cartData.id) setStoredCartId(cartData.id);
         close();
