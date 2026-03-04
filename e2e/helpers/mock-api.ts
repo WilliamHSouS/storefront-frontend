@@ -173,6 +173,12 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // ── Collections (empty — triggers category fallback) ──
+  if (method === 'GET' && path === '/api/v1/collections/') {
+    json(res, { results: [], next: null });
+    return;
+  }
+
   // ── Categories ──
   if (method === 'GET' && path === '/api/v1/categories/') {
     json(res, { results: categories });

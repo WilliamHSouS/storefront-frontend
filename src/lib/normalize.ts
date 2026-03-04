@@ -28,6 +28,31 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/** A single option within a modifier group (e.g. "Extra cheese", "Large"). */
+export interface ModifierOption {
+  id: string | number;
+  title?: string;
+  name?: string;
+  price_modifier?: string;
+  price?: string;
+  is_available?: boolean;
+  [key: string]: unknown;
+}
+
+/** A group of modifiers for a product (e.g. "Size", "Toppings"). */
+export interface ModifierGroup {
+  id: string | number;
+  title?: string;
+  name?: string;
+  selection_type?: string;
+  required?: boolean;
+  min_selections?: number;
+  max_selections?: number;
+  modifiers?: ModifierOption[];
+  options?: ModifierOption[];
+  [key: string]: unknown;
+}
+
 /** The shape frontend components expect for a product. */
 export interface NormalizedProduct {
   id: number | string;
@@ -42,7 +67,7 @@ export interface NormalizedProduct {
   intro: string | null;
   is_available: boolean;
   sold_out: boolean;
-  modifier_groups: Array<Record<string, unknown>>;
+  modifier_groups: ModifierGroup[];
   tags: string[];
   images: Array<{ image_url: string; alt_text: string; position: number }>;
   /** Pass-through for any fields we don't explicitly map. */
@@ -74,7 +99,7 @@ interface RawProduct {
   intro?: string | null;
   is_available?: boolean;
   sold_out?: boolean;
-  modifier_groups?: Array<Record<string, unknown>>;
+  modifier_groups?: ModifierGroup[];
   tags?: string[];
   [key: string]: unknown;
 }

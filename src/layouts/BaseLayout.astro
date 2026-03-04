@@ -8,13 +8,15 @@ import CartBar from '@/components/interactive/CartBar';
 import CartDrawer from '@/components/interactive/CartDrawer';
 import ProductDetail from '@/components/interactive/ProductDetail';
 import SearchBar from '@/components/interactive/SearchBar';
+import Toast from '@/components/interactive/Toast';
 
 interface Props {
   title: string;
   description?: string;
+  hideSharedIslands?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, hideSharedIslands = false } = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
@@ -64,10 +66,11 @@ const langValue = lang ?? 'en';
     <slot />
 
     {/* Shared islands: cart, product detail modal, search */}
-    <CartBar client:load lang={langValue} />
-    <CartDrawer client:load lang={langValue} />
-    <ProductDetail client:load lang={langValue} />
+    <CartBar client:idle lang={langValue} />
+    {!hideSharedIslands && <CartDrawer client:idle lang={langValue} />}
+    {!hideSharedIslands && <ProductDetail client:idle lang={langValue} />}
     <SearchBar client:idle lang={langValue} />
+    <Toast client:idle lang={langValue} />
 
     <script>
       import { initAnalytics } from '@/analytics';

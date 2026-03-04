@@ -1,19 +1,25 @@
 ---
 import type { MerchantConfig } from '@/types/merchant';
+import { responsiveImage } from '@/lib/image';
 
 interface Props {
   merchant: MerchantConfig;
 }
 
 const { merchant } = Astro.props;
+const heroAttrs = merchant.heroImage
+  ? responsiveImage(merchant.heroImage, [640, 960, 1280, 1920], '100vw', 80)
+  : null;
 ---
 
 <section class="relative">
   <div class="aspect-[21/9] w-full overflow-hidden bg-card-image sm:aspect-[3/1]">
     {
-      merchant.heroImage ? (
+      heroAttrs ? (
         <img
-          src={merchant.heroImage}
+          src={heroAttrs.src}
+          srcset={heroAttrs.srcset}
+          sizes={heroAttrs.sizes}
           alt={merchant.name}
           class="h-full w-full object-cover"
           width="1200"

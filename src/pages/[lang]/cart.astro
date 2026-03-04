@@ -11,7 +11,7 @@ const merchant = Astro.locals.merchant as MerchantConfig;
 const lang = Astro.locals.lang as string;
 ---
 
-<BaseLayout title={`${merchant.name} — Cart`}>
+<BaseLayout title={`${merchant.name} — Cart`} hideSharedIslands>
   <SEOHead slot="head" page="cart" merchant={merchant} lang={lang} />
   <Header merchant={merchant} lang={lang} />
 

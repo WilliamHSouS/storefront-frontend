@@ -7,13 +7,23 @@ const FOCUSABLE_SELECTOR = 'button, a, input, textarea, select, [tabindex]:not([
 // without the inner one accidentally restoring scroll while the outer is open.
 let scrollLockCount = 0;
 
-function lockScroll(): void {
+/** Reset scroll lock count — exported for testing only. */
+export function _resetScrollLockCount(): void {
+  scrollLockCount = 0;
+}
+
+/** Get current scroll lock count — exported for testing only. */
+export function _getScrollLockCount(): number {
+  return scrollLockCount;
+}
+
+export function _lockScroll(): void {
   if (scrollLockCount++ === 0) {
     document.body.style.overflow = 'hidden';
   }
 }
 
-function unlockScroll(): void {
+export function _unlockScroll(): void {
   if (--scrollLockCount <= 0) {
     scrollLockCount = 0;
     document.body.style.overflow = '';
@@ -57,11 +67,11 @@ export function useFocusTrap(
       }
     };
 
-    lockScroll();
+    _lockScroll();
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      unlockScroll();
+      _unlockScroll();
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isActive, onEscape]);

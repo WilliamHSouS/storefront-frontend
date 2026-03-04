@@ -1,5 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { formatPrice } from './currency';
+import { formatPrice, langToLocale } from './currency';
+
+describe('langToLocale', () => {
+  it('maps nl to nl-NL', () => {
+    expect(langToLocale('nl')).toBe('nl-NL');
+  });
+
+  it('maps de to de-DE', () => {
+    expect(langToLocale('de')).toBe('de-DE');
+  });
+
+  it('maps en to en-GB', () => {
+    expect(langToLocale('en')).toBe('en-GB');
+  });
+
+  it('falls back to en-GB for unknown language', () => {
+    expect(langToLocale('fr')).toBe('en-GB');
+    expect(langToLocale('')).toBe('en-GB');
+  });
+});
 
 describe('formatPrice', () => {
   it('formats EUR in Dutch locale', () => {

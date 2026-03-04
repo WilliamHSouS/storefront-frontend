@@ -1,4 +1,5 @@
 import { formatPrice } from './currency';
+import { t } from '@/i18n';
 
 export type Discount =
   | { type: 'percentage'; value: number }
@@ -44,18 +45,23 @@ export function hasUnitDiscount(item: PricedItem): boolean {
   return item.discount.type === 'percentage' || item.discount.type === 'fixed';
 }
 
-export function getDiscountLabel(item: PricedItem, currency: string, locale: string): string {
+export function getDiscountLabel(
+  item: PricedItem,
+  currency: string,
+  locale: string,
+  lang: string,
+): string {
   if (!item.discount) return '';
 
   switch (item.discount.type) {
     case 'percentage':
       return `-${item.discount.value}%`;
     case 'fixed':
-      return `${formatPrice(String(item.discount.value), currency, locale)} off`;
+      return `${formatPrice(String(item.discount.value), currency, locale)} ${t('discountOff', lang)}`;
     case 'bogo':
-      return `Buy ${item.discount.buyQuantity} Get ${item.discount.getQuantity} Free`;
+      return `${t('discountBuy', lang)} ${item.discount.buyQuantity} ${t('discountGet', lang)} ${item.discount.getQuantity} ${t('discountFree', lang)}`;
     case 'tiered':
-      return `${item.discount.quantity} for ${formatPrice(String(item.discount.price), currency, locale)}`;
+      return `${item.discount.quantity} ${t('discountFor', lang)} ${formatPrice(String(item.discount.price), currency, locale)}`;
   }
 }
 

@@ -4,9 +4,14 @@ export function langToLocale(lang: string): string {
   return 'en-GB';
 }
 
+const formatters = new Map<string, Intl.NumberFormat>();
+
 export function formatPrice(amount: string, currency: string, locale: string): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-  }).format(Number(amount));
+  const key = `${locale}:${currency}`;
+  let fmt = formatters.get(key);
+  if (!fmt) {
+    fmt = new Intl.NumberFormat(locale, { style: 'currency', currency });
+    formatters.set(key, fmt);
+  }
+  return fmt.format(Number(amount));
 }

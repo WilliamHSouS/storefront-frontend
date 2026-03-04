@@ -1,14 +1,123 @@
 import { useStore } from '@nanostores/preact';
 import { useRef } from 'preact/hooks';
-import { $cart, $cartTotal, $cartLoading } from '@/stores/cart';
+import { $cart, $cartTotal } from '@/stores/cart';
+import type { CartLineItem as CartLineItemType } from '@/stores/cart';
 import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { t } from '@/i18n';
+import { optimizedImageUrl } from '@/lib/image';
 import QuantitySelector from './QuantitySelector';
 import CartSuggestions from './CartSuggestions';
-import { getClient } from '@/lib/api';
+import { setCartItemQuantity } from '@/stores/cart-actions';
+import { showToast } from '@/stores/toast';
+
+/* ------------------------------------------------------------------ */
+/*  Shared sub-components (used by both inline and drawer modes)      */
+/* ------------------------------------------------------------------ */
+
+interface CartLineItemProps {
+  item: CartLineItemType;
+  currency: string;
+  locale: string;
+  lang: string;
+  onUpdateQuantity: (itemId: string, newQuantity: number) => void;
+  onRemove: (itemId: string) => void;
+}
+
+function CartLineItem({
+  item,
+  currency,
+  locale,
+  lang,
+  onUpdateQuantity,
+  onRemove,
+}: CartLineItemProps) {
+  return (
+    <li class="flex gap-3 py-3">
+      {item.product_image && (
+        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-card-image">
+          <img
+            src={optimizedImageUrl(item.product_image, { width: 128 })}
+            alt=""
+            class="h-full w-full object-cover"
+            width="64"
+            height="64"
+            loading="lazy"
+          />
+        </div>
+      )}
+      <div class="flex flex-1 flex-col justify-between">
+        <div>
+          <h3 class="text-sm font-medium text-card-foreground">{item.product_title}</h3>
+          {item.selected_options && item.selected_options.length > 0 && (
+            <p class="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+              {item.selected_options.map((m) => m.name).join(', ')}
+            </p>
+          )}
+        </div>
+        <div class="mt-1 flex items-center justify-between">
+          <QuantitySelector
+            quantity={item.quantity}
+            onIncrement={() => onUpdateQuantity(item.id, item.quantity + 1)}
+            onDecrement={() => onUpdateQuantity(item.id, item.quantity - 1)}
+            onRemove={() => onRemove(item.id)}
+            lang={lang}
+          />
+          <div class="text-right">
+            <span class="text-sm font-semibold text-card-foreground">
+              {formatPrice(item.line_total, currency, locale)}
+            </span>
+            {item.discount && (
+              <span class="block text-xs text-destructive">{item.discount.label}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+interface CartFooterProps {
+  savings: string | null;
+  cartTotal: string;
+  currency: string;
+  locale: string;
+  lang: string;
+  /** Optional inline style for the footer wrapper (e.g. safe-area padding). */
+  style?: Record<string, string>;
+}
+
+function CartFooter({ savings, cartTotal, currency, locale, lang, style }: CartFooterProps) {
+  return (
+    <div class="border-t border-border px-4 py-3" style={style}>
+      {savings && (
+        <div class="mb-2 flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">{t('youSave', lang)}</span>
+          <span class="font-medium text-destructive">{formatPrice(savings, currency, locale)}</span>
+        </div>
+      )}
+      <div class="mb-3 flex items-center justify-between">
+        <span class="text-sm font-medium text-card-foreground">{t('orderTotal', lang)}</span>
+        <span class="text-lg font-bold text-card-foreground">
+          {formatPrice(cartTotal, currency, locale)}
+        </span>
+      </div>
+      <CartSuggestions lang={lang} />
+      <a
+        href={`/${lang}/checkout`}
+        class="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+      >
+        {t('nextCheckout', lang)}
+      </a>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main CartDrawer component                                         */
+/* ------------------------------------------------------------------ */
 
 interface Props {
   lang: string;
@@ -33,36 +142,29 @@ export default function CartDrawer({ lang, inline = false }: Props) {
 
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
     const cartId = cart?.id;
-    if (!cartId) return;
-    $cartLoading.set(true);
+    if (!cartId) {
+      showToast(t('toastCartUpdateFailed', lang));
+      return;
+    }
     try {
-      const client = getClient();
-      const { data } = await client.PATCH(`/api/v1/cart/{cart_id}/items/{id}/`, {
-        params: { path: { cart_id: cartId, id: itemId } },
-        body: { quantity: newQuantity },
-      });
-      if (data) $cart.set(data as typeof cart);
+      await setCartItemQuantity(cartId, itemId, newQuantity);
     } catch (err) {
       console.error('[cart] failed to update quantity:', err);
-    } finally {
-      $cartLoading.set(false);
+      showToast(t('toastCartUpdateFailed', lang));
     }
   };
 
   const handleRemove = async (itemId: string) => {
     const cartId = cart?.id;
-    if (!cartId) return;
-    $cartLoading.set(true);
+    if (!cartId) {
+      showToast(t('toastCartUpdateFailed', lang));
+      return;
+    }
     try {
-      const client = getClient();
-      const { data } = await client.DELETE(`/api/v1/cart/{cart_id}/items/{id}/`, {
-        params: { path: { cart_id: cartId, id: itemId } },
-      });
-      if (data) $cart.set(data as typeof cart);
+      await setCartItemQuantity(cartId, itemId, 0);
     } catch (err) {
       console.error('[cart] failed to remove item:', err);
-    } finally {
-      $cartLoading.set(false);
+      showToast(t('toastCartUpdateFailed', lang));
     }
   };
 
@@ -91,75 +193,27 @@ export default function CartDrawer({ lang, inline = false }: Props) {
           ) : (
             <ul class="divide-y divide-border">
               {lineItems.map((item) => (
-                <li key={item.id} class="flex gap-3 py-3">
-                  {item.product_image && (
-                    <div class="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-card-image">
-                      <img
-                        src={item.product_image}
-                        alt=""
-                        class="h-full w-full object-cover"
-                        width="64"
-                        height="64"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  <div class="flex flex-1 flex-col justify-between">
-                    <div>
-                      <h3 class="text-sm font-medium text-card-foreground">{item.product_title}</h3>
-                      {item.selected_options && item.selected_options.length > 0 && (
-                        <p class="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                          {item.selected_options.map((m) => m.name).join(', ')}
-                        </p>
-                      )}
-                    </div>
-                    <div class="mt-1 flex items-center justify-between">
-                      <QuantitySelector
-                        quantity={item.quantity}
-                        onIncrement={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        onDecrement={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                        onRemove={() => handleRemove(item.id)}
-                        lang={lang}
-                      />
-                      <div class="text-right">
-                        <span class="text-sm font-semibold text-card-foreground">
-                          {formatPrice(item.line_total, currency, locale)}
-                        </span>
-                        {item.discount && (
-                          <span class="block text-xs text-destructive">{item.discount.label}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </li>
+                <CartLineItem
+                  key={item.id}
+                  item={item}
+                  currency={currency}
+                  locale={locale}
+                  lang={lang}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onRemove={handleRemove}
+                />
               ))}
             </ul>
           )}
         </div>
         {lineItems.length > 0 && (
-          <div class="border-t border-border px-4 py-3">
-            {savings && (
-              <div class="mb-2 flex items-center justify-between text-sm">
-                <span class="text-muted-foreground">{t('youSave', lang)}</span>
-                <span class="font-medium text-destructive">
-                  {formatPrice(savings, currency, locale)}
-                </span>
-              </div>
-            )}
-            <div class="mb-3 flex items-center justify-between">
-              <span class="text-sm font-medium text-card-foreground">{t('orderTotal', lang)}</span>
-              <span class="text-lg font-bold text-card-foreground">
-                {formatPrice(cartTotal, currency, locale)}
-              </span>
-            </div>
-            <CartSuggestions lang={lang} />
-            <a
-              href={`/${lang}/checkout`}
-              class="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              {t('nextCheckout', lang)}
-            </a>
-          </div>
+          <CartFooter
+            savings={savings}
+            cartTotal={cartTotal}
+            currency={currency}
+            locale={locale}
+            lang={lang}
+          />
         )}
       </div>
     );
@@ -223,49 +277,15 @@ export default function CartDrawer({ lang, inline = false }: Props) {
           ) : (
             <ul class="divide-y divide-border">
               {lineItems.map((item) => (
-                <li key={item.id} class="flex gap-3 py-3">
-                  {/* Item image */}
-                  {item.product_image && (
-                    <div class="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-card-image">
-                      <img
-                        src={item.product_image}
-                        alt=""
-                        class="h-full w-full object-cover"
-                        width="64"
-                        height="64"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-
-                  <div class="flex flex-1 flex-col justify-between">
-                    <div>
-                      <h3 class="text-sm font-medium text-card-foreground">{item.product_title}</h3>
-                      {item.selected_options && item.selected_options.length > 0 && (
-                        <p class="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                          {item.selected_options.map((m) => m.name).join(', ')}
-                        </p>
-                      )}
-                    </div>
-                    <div class="mt-1 flex items-center justify-between">
-                      <QuantitySelector
-                        quantity={item.quantity}
-                        onIncrement={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        onDecrement={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                        onRemove={() => handleRemove(item.id)}
-                        lang={lang}
-                      />
-                      <div class="text-right">
-                        <span class="text-sm font-semibold text-card-foreground">
-                          {formatPrice(item.line_total, currency, locale)}
-                        </span>
-                        {item.discount && (
-                          <span class="block text-xs text-destructive">{item.discount.label}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </li>
+                <CartLineItem
+                  key={item.id}
+                  item={item}
+                  currency={currency}
+                  locale={locale}
+                  lang={lang}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onRemove={handleRemove}
+                />
               ))}
             </ul>
           )}
@@ -273,32 +293,14 @@ export default function CartDrawer({ lang, inline = false }: Props) {
 
         {/* Footer */}
         {lineItems.length > 0 && (
-          <div
-            class="border-t border-border px-4 py-3"
+          <CartFooter
+            savings={savings}
+            cartTotal={cartTotal}
+            currency={currency}
+            locale={locale}
+            lang={lang}
             style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
-          >
-            {savings && (
-              <div class="mb-2 flex items-center justify-between text-sm">
-                <span class="text-muted-foreground">{t('youSave', lang)}</span>
-                <span class="font-medium text-destructive">
-                  {formatPrice(savings, currency, locale)}
-                </span>
-              </div>
-            )}
-            <div class="mb-3 flex items-center justify-between">
-              <span class="text-sm font-medium text-card-foreground">{t('orderTotal', lang)}</span>
-              <span class="text-lg font-bold text-card-foreground">
-                {formatPrice(cartTotal, currency, locale)}
-              </span>
-            </div>
-            <CartSuggestions lang={lang} />
-            <a
-              href={`/${lang}/checkout`}
-              class="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              {t('nextCheckout', lang)}
-            </a>
-          </div>
+          />
         )}
       </div>
     </div>

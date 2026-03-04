@@ -5,10 +5,11 @@ interface Props {
   item: PricedItem;
   currency: string;
   locale: string;
+  lang: string;
 }
 
-const { item, currency, locale } = Astro.props;
-const label = getDiscountLabel(item, currency, locale);
+const { item, currency, locale, lang } = Astro.props;
+const label = getDiscountLabel(item, currency, locale, lang);
 ---
 
 {

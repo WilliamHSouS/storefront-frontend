@@ -61,7 +61,7 @@ export default function SearchBar({ lang }: Props) {
       if (data) {
         const page = data as { results: Array<Record<string, unknown>> };
         const items = page.results ?? [];
-        if (items.length > 0 || !data) {
+        if (items.length > 0) {
           setResults(items.map(toSearchResult));
           return;
         }

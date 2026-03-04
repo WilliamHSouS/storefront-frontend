@@ -13,6 +13,7 @@ import {
   type PricedItem,
 } from '@/lib/pricing';
 import { normalizeProduct, extractIdFromSlug, parseMetadataMap, slugify } from '@/lib/normalize';
+import { responsiveImage } from '@/lib/image';
 import PromoBadge from '@/components/astro/PromoBadge.astro';
 import { t } from '@/i18n';
 
@@ -71,6 +72,9 @@ const effectivePrice = getEffectivePrice(pricedItem);
 const originalPrice = getOriginalPrice(pricedItem);
 const showStrikethrough = hasUnitDiscount(pricedItem);
 const hasModifiers = product.modifier_groups.length > 0;
+const productImgAttrs = product.image
+  ? responsiveImage(product.image, [300, 450, 600, 900], '(min-width: 768px) 600px, 100vw')
+  : null;
 
 // Sort images by position for gallery display
 const galleryImages = [...product.images].sort((a, b) => a.position - b.position);
@@ -100,7 +104,7 @@ if (Array.isArray(product.attribute_values)) {
     ) {
       display = raw.selected_choices.map((c) => c.value).join(', ');
     } else if (raw.input_type === 'boolean' && raw.value_boolean != null) {
-      display = raw.value_boolean ? 'Yes' : 'No';
+      display = raw.value_boolean ? t('yes', lang) : t('no', lang);
     } else if (raw.input_type === 'numeric' && raw.value_numeric != null) {
       display = String(Math.round(Number(raw.value_numeric)));
     } else if (raw.value_text) {
@@ -156,15 +160,18 @@ const breadcrumbs = [
       <div>
         <div class="aspect-square overflow-hidden rounded-lg bg-card-image">
           {
-            product.image ? (
+            productImgAttrs ? (
               <img
                 id="product-main-image"
-                src={product.image}
+                src={productImgAttrs.src}
+                srcset={productImgAttrs.srcset}
+                sizes={productImgAttrs.sizes}
                 alt={product.name}
                 class="h-full w-full object-cover"
                 width="600"
                 height="600"
                 loading="eager"
+                fetchpriority="high"
               />
             ) : (
               <div class="flex h-full w-full items-center justify-center text-muted-foreground/30">
@@ -229,7 +236,12 @@ const breadcrumbs = [
           </h1>
           {
             hasDiscount && (
-              <PromoBadge item={pricedItem} currency={merchant.currency} locale={locale} />
+              <PromoBadge
+                item={pricedItem}
+                currency={merchant.currency}
+                locale={locale}
+                lang={lang}
+              />
             )
           }
         </div>

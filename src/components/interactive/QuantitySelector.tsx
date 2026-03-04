@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import AnimatedNumber from './AnimatedNumber';
 import ConfirmRemoveDialog from './ConfirmRemoveDialog';
+import { t } from '@/i18n';
 
 interface Props {
   quantity: number;
@@ -37,7 +38,7 @@ export default function QuantitySelector({
           onClick={handleDecrement}
           disabled={quantity <= min && min > 0}
           class="relative inline-flex h-9 w-9 items-center justify-center rounded-l-md text-foreground transition-colors hover:bg-accent disabled:opacity-50 before:absolute before:inset-[-4px]"
-          aria-label={quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
+          aria-label={quantity <= 1 ? t('removeItem', lang) : t('decreaseQuantity', lang)}
         >
           {quantity <= 1 && min === 0 ? (
             // Trash icon
@@ -81,7 +82,7 @@ export default function QuantitySelector({
           type="button"
           onClick={onIncrement}
           class="relative inline-flex h-9 w-9 items-center justify-center rounded-r-md text-foreground transition-colors hover:bg-accent before:absolute before:inset-[-4px]"
-          aria-label="Increase quantity"
+          aria-label={t('increaseQuantity', lang)}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

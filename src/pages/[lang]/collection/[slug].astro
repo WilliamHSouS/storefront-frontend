@@ -15,16 +15,14 @@ const { slug } = Astro.params;
 let category: NormalizedCategory | undefined;
 let products: ReturnType<typeof normalizeProduct>[] = [];
 
-// 1. Try fetching collection by slug directly
-const collectionResult = await sdk.GET(`/api/v1/collections/{slug}/`, {
-  params: { path: { slug: slug! } },
-});
+// 1. Try fetching collection by slug directly (parallel)
+const [collectionResult, productsResult] = await Promise.all([
+  sdk.GET(`/api/v1/collections/{slug}/`, { params: { path: { slug: slug! } } }),
+  sdk.GET(`/api/v1/collections/{slug}/products/`, { params: { path: { slug: slug! } } }),
+]);
 
 if (collectionResult.data) {
   category = normalizeCollection(collectionResult.data as Record<string, unknown>);
-  const productsResult = await sdk.GET(`/api/v1/collections/{slug}/products/`, {
-    params: { path: { slug: slug! } },
-  });
   const rawProducts =
     (productsResult.data as { results: Array<Record<string, unknown>> } | null)?.results ?? [];
   products = rawProducts.map(normalizeProduct);

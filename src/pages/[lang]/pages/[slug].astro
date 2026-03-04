@@ -3,7 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import Header from '@/components/astro/Header.astro';
 import Footer from '@/components/astro/Footer.astro';
 import SEOHead from '@/components/astro/SEOHead.astro';
-import { sanitizeHtml } from '@/lib/sanitize';
+import { sanitizeHtml, escapeHtml } from '@/lib/sanitize';
 import type { MerchantConfig } from '@/types/merchant';
 
 const merchant = Astro.locals.merchant as MerchantConfig;
@@ -63,10 +63,10 @@ function renderContentBlocks(blocks: Array<Record<string, unknown>>): string {
         }
         case 'image': {
           const ct = block.content as Record<string, unknown> | undefined;
-          const src = ct?.url ?? ct?.image_url ?? block.url ?? '';
-          const alt = ct?.alt_text ?? ct?.alt ?? '';
-          const caption = ct?.caption ?? '';
-          return `<figure><img src="${src}" alt="${alt}" />${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>`;
+          const src = escapeHtml(String(ct?.url ?? ct?.image_url ?? block.url ?? ''));
+          const alt = escapeHtml(String(ct?.alt_text ?? ct?.alt ?? ''));
+          const caption = String(ct?.caption ?? '');
+          return `<figure><img src="${src}" alt="${alt}" />${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ''}</figure>`;
         }
         case 'divider':
           return '<hr />';
@@ -97,9 +97,6 @@ if (raw.content_blocks && Array.isArray(raw.content_blocks)) {
 }
 
 const safeContent = sanitizeHtml(htmlContent);
-
-// CMS pages are heavily cached — content changes infrequently
-Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 ---
 
 <BaseLayout

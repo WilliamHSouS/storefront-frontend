@@ -56,7 +56,7 @@ const productIds = allProducts.map((p) => String(p.id));
   <Header merchant={merchant} lang={lang} />
   <HeroSection merchant={merchant} />
 
-  <CategoryTabs client:load categories={categories} />
+  <CategoryTabs client:idle categories={categories} />
 
   <main>
     {

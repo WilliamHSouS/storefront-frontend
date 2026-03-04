@@ -78,7 +78,12 @@ describe('hasUnitDiscount', () => {
 describe('getDiscountLabel', () => {
   it('returns percentage label', () => {
     expect(
-      getDiscountLabel(makeItem({ discount: { type: 'percentage', value: 15 } }), 'EUR', 'nl-NL'),
+      getDiscountLabel(
+        makeItem({ discount: { type: 'percentage', value: 15 } }),
+        'EUR',
+        'nl-NL',
+        'en',
+      ),
     ).toBe('-15%');
   });
 
@@ -87,6 +92,7 @@ describe('getDiscountLabel', () => {
       makeItem({ discount: { type: 'fixed', value: 2 } }),
       'EUR',
       'nl-NL',
+      'en',
     );
     expect(label).toContain('2');
     expect(label).toContain('off');
@@ -97,6 +103,7 @@ describe('getDiscountLabel', () => {
       makeItem({ discount: { type: 'bogo', buyQuantity: 1, getQuantity: 1 } }),
       'EUR',
       'nl-NL',
+      'en',
     );
     expect(label).toContain('Buy');
   });
@@ -106,8 +113,13 @@ describe('getDiscountLabel', () => {
       makeItem({ discount: { type: 'tiered', quantity: 2, price: 15 } }),
       'EUR',
       'nl-NL',
+      'en',
     );
     expect(label).toContain('2');
+  });
+
+  it('returns empty string when discount is null', () => {
+    expect(getDiscountLabel(makeItem({ discount: null }), 'EUR', 'nl-NL', 'en')).toBe('');
   });
 });
 

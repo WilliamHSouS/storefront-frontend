@@ -23,8 +23,8 @@ export function resolveMerchantSlug(
   let customDomains: Record<string, string> = {};
   try {
     customDomains = JSON.parse(customDomainsJson || '{}');
-  } catch {
-    // Malformed JSON — ignore
+  } catch (error) {
+    console.warn('Failed to resolve merchant:', error);
   }
   if (customDomains[host]) return customDomains[host];
 
