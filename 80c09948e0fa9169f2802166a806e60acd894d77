@@ -1,0 +1,29 @@
+e2e/fixtures/cart.ts
+  9c00098c844830a3 16,83,93-113
+e2e/helpers/mock-api.ts
+  9c00098c844830a3 216-217,219-222,226
+src/components/interactive/CartDrawer.tsx
+  9c00098c844830a3 54-62
+src/stores/cart.ts
+  9c00098c844830a3 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "80c09948e0fa9169f2802166a806e60acd894d77",
+  "prompts": {
+    "9c00098c844830a3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bfbb100-ed07-4ed0-80d7-e5d417e3384c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1380,
+      "total_deletions": 123,
+      "accepted_lines": 1266,
+      "overriden_lines": 0
+    }
+  }
+}
