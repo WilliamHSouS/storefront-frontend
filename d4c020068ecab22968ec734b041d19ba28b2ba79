@@ -1,0 +1,23 @@
+e2e/upsells.spec.ts
+  d545c629d3dd72a4 90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "d4c020068ecab22968ec734b041d19ba28b2ba79",
+  "prompts": {
+    "d545c629d3dd72a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "691042d3-6640-49a9-a058-cf4959e91213",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 2,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
