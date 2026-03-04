@@ -1,0 +1,27 @@
+e2e/cart.spec.ts
+  9c00098c844830a3 358,361,368,372-373,384,392,394,400,403
+src/components/interactive/DiscountCodeInput.tsx
+  9c00098c844830a3 2,38-39
+src/stores/cart-actions.ts
+  9c00098c844830a3 5,80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "c7de5806bab58b1cdd349632743749c7423b387f",
+  "prompts": {
+    "9c00098c844830a3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bfbb100-ed07-4ed0-80d7-e5d417e3384c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 19,
+      "accepted_lines": 1239,
+      "overriden_lines": 0
+    }
+  }
+}
