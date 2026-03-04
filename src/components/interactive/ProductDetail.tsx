@@ -154,19 +154,19 @@ export default function ProductDetail({ lang }: Props) {
 
   // Fetch product detail + suggestions when selected
   useEffect(() => {
-    if (!selectedProduct) {
-      setProduct(null);
-      setSelections({});
-      setQuantities({});
-      setQuantity(1);
-      setNotes('');
-      setShowNotes(false);
-      setFetchError(false);
-      setStep('detail');
-      setSuggestions([]);
-      setAddedSuggestions(new Set());
-      return;
-    }
+    // Always reset state (handles both null and product-to-product transitions)
+    setProduct(null);
+    setSelections({});
+    setQuantities({});
+    setQuantity(1);
+    setNotes('');
+    setShowNotes(false);
+    setFetchError(false);
+    setStep('detail');
+    setSuggestions([]);
+    setAddedSuggestions(new Set());
+
+    if (!selectedProduct) return;
 
     if (selectedProduct.skipToUpsell) {
       // Product already added — only fetch suggestions for the upsell step
