@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/preact';
-import { useRef } from 'preact/hooks';
-import { $cart, $cartTotal, $cartLoading } from '@/stores/cart';
+import { useRef, useEffect } from 'preact/hooks';
+import { $cart, $cartTotal, $cartLoading, $eligiblePromotions } from '@/stores/cart';
 import type { CartLineItem as CartLineItemType, Cart } from '@/stores/cart';
 import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
@@ -9,8 +9,9 @@ import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { t } from '@/i18n';
 import { optimizedImageUrl } from '@/lib/image';
 import QuantitySelector from './QuantitySelector';
-import { setCartItemQuantity } from '@/stores/cart-actions';
+import { setCartItemQuantity, checkPromotionEligibility } from '@/stores/cart-actions';
 import { showToast } from '@/stores/toast';
+import PromoBanner from './PromoBanner';
 
 /* ------------------------------------------------------------------ */
 /*  Shared sub-components (used by both inline and drawer modes)      */
@@ -205,8 +206,28 @@ export default function CartDrawer({ lang, inline = false }: Props) {
   const merchant = useStore($merchant);
   const drawerRef = useRef<HTMLDivElement>(null);
 
+  const eligiblePromotions = useStore($eligiblePromotions);
+
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
+
+  // Check promotion eligibility when cart changes (debounced + cancellable)
+  useEffect(() => {
+    if (!cart || cart.line_items.length === 0) {
+      $eligiblePromotions.set([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      checkPromotionEligibility(cart, undefined, controller.signal).catch(() => {});
+    }, 300);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [cart?.line_items.length, cart?.cart_total]);
 
   const close = () => $isCartOpen.set(false);
 
@@ -262,19 +283,22 @@ export default function CartDrawer({ lang, inline = false }: Props) {
               </a>
             </div>
           ) : (
-            <ul class="divide-y divide-border">
-              {lineItems.map((item) => (
-                <CartLineItem
-                  key={item.id}
-                  item={item}
-                  currency={currency}
-                  locale={locale}
-                  lang={lang}
-                  onUpdateQuantity={handleUpdateQuantity}
-                  onRemove={handleRemove}
-                />
-              ))}
-            </ul>
+            <>
+              {lineItems.length > 0 && <PromoBanner promotions={eligiblePromotions} lang={lang} />}
+              <ul class="divide-y divide-border">
+                {lineItems.map((item) => (
+                  <CartLineItem
+                    key={item.id}
+                    item={item}
+                    currency={currency}
+                    locale={locale}
+                    lang={lang}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemove={handleRemove}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </div>
         {lineItems.length > 0 && (
@@ -346,19 +370,22 @@ export default function CartDrawer({ lang, inline = false }: Props) {
               </button>
             </div>
           ) : (
-            <ul class="divide-y divide-border">
-              {lineItems.map((item) => (
-                <CartLineItem
-                  key={item.id}
-                  item={item}
-                  currency={currency}
-                  locale={locale}
-                  lang={lang}
-                  onUpdateQuantity={handleUpdateQuantity}
-                  onRemove={handleRemove}
-                />
-              ))}
-            </ul>
+            <>
+              {lineItems.length > 0 && <PromoBanner promotions={eligiblePromotions} lang={lang} />}
+              <ul class="divide-y divide-border">
+                {lineItems.map((item) => (
+                  <CartLineItem
+                    key={item.id}
+                    item={item}
+                    currency={currency}
+                    locale={locale}
+                    lang={lang}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemove={handleRemove}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </div>
 

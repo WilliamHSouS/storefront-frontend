@@ -23,6 +23,7 @@ export interface RequestOptions {
     path?: Record<string, string | number>;
   };
   body?: unknown;
+  signal?: AbortSignal;
 }
 
 export interface StorefrontClient {

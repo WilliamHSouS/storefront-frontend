@@ -62,5 +62,10 @@
   "tax": "MwSt.",
   "taxIncluded": "inkl. MwSt.",
   "discount": "Rabatt",
-  "promotion": "Aktion"
+  "promotion": "Aktion",
+  "promoEligible": "Sonderangebot verfügbar!",
+  "promoApply": "Deal anwenden",
+  "promoApplied": "Deal angewendet!",
+  "promoBogo": "Kaufe {buy} erhalte {get} gratis",
+  "promoAlmostEligible": "Füge noch {needed} hinzu, um berechtigt zu sein"
 }

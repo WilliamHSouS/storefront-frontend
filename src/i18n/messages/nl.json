@@ -62,5 +62,10 @@
   "tax": "BTW",
   "taxIncluded": "incl. BTW",
   "discount": "Korting",
-  "promotion": "Actie"
+  "promotion": "Actie",
+  "promoEligible": "Speciale aanbieding beschikbaar!",
+  "promoApply": "Deal toepassen",
+  "promoApplied": "Deal toegepast!",
+  "promoBogo": "Koop {buy} krijg {get} gratis",
+  "promoAlmostEligible": "Voeg nog {needed} toe om in aanmerking te komen"
 }

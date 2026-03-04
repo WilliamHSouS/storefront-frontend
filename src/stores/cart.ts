@@ -51,6 +51,19 @@ export const $itemCount = computed($cart, (cart) => cart?.item_count ?? 0);
 
 export const $cartTotal = computed($cart, (cart) => cart?.cart_total ?? '0.00');
 
+export interface EligiblePromotion {
+  id: number;
+  name: string;
+  promotion_type: string;
+  benefit_type: string;
+  benefit_product_ids?: string[];
+  benefit_quantity: number;
+  discount_amount: string;
+  is_best_deal: boolean;
+}
+
+export const $eligiblePromotions = atom<EligiblePromotion[]>([]);
+
 /** Extract a human-readable detail string from an SDK error (ApiError or Error). */
 export function errorDetail(error: unknown): string {
   if (!error || typeof error !== 'object') return 'Unknown error';

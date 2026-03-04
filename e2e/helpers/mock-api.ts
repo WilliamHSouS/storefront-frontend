@@ -287,6 +287,41 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // ── Promotions: eligible ──
+  if (method === 'POST' && path === '/api/v1/promotions/eligible/') {
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(await readBody(req));
+    } catch {
+      json(res, { detail: 'Invalid request body' }, 400);
+      return;
+    }
+    const cartItems =
+      (body.cart_items as Array<{ product_id: string; quantity: number; price: string }>) ?? [];
+    const eligible: unknown[] = [];
+
+    // Test promotion: Buy 2 Falafel Wraps get 1 free
+    const falafelItem = cartItems.find((i) => i.product_id === 'prod-1');
+    if (falafelItem && falafelItem.quantity >= 2) {
+      eligible.push({
+        id: 1,
+        name: 'Buy 2 Falafel Wraps, get 1 free!',
+        promotion_type: 'bogo',
+        benefit_type: 'free',
+        benefit_product_ids: ['prod-1'],
+        benefit_quantity: 1,
+        discount_amount: falafelItem.price,
+        is_best_deal: true,
+      });
+    }
+
+    json(res, {
+      eligible_promotions: eligible,
+      best_promotion_id: eligible.length > 0 ? 1 : null,
+    });
+    return;
+  }
+
   // ── Fallback ──
   notFound(res);
 }

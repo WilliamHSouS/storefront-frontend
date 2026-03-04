@@ -1,6 +1,6 @@
 import { getClient } from '@/lib/api';
-import { $cart, $cartLoading, errorDetail } from '@/stores/cart';
-import type { Cart } from '@/stores/cart';
+import { $cart, $cartLoading, $eligiblePromotions, errorDetail } from '@/stores/cart';
+import type { Cart, EligiblePromotion } from '@/stores/cart';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 
 /**
@@ -48,6 +48,36 @@ export async function setCartItemQuantity(
 ): Promise<Cart> {
   if (quantity <= 0) return removeCartItem(cartId, lineItemId, client);
   return updateCartItemQuantity(cartId, lineItemId, quantity, client);
+}
+
+export async function checkPromotionEligibility(
+  cart: Cart,
+  client?: StorefrontClient,
+  signal?: AbortSignal,
+): Promise<EligiblePromotion[]> {
+  const sdk = client ?? getClient();
+  const cartItems = cart.line_items.map((item) => ({
+    product_id: item.product_id,
+    quantity: item.quantity,
+    price: item.unit_price,
+  }));
+
+  const { data, error } = await sdk.POST('/api/v1/promotions/eligible/', {
+    body: { cart_items: cartItems },
+    signal,
+  });
+
+  // Don't update state if request was aborted
+  if (signal?.aborted) return [];
+
+  if (error || !data) {
+    $eligiblePromotions.set([]);
+    return [];
+  }
+
+  const promos = (data as { eligible_promotions: EligiblePromotion[] }).eligible_promotions;
+  $eligiblePromotions.set(promos);
+  return promos;
 }
 
 export async function removeCartItem(

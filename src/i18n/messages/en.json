@@ -62,5 +62,10 @@
   "tax": "Tax",
   "taxIncluded": "incl. tax",
   "discount": "Discount",
-  "promotion": "Promotion"
+  "promotion": "Promotion",
+  "promoEligible": "Special offer available!",
+  "promoApply": "Apply deal",
+  "promoApplied": "Deal applied!",
+  "promoBogo": "Buy {buy} get {get} free",
+  "promoAlmostEligible": "Add {needed} more to qualify"
 }
