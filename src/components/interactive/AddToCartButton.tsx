@@ -132,7 +132,7 @@ export default function AddToCartButton({
       >
         {t('addToCart', lang)}
         {quantity > 0 && (
-          <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground transition-transform duration-200 group-hover:scale-125">
+          <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground group-hover:animate-badge-bounce">
             {quantity}
           </span>
         )}
