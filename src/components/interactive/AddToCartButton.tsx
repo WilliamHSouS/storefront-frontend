@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { $cart, $cartLoading, setStoredCartId, ensureCart } from '@/stores/cart';
 import { $selectedProduct } from '@/stores/ui';
 import { getClient } from '@/lib/api';
+import { showToast } from '@/stores/toast';
+import { setCartItemQuantity } from '@/stores/cart-actions';
 import { t } from '@/i18n';
 import QuantitySelector from './QuantitySelector';
 
@@ -46,23 +48,11 @@ export default function AddToCartButton({
   const updateCartItem = async (itemId: string, newQuantity: number) => {
     const cartId = cart?.id;
     if (!cartId) return;
-    $cartLoading.set(true);
     try {
-      const client = getClient();
-      if (newQuantity === 0) {
-        const { data } = await client.DELETE(`/api/v1/cart/{cart_id}/items/{id}/`, {
-          params: { path: { cart_id: cartId, id: itemId } },
-        });
-        if (data) $cart.set(data as typeof cart);
-      } else {
-        const { data } = await client.PATCH(`/api/v1/cart/{cart_id}/items/{id}/`, {
-          params: { path: { cart_id: cartId, id: itemId } },
-          body: { quantity: newQuantity },
-        });
-        if (data) $cart.set(data as typeof cart);
-      }
-    } finally {
-      $cartLoading.set(false);
+      await setCartItemQuantity(cartId, itemId, newQuantity);
+    } catch (err) {
+      console.error('[AddToCart] update error:', err);
+      showToast(t('toastCartUpdateFailed', lang));
     }
   };
 
@@ -91,6 +81,7 @@ export default function AddToCartButton({
           $selectedProduct.set({ id: productId, name: productName });
         } else {
           console.error('Failed to add to cart:', error);
+          showToast(t('toastAddToCartFailed', lang));
         }
       } else if (data) {
         const cartData = data as typeof cart;
@@ -99,6 +90,7 @@ export default function AddToCartButton({
       }
     } catch (err) {
       console.error('[AddToCart] error:', err);
+      showToast(t('toastAddToCartFailed', lang));
       $cart.set(prevCart);
     } finally {
       $cartLoading.set(false);
@@ -124,7 +116,7 @@ export default function AddToCartButton({
         type="button"
         onClick={resetCollapseTimer}
         class="inline-flex h-9 min-w-9 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground"
-        aria-label={`${quantity} in cart, tap to adjust`}
+        aria-label={`${quantity} ${t('inCartTapToAdjust', lang)}`}
       >
         {quantity}
       </button>

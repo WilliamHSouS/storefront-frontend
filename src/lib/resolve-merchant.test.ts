@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { resolveMerchantSlug } from './resolve-merchant';
 
 describe('resolveMerchantSlug', () => {
@@ -21,6 +21,13 @@ describe('resolveMerchantSlug', () => {
 
   it('handles malformed CUSTOM_DOMAINS JSON gracefully', () => {
     expect(resolveMerchantSlug('barsumac.nl', 'not-json')).toBe('bar-sumac');
+  });
+
+  it('logs a warning when CUSTOM_DOMAINS JSON is malformed', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    resolveMerchantSlug('barsumac.nl', 'not-json');
+    expect(warnSpy).toHaveBeenCalledWith('Failed to resolve merchant:', expect.any(SyntaxError));
+    warnSpy.mockRestore();
   });
 
   it('falls back to DEFAULT_MERCHANT for bare localhost', () => {

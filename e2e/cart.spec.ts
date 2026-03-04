@@ -28,7 +28,7 @@ test.describe('Cart — adding items', () => {
 
     // After adding, AddToCartButton changes from "Toevoegen" to a quantity badge
     const card = page.locator(`[data-product-id="${falafel.id}"]`).first();
-    await expect(card.getByRole('button', { name: /in cart/ })).toBeVisible();
+    await expect(card.getByRole('button', { name: /in winkelwagen/ })).toBeVisible();
   });
 
   test('add complex product opens product detail modal first', async ({ page }) => {
@@ -89,7 +89,7 @@ test.describe('Cart drawer — display and interaction', () => {
         resp.url().includes('/api/v1/cart/') &&
         resp.request().method() === 'PATCH',
     );
-    await drawer.getByRole('button', { name: 'Increase quantity' }).click();
+    await drawer.getByRole('button', { name: 'Aantal verhogen' }).click();
     await responsePromise;
 
     // Line item total should update to 2x €8.50 = €17.00
@@ -107,7 +107,7 @@ test.describe('Cart drawer — display and interaction', () => {
 
     // With quantity 1, the minus button shows trash icon with "Remove item".
     // Use .first() in case the QuantitySelector renders multiple matching buttons.
-    await drawer.getByRole('button', { name: 'Remove item' }).first().click();
+    await drawer.getByRole('button', { name: 'Item verwijderen' }).first().click();
 
     // ConfirmRemoveDialog should appear as an alertdialog
     const confirmDialog = page.getByRole('alertdialog', { name: 'Verwijderen' });
@@ -123,7 +123,7 @@ test.describe('Cart drawer — display and interaction', () => {
     const drawer = await openCartDrawer(page);
     await expect(drawer).toBeVisible({ timeout: 5_000 });
 
-    await drawer.getByRole('button', { name: 'Remove item' }).first().click();
+    await drawer.getByRole('button', { name: 'Item verwijderen' }).first().click();
 
     const confirmDialog = page.getByRole('alertdialog', { name: 'Verwijderen' });
     await expect(confirmDialog).toBeVisible();

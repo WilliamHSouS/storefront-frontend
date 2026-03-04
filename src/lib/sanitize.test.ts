@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeHtml } from './sanitize';
+import { sanitizeHtml, escapeHtml } from './sanitize';
 
 describe('sanitizeHtml', () => {
   // --- Dangerous tags ---
@@ -38,15 +38,19 @@ describe('sanitizeHtml', () => {
 
   // --- Event handlers ---
   it('strips double-quoted event handlers', () => {
-    expect(sanitizeHtml('<img src="x" onerror="alert(1)">')).toBe('<img src="x">');
+    const result = sanitizeHtml('<img src="x" onerror="alert(1)">');
+    expect(result).not.toContain('onerror');
+    expect(result).toContain('src="x"');
   });
 
   it('strips single-quoted event handlers', () => {
-    expect(sanitizeHtml("<div onclick='alert(1)'>Hi</div>")).toBe('<div>Hi</div>');
+    const result = sanitizeHtml("<div onclick='alert(1)'>Hi</div>");
+    expect(result).not.toContain('onclick');
   });
 
   it('strips unquoted event handlers', () => {
-    expect(sanitizeHtml('<a onmouseover=alert(1)>click</a>')).toBe('<a>click</a>');
+    const result = sanitizeHtml('<a onmouseover=alert(1)>click</a>');
+    expect(result).not.toContain('onmouseover');
   });
 
   it('strips HTML entity-encoded quote event handlers', () => {
@@ -57,19 +61,20 @@ describe('sanitizeHtml', () => {
 
   // --- javascript: URIs ---
   it('blocks javascript: URIs in href', () => {
-    expect(sanitizeHtml('<a href="javascript:alert(1)">click</a>')).toContain('blocked:');
-    expect(sanitizeHtml('<a href="javascript:alert(1)">click</a>')).not.toContain('javascript:');
+    const result = sanitizeHtml('<a href="javascript:alert(1)">click</a>');
+    expect(result).not.toContain('javascript:');
   });
 
   it('blocks case-insensitive javascript: URIs', () => {
-    expect(sanitizeHtml('<a href="JAVASCRIPT:alert(1)">click</a>')).toContain('blocked:');
+    const result = sanitizeHtml('<a href="JAVASCRIPT:alert(1)">click</a>');
+    expect(result).not.toContain('JAVASCRIPT:');
+    expect(result).not.toContain('javascript:');
   });
 
   // --- data: URIs ---
   it('blocks data:text/html URIs', () => {
     const input = '<a href="data:text/html,<script>alert(1)</script>">click</a>';
     const result = sanitizeHtml(input);
-    expect(result).toContain('blocked:');
     expect(result).not.toContain('data:text/html');
   });
 
@@ -106,5 +111,66 @@ describe('sanitizeHtml', () => {
   it('handles multiple dangerous elements', () => {
     const input = '<p>Safe</p><script>bad1</script><p>Also safe</p><iframe src="evil"></iframe>';
     expect(sanitizeHtml(input)).toBe('<p>Safe</p><p>Also safe</p>');
+  });
+
+  // --- New DOMPurify-specific tests ---
+  it('strips SVG namespace with event handlers', () => {
+    const input = '<svg><animate onbegin="alert(1)"></svg>';
+    const result = sanitizeHtml(input);
+    expect(result).not.toContain('onbegin');
+    expect(result).not.toContain('alert');
+  });
+
+  it('strips nested script tag reconstruction', () => {
+    const input = '<scr<script>ipt>alert(1)</script>';
+    const result = sanitizeHtml(input);
+    expect(result).not.toContain('<script');
+    expect(result).not.toMatch(/<scr.*ipt>/i);
+  });
+
+  it('strips <style> tags', () => {
+    const input = '<p>Hi</p><style>body { display: none; }</style>';
+    const result = sanitizeHtml(input);
+    expect(result).not.toContain('<style');
+    expect(result).not.toContain('display');
+  });
+
+  it('strips <meta> tags', () => {
+    const input = '<meta http-equiv="refresh" content="0;url=evil"><p>Hi</p>';
+    const result = sanitizeHtml(input);
+    expect(result).not.toContain('<meta');
+    expect(result).toContain('<p>Hi</p>');
+  });
+});
+
+describe('escapeHtml', () => {
+  it('escapes ampersands', () => {
+    expect(escapeHtml('a & b')).toBe('a &amp; b');
+  });
+
+  it('escapes angle brackets', () => {
+    expect(escapeHtml('<script>')).toBe('&lt;script&gt;');
+  });
+
+  it('escapes double quotes', () => {
+    expect(escapeHtml('"hello"')).toBe('&quot;hello&quot;');
+  });
+
+  it('escapes single quotes', () => {
+    expect(escapeHtml("it's")).toBe('it&#x27;s');
+  });
+
+  it('escapes all special characters together', () => {
+    expect(escapeHtml('<a href="x&y">it\'s</a>')).toBe(
+      '&lt;a href=&quot;x&amp;y&quot;&gt;it&#x27;s&lt;/a&gt;',
+    );
+  });
+
+  it('returns plain text unchanged', () => {
+    expect(escapeHtml('hello world')).toBe('hello world');
+  });
+
+  it('handles empty string', () => {
+    expect(escapeHtml('')).toBe('');
   });
 });

@@ -1,34 +1,20 @@
 /**
  * Tests for the ref-counted scroll lock used by useFocusTrap.
  *
- * The scroll lock functions are module-internal, so we test them
- * indirectly through their observable side effect on document.body.style.overflow.
- * We import the module and simulate multiple lock/unlock cycles.
+ * The scroll lock functions are exported (with underscore prefix) from
+ * use-focus-trap.ts for testing. We test them directly here.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-
-// Since lockScroll/unlockScroll are not exported, we test the behavior
-// through a thin test helper that mirrors the logic.
-// If these functions are ever exported, replace this with direct imports.
-
-let scrollLockCount = 0;
-
-function lockScroll(): void {
-  if (scrollLockCount++ === 0) {
-    document.body.style.overflow = 'hidden';
-  }
-}
-
-function unlockScroll(): void {
-  if (--scrollLockCount <= 0) {
-    scrollLockCount = 0;
-    document.body.style.overflow = '';
-  }
-}
+import {
+  _lockScroll as lockScroll,
+  _unlockScroll as unlockScroll,
+  _resetScrollLockCount as resetScrollLockCount,
+  _getScrollLockCount as getScrollLockCount,
+} from './use-focus-trap';
 
 describe('ref-counted scroll lock', () => {
   beforeEach(() => {
-    scrollLockCount = 0;
+    resetScrollLockCount();
     document.body.style.overflow = '';
   });
 
@@ -41,7 +27,7 @@ describe('ref-counted scroll lock', () => {
     lockScroll();
     lockScroll();
     expect(document.body.style.overflow).toBe('hidden');
-    expect(scrollLockCount).toBe(2);
+    expect(getScrollLockCount()).toBe(2);
   });
 
   it('does not unlock until all locks are released', () => {
@@ -65,7 +51,7 @@ describe('ref-counted scroll lock', () => {
     unlockScroll(); // extra unlock — should not go negative
     unlockScroll(); // another extra
     expect(document.body.style.overflow).toBe('');
-    expect(scrollLockCount).toBe(0);
+    expect(getScrollLockCount()).toBe(0);
   });
 
   it('works correctly after reset from over-unlock', () => {

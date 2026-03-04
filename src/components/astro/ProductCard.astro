@@ -6,6 +6,7 @@ import {
   hasUnitDiscount,
   type PricedItem,
 } from '@/lib/pricing';
+import { responsiveImage } from '@/lib/image';
 import PromoBadge from './PromoBadge.astro';
 import AddToCartButton from '@/components/interactive/AddToCartButton';
 interface Props {
@@ -34,6 +35,13 @@ const originalPrice = getOriginalPrice(pricedItem);
 const showStrikethrough = hasUnitDiscount(pricedItem);
 const hasModifiers = (product.modifier_groups?.length ?? 0) > 0;
 const isGrid = variant === 'grid';
+const imgAttrs = product.image
+  ? responsiveImage(
+      product.image,
+      isGrid ? [208, 300, 450, 600] : [104, 208],
+      isGrid ? '(min-width: 768px) 300px, 50vw' : '104px',
+    )
+  : null;
 ---
 
 <article
@@ -51,9 +59,11 @@ const isGrid = variant === 'grid';
     ]}
   >
     {
-      product.image ? (
+      imgAttrs ? (
         <img
-          src={product.image}
+          src={imgAttrs.src}
+          srcset={imgAttrs.srcset}
+          sizes={imgAttrs.sizes}
           alt={product.name}
           class="h-full w-full object-cover transition-transform group-hover:scale-105"
           loading="lazy"
@@ -93,7 +103,11 @@ const isGrid = variant === 'grid';
             {product.name}
           </a>
         </h3>
-        {product.discount && <PromoBadge item={pricedItem} currency={currency} locale={locale} />}
+        {
+          product.discount && (
+            <PromoBadge item={pricedItem} currency={currency} locale={locale} lang={lang} />
+          )
+        }
       </div>
       {
         product.description && (

@@ -48,7 +48,7 @@
     "@poweredbysous/storefront-sdk": "^0.1.0",
     "astro": "^5.18.0",
     "astro-seo": "^1.1.0",
-    "lucide-preact": "^0.576.0",
+    "isomorphic-dompurify": "^3.0.0",
     "nanostores": "^1.1.1",
     "posthog-js": "^1.357.0",
     "preact": "^10.28.4",

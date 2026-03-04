@@ -55,9 +55,7 @@ test.describe('Smoke tests', () => {
   test('404 page renders for unknown routes', async ({ page }) => {
     const errors = collectPageErrors(page);
     const response = await page.goto('/nl/this-does-not-exist');
-    // The app may redirect unknown routes or show a 404
-    // Either a 404 status or the "Restaurant not found" page is acceptable
-    expect(response?.status()).toBeDefined();
+    expect(response?.status()).toBe(404);
     expect(errors).toHaveLength(0);
   });
 

@@ -219,7 +219,7 @@ test.describe('Product detail modal — quantity and notes', () => {
 
     // Increase quantity to 2 via the quantity selector in the CTA area
     // The QuantitySelector in the modal footer has "Increase quantity" button
-    await modal.getByRole('button', { name: 'Increase quantity' }).click();
+    await modal.getByRole('button', { name: 'Aantal verhogen' }).click();
 
     // Total should be 2 x €14.50 = €29.00
     await expect(ctaButton).toContainText('€ 29,00');

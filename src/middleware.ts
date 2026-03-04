@@ -98,5 +98,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
     response.headers.set('Cache-Control', 'private, no-store');
   }
 
+  response.headers.set('Vary', 'Cookie');
+
   return response;
 };

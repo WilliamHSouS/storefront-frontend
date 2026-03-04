@@ -7,21 +7,26 @@ import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { t } from '@/i18n';
 import { getClient } from '@/lib/api';
+import type { ModifierGroup as RawModifierGroup } from '@/lib/normalize';
+import { optimizedImageUrl } from '@/lib/image';
+import { showToast } from '@/stores/toast';
 import QuantitySelector from './QuantitySelector';
 
-interface ModifierOption {
+/** Mapped modifier option ready for UI rendering. */
+interface MappedModifierOption {
   id: string;
   name: string;
   price: string;
 }
 
-interface ModifierGroup {
+/** Mapped modifier group ready for UI rendering. */
+interface MappedModifierGroup {
   id: string;
   name: string;
   type: 'radio' | 'checkbox' | 'quantity';
   required: boolean;
   max_selections?: number;
-  options: ModifierOption[];
+  options: MappedModifierOption[];
 }
 
 interface AttributeValue {
@@ -40,28 +45,28 @@ interface ProductData {
   description?: string;
   price: string;
   image?: string | null;
-  modifier_groups?: ModifierGroup[];
+  modifier_groups?: MappedModifierGroup[];
   attribute_values?: AttributeValue[];
   cross_sells?: Array<{ id: string; name: string; price: string; image?: string | null }>;
 }
 
-/** Map API modifier group to the shape this component expects. */
-function mapModifierGroup(raw: Record<string, unknown>): ModifierGroup {
-  const selectionType = raw.selection_type as string | undefined;
-  const modifiers = (raw.modifiers ?? raw.options ?? []) as Array<Record<string, unknown>>;
+/** Map an API modifier group to the shape this component expects for rendering. */
+function mapModifierGroup(raw: RawModifierGroup): MappedModifierGroup {
+  const selectionType = raw.selection_type;
+  const modifiers = raw.modifiers ?? raw.options ?? [];
 
   return {
     id: String(raw.id),
-    name: (raw.title ?? raw.name ?? '') as string,
+    name: raw.title ?? raw.name ?? '',
     type: selectionType === 'multiple' ? 'checkbox' : 'radio',
-    required: (raw.required as boolean) ?? (raw.min_selections as number) > 0,
-    max_selections: raw.max_selections as number | undefined,
+    required: raw.required ?? (raw.min_selections ?? 0) > 0,
+    max_selections: raw.max_selections,
     options: modifiers
       .filter((m) => m.is_available !== false)
       .map((m) => ({
         id: String(m.id),
-        name: (m.title ?? m.name ?? '') as string,
-        price: (m.price_modifier ?? m.price ?? '0') as string,
+        name: m.title ?? m.name ?? '',
+        price: m.price_modifier ?? m.price ?? '0',
       })),
   };
 }
@@ -69,18 +74,17 @@ function mapModifierGroup(raw: Record<string, unknown>): ModifierGroup {
 /** Normalize raw API product detail to ProductData shape. */
 function toProductData(raw: Record<string, unknown>): ProductData {
   const images = raw.images as Array<{ image_url: string }> | undefined;
-  const rawGroups = (raw.modifier_groups ?? []) as Array<Record<string, unknown>>;
+  const rawGroups = (raw.modifier_groups ?? []) as RawModifierGroup[];
 
   return {
-    ...raw,
     id: raw.id as string | number,
-    name: (raw.title ?? raw.name ?? '') as string,
+    name: ((raw.title ?? raw.name) as string | undefined) ?? '',
     description: raw.description as string | undefined,
-    price: (raw.price ?? '0') as string,
+    price: (raw.price as string | undefined) ?? '0',
     image: images?.[0]?.image_url ?? (raw.image as string | null) ?? null,
     modifier_groups: rawGroups.map(mapModifierGroup),
     attribute_values: raw.attribute_values as ProductData['attribute_values'],
-  } as ProductData;
+  };
 }
 
 interface Props {
@@ -99,6 +103,7 @@ export default function ProductDetail({ lang }: Props) {
   const [showNotes, setShowNotes] = useState(false);
   const [shakeGroup, setShakeGroup] = useState<string | null>(null);
   const [loadingProduct, setLoadingProduct] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
@@ -106,6 +111,28 @@ export default function ProductDetail({ lang }: Props) {
   const close = () => $selectedProduct.set(null);
 
   useFocusTrap(dialogRef, !!selectedProduct, close);
+
+  const fetchProductById = async (productId: string) => {
+    setLoadingProduct(true);
+    setFetchError(false);
+    try {
+      const client = getClient();
+      const { data, error } = await client.GET(`/api/v1/products/{id}/`, {
+        params: { path: { id: productId } },
+      });
+      if (!data) {
+        if (error) console.error('[ProductDetail] SDK error loading product:', error);
+        setFetchError(true);
+        return;
+      }
+      setProduct(toProductData(data as Record<string, unknown>));
+    } catch (err) {
+      console.error('[ProductDetail] failed to load product:', err);
+      setFetchError(true);
+    } finally {
+      setLoadingProduct(false);
+    }
+  };
 
   // Fetch product detail when selected
   useEffect(() => {
@@ -116,22 +143,11 @@ export default function ProductDetail({ lang }: Props) {
       setQuantity(1);
       setNotes('');
       setShowNotes(false);
+      setFetchError(false);
       return;
     }
 
-    const fetchProduct = async () => {
-      setLoadingProduct(true);
-      try {
-        const client = getClient();
-        const { data } = await client.GET(`/api/v1/products/{id}/`, {
-          params: { path: { id: String(selectedProduct.id) } },
-        });
-        if (data) setProduct(toProductData(data as Record<string, unknown>));
-      } finally {
-        setLoadingProduct(false);
-      }
-    };
-    fetchProduct();
+    fetchProductById(String(selectedProduct.id));
   }, [selectedProduct]);
 
   const handleRadioSelect = (groupId: string, optionId: string) => {
@@ -180,18 +196,22 @@ export default function ProductDetail({ lang }: Props) {
     return Math.round(total * quantity * 100) / 100;
   };
 
+  /** Check whether a modifier group has at least one selection/quantity chosen. */
+  const isGroupFilled = (groupId: string): boolean => {
+    const group = (product?.modifier_groups ?? []).find((g) => g.id === groupId);
+    if (!group) return false;
+    if (group.type === 'quantity') {
+      const groupQtys = quantities[groupId] ?? {};
+      return Object.values(groupQtys).some((q) => q > 0);
+    }
+    return (selections[groupId]?.length ?? 0) > 0;
+  };
+
   // Validate required groups
   const getUnfilledGroups = (): string[] => {
     if (!product) return [];
     return (product.modifier_groups ?? [])
-      .filter((g) => g.required)
-      .filter((g) => {
-        if (g.type === 'quantity') {
-          const groupQtys = quantities[g.id] ?? {};
-          return Object.values(groupQtys).every((q) => q === 0);
-        }
-        return !selections[g.id] || selections[g.id].length === 0;
-      })
+      .filter((g) => g.required && !isGroupFilled(g.id))
       .map((g) => g.id);
   };
 
@@ -235,7 +255,7 @@ export default function ProductDetail({ lang }: Props) {
 
       const client = getClient();
       const cartId = await ensureCart(client);
-      const { data } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
+      const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
         params: { path: { cart_id: cartId } },
         body: {
           product_id: product.id,
@@ -245,14 +265,22 @@ export default function ProductDetail({ lang }: Props) {
         },
       });
 
+      if (error) {
+        console.error('[ProductDetail] SDK error adding to cart:', error);
+        showToast(t('toastAddToCartFailed', lang));
+        return;
+      }
+
       if (data) {
         const cartData = data as Cart;
         $cart.set(cartData);
         if (cartData.id) setStoredCartId(cartData.id);
+        showToast(t('toastAddedToCart', lang), 'success');
         close();
       }
     } catch (err) {
       console.error('[ProductDetail] add to cart error:', err);
+      showToast(t('toastAddToCartFailed', lang));
     } finally {
       $cartLoading.set(false);
     }
@@ -279,7 +307,50 @@ export default function ProductDetail({ lang }: Props) {
         aria-label={product?.name ?? ''}
         class="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg"
       >
-        {loadingProduct || !product ? (
+        {loadingProduct ? (
+          <div
+            class="flex h-64 items-center justify-center"
+            role="status"
+            aria-label={t('loading', lang)}
+          >
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          </div>
+        ) : !product && fetchError ? (
+          <div class="relative flex h-64 flex-col items-center justify-center gap-3 px-4">
+            <button
+              type="button"
+              onClick={close}
+              class="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-card/80 text-muted-foreground backdrop-blur-sm hover:bg-accent before:absolute before:inset-[-6px]"
+              aria-label={t('close', lang)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+            <p class="text-sm text-destructive">{t('productLoadFailed', lang)}</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (!selectedProduct) return;
+                fetchProductById(String(selectedProduct.id));
+              }}
+              class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              {t('tryAgain', lang)}
+            </button>
+          </div>
+        ) : !product ? (
           <div
             class="flex h-64 items-center justify-center"
             role="status"
@@ -316,7 +387,7 @@ export default function ProductDetail({ lang }: Props) {
             {product.image && (
               <div class="aspect-video w-full overflow-hidden bg-card-image">
                 <img
-                  src={product.image}
+                  src={optimizedImageUrl(product.image, { width: 900 })}
                   alt={product.name}
                   class="h-full w-full object-cover"
                   width="512"
@@ -346,7 +417,7 @@ export default function ProductDetail({ lang }: Props) {
                     if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
                       display = attr.selected_choices.map((c) => c.value).join(', ');
                     } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
-                      display = attr.value_boolean ? 'Yes' : 'No';
+                      display = attr.value_boolean ? t('yes', lang) : t('no', lang);
                     } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
                       display = String(Math.round(Number(attr.value_numeric)));
                     } else if (attr.value_text) {
@@ -374,16 +445,10 @@ export default function ProductDetail({ lang }: Props) {
                     {group.required && (
                       <span
                         class={`text-xs font-medium ${
-                          (selections[group.id]?.length ?? 0) > 0 ||
-                          Object.values(quantities[group.id] ?? {}).some((q) => q > 0)
-                            ? 'text-green-600'
-                            : 'text-destructive'
+                          isGroupFilled(group.id) ? 'text-green-600' : 'text-destructive'
                         }`}
                       >
-                        {(selections[group.id]?.length ?? 0) > 0 ||
-                        Object.values(quantities[group.id] ?? {}).some((q) => q > 0)
-                          ? '✓'
-                          : t('required', lang)}
+                        {isGroupFilled(group.id) ? '✓' : t('required', lang)}
                       </span>
                     )}
                   </div>

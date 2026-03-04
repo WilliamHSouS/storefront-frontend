@@ -34,51 +34,91 @@ export interface Cart {
 export const $cart = atom<Cart | null>(null);
 export const $cartLoading = atom(false);
 
-export const $itemCount = computed(
-  $cart,
-  (cart) => cart?.line_items.reduce((sum, item) => sum + item.quantity, 0) ?? 0,
-);
+export const $itemCount = computed($cart, (cart) => cart?.item_count ?? 0);
 
 export const $cartTotal = computed($cart, (cart) => cart?.cart_total ?? '0.00');
+
+/** Extract a human-readable detail string from an SDK error (ApiError or Error). */
+export function errorDetail(error: unknown): string {
+  if (!error || typeof error !== 'object') return 'Unknown error';
+  if ('message' in error && typeof (error as Error).message === 'string')
+    return (error as Error).message;
+  if ('statusText' in error) {
+    const e = error as { status: number; statusText: string };
+    return `${e.status} ${e.statusText}`;
+  }
+  return 'Unknown error';
+}
 
 const CART_ID_KEY = 'sous_cart_id';
 
 export function getStoredCartId(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(CART_ID_KEY);
+  try {
+    return localStorage.getItem(CART_ID_KEY);
+  } catch (e) {
+    console.warn('Failed to read cart ID from localStorage:', e);
+    return null;
+  }
 }
 
 export function setStoredCartId(cartId: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(CART_ID_KEY, cartId);
+  try {
+    localStorage.setItem(CART_ID_KEY, cartId);
+  } catch (e) {
+    console.warn('Failed to save cart ID to localStorage:', e);
+  }
 }
 
 export function clearStoredCartId(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(CART_ID_KEY);
+  try {
+    localStorage.removeItem(CART_ID_KEY);
+  } catch (e) {
+    console.warn('Failed to clear cart ID from localStorage:', e);
+  }
 }
+
+let pendingEnsure: Promise<string> | null = null;
 
 /**
  * Ensure a cart exists (fetch stored or create new).
  * Returns the cart ID for use in API URLs.
+ * Uses a promise-based lock to prevent duplicate cart creation from concurrent calls.
  */
 export async function ensureCart(client: StorefrontClient): Promise<string> {
+  if (pendingEnsure) return pendingEnsure;
+
+  pendingEnsure = _doEnsureCart(client).finally(() => {
+    pendingEnsure = null;
+  });
+  return pendingEnsure;
+}
+
+async function _doEnsureCart(client: StorefrontClient): Promise<string> {
   const existing = $cart.get();
   if (existing?.id) return existing.id;
 
   const storedId = getStoredCartId();
   if (storedId) {
-    const { data } = await client.GET(`/api/v1/cart/{id}/`, {
+    const { data, error } = await client.GET(`/api/v1/cart/{id}/`, {
       params: { path: { id: storedId } },
     });
     if (data) {
       $cart.set(data as Cart);
       return (data as Cart).id;
     }
+    if (error) {
+      console.warn('Stored cart expired or invalid, creating new cart:', error);
+      clearStoredCartId();
+    }
   }
 
-  const { data } = await client.POST('/api/v1/cart/');
-  if (!data) throw new Error('Failed to create cart');
+  const { data, error } = await client.POST('/api/v1/cart/');
+  if (!data) {
+    throw new Error(`Failed to create cart: ${errorDetail(error)}`);
+  }
   const newCart = data as Cart;
   $cart.set(newCart);
   setStoredCartId(newCart.id);
