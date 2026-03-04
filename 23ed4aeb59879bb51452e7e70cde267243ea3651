@@ -1,0 +1,29 @@
+src/i18n/messages/nl.json
+  d545c629d3dd72a4 40-42
+src/i18n/messages/de.json
+  d545c629d3dd72a4 40-42
+src/components/interactive/ProductDetail.tsx
+  d545c629d3dd72a4 349
+src/i18n/messages/en.json
+  d545c629d3dd72a4 40-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "23ed4aeb59879bb51452e7e70cde267243ea3651",
+  "prompts": {
+    "d545c629d3dd72a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "691042d3-6640-49a9-a058-cf4959e91213",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 560,
+      "total_deletions": 4,
+      "accepted_lines": 560,
+      "overriden_lines": 0
+    }
+  }
+}
