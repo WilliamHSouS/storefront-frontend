@@ -93,7 +93,7 @@ export function cartWithMultipleItems(): CartFixture {
         unit_price: '14.50',
         line_total: '14.50',
         selected_options: [
-          { id: 'opt-regular', name: 'Regular', group_name: 'Size', price: '0.00', quantity: 1 },
+          { id: '201', name: 'Regular', group_name: 'Size', price: '0.00', quantity: 1 },
         ],
       },
     ],
@@ -115,9 +115,9 @@ export function cartWithModifiers(): CartFixture {
         unit_price: '14.50',
         line_total: '16.50',
         selected_options: [
-          { id: 'opt-regular', name: 'Regular', group_name: 'Size', price: '0.00', quantity: 1 },
+          { id: '201', name: 'Regular', group_name: 'Size', price: '0.00', quantity: 1 },
           {
-            id: 'opt-cheese',
+            id: '205',
             name: 'Extra Cheese',
             group_name: 'Extras',
             price: '2.00',

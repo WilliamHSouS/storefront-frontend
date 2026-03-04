@@ -201,3 +201,145 @@ test.describe('Cart page — inline mode', () => {
     await expect(link).toHaveAttribute('href', '/nl/');
   });
 });
+
+test.describe('Cart — modifier display', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockApi(page);
+    await blockAnalytics(page);
+  });
+
+  test('shows modifier group names and prices in cart', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    // Add Shawarma Bowl with modifiers via product detail
+    await openProductDetailModal(page, shawarma.id);
+    // Select "Large" size (+€3.00)
+    await page.getByRole('radio', { name: 'Large' }).click();
+
+    // Wait for POST response after clicking "add to order"
+    const responsePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/items/') &&
+        resp.url().includes('/api/v1/cart/') &&
+        resp.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: /toevoegen aan bestelling/i }).click();
+    await responsePromise;
+
+    const drawer = await openCartDrawer(page);
+    await expect(drawer).toBeVisible({ timeout: 5_000 });
+
+    // Assert modifier group name and price visible within the cart drawer
+    const cartItem = drawer.locator('li').first();
+    await expect(cartItem.getByText('Size: Large')).toBeVisible();
+    await expect(cartItem.getByText(/\+€/)).toBeVisible();
+  });
+});
+
+test.describe('Cart — order summary', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockApi(page);
+    await blockAnalytics(page);
+  });
+
+  test('shows subtotal and tax rows', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    await addSimpleProductToCart(page, falafel.id);
+    await openCartDrawer(page);
+
+    // Assert subtotal row
+    await expect(page.getByText('Subtotaal')).toBeVisible();
+    // Assert tax row (Dutch: "incl. BTW")
+    await expect(page.getByText('incl. BTW')).toBeVisible();
+    // Assert total row (exact match to avoid matching "Subtotaal")
+    await expect(page.getByText('Totaal', { exact: true })).toBeVisible();
+  });
+});
+
+test.describe('Cart — promotion banner', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockApi(page);
+    await blockAnalytics(page);
+  });
+
+  test('shows promotion banner when eligible', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    // Add 1 Falafel Wrap, then increment to qty 2 to trigger BOGO promo
+    await addSimpleProductToCart(page, falafel.id);
+    const drawer = await openCartDrawer(page);
+    await expect(drawer).toBeVisible({ timeout: 5_000 });
+
+    // Increment quantity to 2
+    const patchResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/items/') &&
+        resp.url().includes('/api/v1/cart/') &&
+        resp.request().method() === 'PATCH',
+    );
+    await drawer.getByRole('button', { name: 'Aantal verhogen' }).click();
+    await patchResponse;
+
+    // Wait for the promotion eligibility check (300ms debounce + API call)
+    await expect(page.locator('[role="status"]').filter({ hasText: /falafel/i })).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
+  test('hides promotion banner when cart is emptied', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    // Add 1 Falafel Wrap, then increment to qty 2 to trigger BOGO promo
+    await addSimpleProductToCart(page, falafel.id);
+    const drawer = await openCartDrawer(page);
+    await expect(drawer).toBeVisible({ timeout: 5_000 });
+
+    // Increment quantity to 2
+    const patchResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/items/') &&
+        resp.url().includes('/api/v1/cart/') &&
+        resp.request().method() === 'PATCH',
+    );
+    await drawer.getByRole('button', { name: 'Aantal verhogen' }).click();
+    await patchResponse;
+
+    // Banner should be visible
+    await expect(page.locator('[role="status"]').filter({ hasText: /falafel/i })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Remove item: click trash/remove button which triggers confirm dialog
+    // First decrement from 2 to 1
+    const patchResponse2 = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/items/') &&
+        resp.url().includes('/api/v1/cart/') &&
+        resp.request().method() === 'PATCH',
+    );
+    await drawer.getByRole('button', { name: 'Aantal verminderen' }).click();
+    await patchResponse2;
+
+    // Now at qty 1, click remove (trash icon) to trigger confirm dialog
+    await drawer.getByRole('button', { name: 'Item verwijderen' }).first().click();
+    const confirmDialog = page.getByRole('alertdialog', { name: 'Verwijderen' });
+    await expect(confirmDialog).toBeVisible();
+
+    const deleteResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/items/') &&
+        resp.url().includes('/api/v1/cart/') &&
+        resp.request().method() === 'DELETE',
+    );
+    await confirmDialog.getByRole('button', { name: 'Verwijderen' }).click();
+    await deleteResponse;
+
+    // Banner should be gone
+    await expect(page.locator('[role="status"]').filter({ hasText: /falafel/i })).toBeHidden();
+  });
+});

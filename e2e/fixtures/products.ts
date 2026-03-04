@@ -26,7 +26,7 @@ export const products = [
     image: 'https://images.example.com/shawarma-bowl.jpg',
     category_id: 'cat-2',
     sold_out: false,
-    modifier_groups: [{ id: 'mod-size' }, { id: 'mod-extras' }],
+    modifier_groups: [{ id: '100' }, { id: '101' }],
   },
   {
     id: 'prod-3',
@@ -56,26 +56,26 @@ export const shawarmaDetail = {
   ...products[1],
   modifier_groups: [
     {
-      id: 'mod-size',
+      id: '100',
       name: 'Size',
       type: 'radio' as const,
       selection_type: 'single' as const,
       required: true,
       options: [
-        { id: 'opt-regular', name: 'Regular', price: '0.00' },
-        { id: 'opt-large', name: 'Large', price: '3.00' },
+        { id: '201', name: 'Regular', price: '0.00' },
+        { id: '202', name: 'Large', price: '3.00' },
       ],
     },
     {
-      id: 'mod-extras',
+      id: '101',
       name: 'Extras',
       type: 'checkbox' as const,
       selection_type: 'multiple' as const,
       required: false,
       max_selections: 3,
       options: [
-        { id: 'opt-halloumi', name: 'Halloumi', price: '2.50' },
-        { id: 'opt-avocado', name: 'Avocado', price: '2.00' },
+        { id: '203', name: 'Halloumi', price: '2.50' },
+        { id: '204', name: 'Avocado', price: '2.00' },
       ],
     },
   ],

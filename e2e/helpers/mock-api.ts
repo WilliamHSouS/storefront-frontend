@@ -225,15 +225,19 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     }
 
     const selectedOptions = (body.options ?? []).map(
-      (m: { option_id: string; option_group_id: string; quantity: number }) => {
+      (m: { option_id: string | number; option_group_id: string | number; quantity: number }) => {
         const detail = productDetails[product.id] as typeof shawarmaDetail | undefined;
-        const group = detail?.modifier_groups?.find((g) =>
-          g.options.some((o) => o.id === m.option_id),
+        // The frontend sends Number(opt.id). Match by converting both sides to
+        // strings so "202" === String(202) works with numeric fixture IDs.
+        const optId = String(m.option_id);
+        const groupId = String(m.option_group_id);
+        const group = detail?.modifier_groups?.find(
+          (g) => g.options.some((o) => o.id === optId) || g.id === groupId,
         );
-        const opt = group?.options.find((o) => o.id === m.option_id);
+        const opt = group?.options.find((o) => o.id === optId);
         return {
-          id: m.option_id,
-          name: opt?.name ?? m.option_id,
+          id: optId,
+          name: opt?.name ?? optId,
           group_name: group?.name,
           price: opt?.price ?? '0.00',
           quantity: m.quantity,
