@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   $cart,
   $itemCount,
@@ -6,8 +6,14 @@ import {
   getStoredCartId,
   setStoredCartId,
   clearStoredCartId,
+  ensureCart,
+  addSuggestionToCart,
 } from './cart';
 import type { Cart } from './cart';
+
+vi.mock('@/lib/api', () => ({
+  getClient: vi.fn(),
+}));
 
 const mockCart: Cart = {
   id: 'cart-123',
@@ -96,5 +102,118 @@ describe('cart persistence', () => {
     expect(getStoredCartId()).toBe('cart-789');
     clearStoredCartId();
     expect(getStoredCartId()).toBeNull();
+  });
+});
+
+describe('ensureCart', () => {
+  beforeEach(() => {
+    $cart.set(null);
+    localStorage.clear();
+  });
+
+  it('returns existing cart ID when cart is already loaded', async () => {
+    $cart.set(mockCart);
+    const mockClient = { GET: vi.fn(), POST: vi.fn() };
+    const id = await ensureCart(mockClient as never);
+    expect(id).toBe('cart-123');
+    expect(mockClient.GET).not.toHaveBeenCalled();
+    expect(mockClient.POST).not.toHaveBeenCalled();
+  });
+
+  it('fetches stored cart from API when cart ID is in localStorage', async () => {
+    setStoredCartId('cart-stored');
+    const fetchedCart: Cart = {
+      id: 'cart-stored',
+      line_items: [],
+      cart_total: '0.00',
+      item_count: 0,
+    };
+    const mockClient = { GET: vi.fn().mockResolvedValue({ data: fetchedCart }), POST: vi.fn() };
+
+    const id = await ensureCart(mockClient as never);
+    expect(id).toBe('cart-stored');
+    expect($cart.get()).toEqual(fetchedCart);
+    expect(mockClient.GET).toHaveBeenCalledWith('/api/v1/cart/{id}/', {
+      params: { path: { id: 'cart-stored' } },
+    });
+  });
+
+  it('creates new cart when no stored ID and no loaded cart', async () => {
+    const newCart: Cart = { id: 'cart-new', line_items: [], cart_total: '0.00', item_count: 0 };
+    const mockClient = { GET: vi.fn(), POST: vi.fn().mockResolvedValue({ data: newCart }) };
+
+    const id = await ensureCart(mockClient as never);
+    expect(id).toBe('cart-new');
+    expect($cart.get()).toEqual(newCart);
+    expect(getStoredCartId()).toBe('cart-new');
+  });
+
+  it('creates new cart when stored cart ID returns null from API', async () => {
+    setStoredCartId('cart-expired');
+    const newCart: Cart = { id: 'cart-fresh', line_items: [], cart_total: '0.00', item_count: 0 };
+    const mockClient = {
+      GET: vi.fn().mockResolvedValue({ data: null }),
+      POST: vi.fn().mockResolvedValue({ data: newCart }),
+    };
+
+    const id = await ensureCart(mockClient as never);
+    expect(id).toBe('cart-fresh');
+  });
+
+  it('throws when cart creation fails', async () => {
+    const mockClient = {
+      GET: vi.fn(),
+      POST: vi.fn().mockResolvedValue({ data: null }),
+    };
+
+    await expect(ensureCart(mockClient as never)).rejects.toThrow('Failed to create cart');
+  });
+});
+
+describe('addSuggestionToCart', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('adds suggestion and updates cart store on success', async () => {
+    const cartWithItem: Cart = {
+      id: 'cart-123',
+      line_items: [
+        {
+          id: 'li-1',
+          product_id: 3,
+          product_title: 'Mint Lemonade',
+          quantity: 1,
+          unit_price: '4.50',
+          line_total: '4.50',
+        },
+      ],
+      cart_total: '4.50',
+      item_count: 1,
+    };
+    $cart.set({ id: 'cart-123', line_items: [], cart_total: '0.00', item_count: 0 });
+
+    const mockClient = { GET: vi.fn(), POST: vi.fn().mockResolvedValue({ data: cartWithItem }) };
+    const { getClient } = await import('@/lib/api');
+    vi.mocked(getClient).mockReturnValue(mockClient as never);
+
+    const result = await addSuggestionToCart(3);
+    expect(result).toBe(true);
+    expect($cart.get()).toEqual(cartWithItem);
+    expect(mockClient.POST).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/items/', {
+      params: { path: { cart_id: 'cart-123' } },
+      body: { product_id: 3, quantity: 1 },
+    });
+  });
+
+  it('returns false when API call fails', async () => {
+    $cart.set({ id: 'cart-123', line_items: [], cart_total: '0.00', item_count: 0 });
+
+    const mockClient = { GET: vi.fn(), POST: vi.fn().mockResolvedValue({ data: null }) };
+    const { getClient } = await import('@/lib/api');
+    vi.mocked(getClient).mockReturnValue(mockClient as never);
+
+    const result = await addSuggestionToCart(99);
+    expect(result).toBe(false);
   });
 });
