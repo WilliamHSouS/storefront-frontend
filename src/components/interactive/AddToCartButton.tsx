@@ -128,11 +128,11 @@ export default function AddToCartButton({
         type="button"
         onClick={handleAdd}
         disabled={loading}
-        class="relative inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        class="group relative inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
       >
         {t('addToCart', lang)}
         {quantity > 0 && (
-          <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">
+          <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground transition-transform duration-200 group-hover:scale-125">
             {quantity}
           </span>
         )}
