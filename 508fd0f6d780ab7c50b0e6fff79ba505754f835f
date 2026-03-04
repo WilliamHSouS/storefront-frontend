@@ -1,0 +1,35 @@
+src/i18n/messages/de.json
+  9c00098c844830a3 70-78
+e2e/helpers/mock-api.ts
+  9c00098c844830a3 329-387
+src/stores/cart-actions.ts
+  9c00098c844830a3 83-131
+src/components/interactive/DiscountCodeInput.tsx
+  9c00098c844830a3 1-87
+src/i18n/messages/nl.json
+  9c00098c844830a3 70-78
+src/i18n/messages/en.json
+  9c00098c844830a3 70-78
+src/components/interactive/CartDrawer.tsx
+  9c00098c844830a3 15,120-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "508fd0f6d780ab7c50b0e6fff79ba505754f835f",
+  "prompts": {
+    "9c00098c844830a3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bfbb100-ed07-4ed0-80d7-e5d417e3384c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 232,
+      "total_deletions": 5,
+      "accepted_lines": 1454,
+      "overriden_lines": 0
+    }
+  }
+}
