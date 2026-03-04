@@ -1,0 +1,39 @@
+src/merchants/brasserie-van-dam.json
+  d545c629d3dd72a4 5-8
+src/types/merchant.ts
+  d545c629d3dd72a4 31-40,45-46
+src/lib/structured-data.test.ts
+  d545c629d3dd72a4 37,47-57,59
+docs/plans/2026-03-04-translation-alignment.md
+  d545c629d3dd72a4 1-548
+src/components/astro/StructuredData.astro
+  d545c629d3dd72a4 12,24,31
+src/pages/[lang]/index.astro
+  d545c629d3dd72a4 54,57
+src/components/astro/Footer.astro
+  d545c629d3dd72a4 3,12,41
+src/lib/structured-data.ts
+  d545c629d3dd72a4 2,7,13
+src/components/astro/HeroSection.astro
+  d545c629d3dd72a4 3,7,10-11,53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "4a768c7209253702568b028226abb405055491f0",
+  "prompts": {
+    "d545c629d3dd72a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "691042d3-6640-49a9-a058-cf4959e91213",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 45,
+      "total_deletions": 12,
+      "accepted_lines": 593,
+      "overriden_lines": 0
+    }
+  }
+}
