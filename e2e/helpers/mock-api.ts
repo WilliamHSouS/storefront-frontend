@@ -326,6 +326,65 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // ── Cart: apply discount code ──
+  const cartDiscountApplyMatch = path.match(/^\/api\/v1\/cart\/([^/]+)\/apply-discount\/$/);
+  if (method === 'POST' && cartDiscountApplyMatch) {
+    const state = getCartState(req);
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(await readBody(req));
+    } catch {
+      json(res, { detail: 'Invalid request body' }, 400);
+      return;
+    }
+    const code = (body.code as string)?.toUpperCase();
+
+    const testDiscounts: Record<string, { id: string; name: string; type: string; value: number }> =
+      {
+        SAVE10: { id: 'disc-1', name: '10% Off', type: 'percentage', value: 10 },
+        FLAT5: { id: 'disc-2', name: '€5 Off', type: 'fixed_amount', value: 5 },
+        EXPIRED: { id: 'disc-3', name: 'Expired Code', type: 'percentage', value: 0 },
+      };
+
+    const discount = testDiscounts[code];
+    if (!discount) {
+      json(res, { detail: 'Invalid discount code' }, 400);
+      return;
+    }
+    if (code === 'EXPIRED') {
+      json(res, { detail: 'Discount code expired' }, 400);
+      return;
+    }
+
+    const subtotal = parseFloat(state.cart.subtotal ?? state.cart.cart_total);
+    const discountAmount =
+      discount.type === 'percentage'
+        ? (subtotal * discount.value) / 100
+        : Math.min(discount.value, subtotal);
+
+    state.cart.applied_discount = {
+      id: discount.id,
+      code,
+      name: discount.name,
+      discount_amount: discountAmount.toFixed(2),
+    };
+    state.cart.discount_amount = discountAmount.toFixed(2);
+    recalcCart(state.cart);
+    json(res, state.cart);
+    return;
+  }
+
+  // ── Cart: remove discount code ──
+  const cartDiscountRemoveMatch = path.match(/^\/api\/v1\/cart\/([^/]+)\/remove-discount\/$/);
+  if (method === 'DELETE' && cartDiscountRemoveMatch) {
+    const state = getCartState(req);
+    delete state.cart.applied_discount;
+    state.cart.discount_amount = '0.00';
+    recalcCart(state.cart);
+    json(res, state.cart);
+    return;
+  }
+
   // ── Fallback ──
   notFound(res);
 }

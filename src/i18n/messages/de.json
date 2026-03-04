@@ -67,5 +67,13 @@
   "promoApply": "Deal anwenden",
   "promoApplied": "Deal angewendet!",
   "promoBogo": "Kaufe {buy} erhalte {get} gratis",
-  "promoAlmostEligible": "Füge noch {needed} hinzu, um berechtigt zu sein"
+  "promoAlmostEligible": "Füge noch {needed} hinzu, um berechtigt zu sein",
+  "discountCode": "Rabattcode",
+  "discountCodePlaceholder": "Code eingeben",
+  "applyDiscount": "Einlösen",
+  "removeDiscount": "Entfernen",
+  "discountApplied": "Rabatt angewendet",
+  "discountInvalid": "Ungültiger Rabattcode",
+  "discountExpired": "Dieser Rabattcode ist abgelaufen",
+  "discountMinOrder": "Mindestbestellwert nicht erreicht"
 }

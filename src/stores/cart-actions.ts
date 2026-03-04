@@ -80,6 +80,55 @@ export async function checkPromotionEligibility(
   return promos;
 }
 
+/** Map backend error detail strings to i18n keys. */
+export const DISCOUNT_ERROR_MAP: Record<string, string> = {
+  'Invalid discount code': 'discountInvalid',
+  'Discount code expired': 'discountExpired',
+  'Minimum order amount not met': 'discountMinOrder',
+};
+
+export async function applyDiscountCode(
+  cartId: string,
+  code: string,
+  client?: StorefrontClient,
+): Promise<Cart> {
+  $cartLoading.set(true);
+  try {
+    const sdk = client ?? getClient();
+    const { data, error } = await sdk.POST(`/api/v1/cart/{cart_id}/apply-discount/`, {
+      params: { path: { cart_id: cartId } },
+      body: { code },
+    });
+    if (error || !data) {
+      const detail = errorDetail(error);
+      const err = new Error(detail);
+      (err as Error & { apiDetail?: string }).apiDetail = detail;
+      throw err;
+    }
+    $cart.set(data as Cart);
+    return data as Cart;
+  } finally {
+    $cartLoading.set(false);
+  }
+}
+
+export async function removeDiscountCode(cartId: string, client?: StorefrontClient): Promise<Cart> {
+  $cartLoading.set(true);
+  try {
+    const sdk = client ?? getClient();
+    const { data, error } = await sdk.DELETE(`/api/v1/cart/{cart_id}/remove-discount/`, {
+      params: { path: { cart_id: cartId } },
+    });
+    if (error || !data) {
+      throw new Error(`Failed to remove discount: ${errorDetail(error)}`);
+    }
+    $cart.set(data as Cart);
+    return data as Cart;
+  } finally {
+    $cartLoading.set(false);
+  }
+}
+
 export async function removeCartItem(
   cartId: string,
   lineItemId: string,

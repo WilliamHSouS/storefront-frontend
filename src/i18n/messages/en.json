@@ -67,5 +67,13 @@
   "promoApply": "Apply deal",
   "promoApplied": "Deal applied!",
   "promoBogo": "Buy {buy} get {get} free",
-  "promoAlmostEligible": "Add {needed} more to qualify"
+  "promoAlmostEligible": "Add {needed} more to qualify",
+  "discountCode": "Discount code",
+  "discountCodePlaceholder": "Enter code",
+  "applyDiscount": "Apply",
+  "removeDiscount": "Remove",
+  "discountApplied": "Discount applied",
+  "discountInvalid": "Invalid discount code",
+  "discountExpired": "This discount code has expired",
+  "discountMinOrder": "Minimum order amount not met"
 }

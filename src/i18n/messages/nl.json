@@ -67,5 +67,13 @@
   "promoApply": "Deal toepassen",
   "promoApplied": "Deal toegepast!",
   "promoBogo": "Koop {buy} krijg {get} gratis",
-  "promoAlmostEligible": "Voeg nog {needed} toe om in aanmerking te komen"
+  "promoAlmostEligible": "Voeg nog {needed} toe om in aanmerking te komen",
+  "discountCode": "Kortingscode",
+  "discountCodePlaceholder": "Voer code in",
+  "applyDiscount": "Toepassen",
+  "removeDiscount": "Verwijderen",
+  "discountApplied": "Korting toegepast",
+  "discountInvalid": "Ongeldige kortingscode",
+  "discountExpired": "Deze kortingscode is verlopen",
+  "discountMinOrder": "Minimaal bestelbedrag niet bereikt"
 }

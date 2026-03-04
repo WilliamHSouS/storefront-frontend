@@ -12,6 +12,7 @@ import QuantitySelector from './QuantitySelector';
 import { setCartItemQuantity, checkPromotionEligibility } from '@/stores/cart-actions';
 import { showToast } from '@/stores/toast';
 import PromoBanner from './PromoBanner';
+import DiscountCodeInput from './DiscountCodeInput';
 
 /* ------------------------------------------------------------------ */
 /*  Shared sub-components (used by both inline and drawer modes)      */
@@ -116,6 +117,8 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, style }: CartFoot
 
   return (
     <div class="border-t border-border px-4 py-3" style={style}>
+      <DiscountCodeInput cart={cart} lang={lang} />
+
       {/* Subtotal */}
       {subtotal && (
         <div class="mb-1 flex items-center justify-between text-sm">
