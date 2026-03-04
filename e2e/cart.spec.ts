@@ -343,3 +343,64 @@ test.describe('Cart — promotion banner', () => {
     await expect(page.locator('[role="status"]').filter({ hasText: /falafel/i })).toBeHidden();
   });
 });
+
+test.describe('Cart — discount codes', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockApi(page);
+    await blockAnalytics(page);
+  });
+
+  test('apply and remove a discount code', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    await addSimpleProductToCart(page, falafel.id);
+    await openCartDrawer(page);
+
+    // Fill in discount code
+    const input = page.getByLabel('Kortingscode');
+    await input.fill('SAVE10');
+
+    // Apply discount
+    const applyResponse = page.waitForResponse(
+      (resp) => resp.url().includes('/apply-discount/') && resp.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Toepassen' }).click();
+    await applyResponse;
+
+    // Discount should be visible in the footer
+    await expect(page.getByText('SAVE10')).toBeVisible();
+    const removeBtn = page.getByRole('button', { name: 'Verwijderen', exact: true });
+    await expect(removeBtn).toBeVisible();
+
+    // Remove discount
+    const removeResponse = page.waitForResponse(
+      (resp) => resp.url().includes('/remove-discount/') && resp.request().method() === 'DELETE',
+    );
+    await removeBtn.click();
+    await removeResponse;
+
+    // Input should reappear
+    await expect(page.getByLabel('Kortingscode')).toBeVisible();
+  });
+
+  test('shows error for invalid discount code', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    await addSimpleProductToCart(page, falafel.id);
+    await openCartDrawer(page);
+
+    const input = page.getByLabel('Kortingscode');
+    await input.fill('INVALID');
+
+    const applyResponse = page.waitForResponse(
+      (resp) => resp.url().includes('/apply-discount/') && resp.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Toepassen' }).click();
+    await applyResponse;
+
+    // Toast should show invalid code message (Dutch)
+    await expect(page.getByText('Ongeldige kortingscode')).toBeVisible({ timeout: 5_000 });
+  });
+});
