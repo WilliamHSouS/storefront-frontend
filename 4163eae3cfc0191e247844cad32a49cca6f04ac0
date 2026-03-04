@@ -1,0 +1,25 @@
+e2e/helpers/test-utils.ts
+  d545c629d3dd72a4 99-120
+e2e/search.spec.ts
+  d545c629d3dd72a4 6-7,20,40,58,77,91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "4163eae3cfc0191e247844cad32a49cca6f04ac0",
+  "prompts": {
+    "d545c629d3dd72a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "691042d3-6640-49a9-a058-cf4959e91213",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 47,
+      "total_deletions": 31,
+      "accepted_lines": 578,
+      "overriden_lines": 0
+    }
+  }
+}
