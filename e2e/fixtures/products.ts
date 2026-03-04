@@ -79,19 +79,65 @@ export const shawarmaDetail = {
       ],
     },
   ],
-  cross_sells: [
-    {
-      id: 'prod-3',
-      title: 'Mint Lemonade',
-      price: '4.50',
-      image: null,
-    },
-  ],
 };
 
 /** Simple product detail (no modifiers) for prod-1 Falafel Wrap */
 export const falafelDetail = {
   ...products[0],
   modifier_groups: [],
-  cross_sells: [],
+};
+
+/** Suggestion fixtures matching backend SuggestionSerializer shape */
+export const suggestions: Record<
+  string,
+  Array<{
+    id: number;
+    title: string;
+    price: string;
+    currency: string;
+    image_url: string;
+    reason: string;
+  }>
+> = {
+  // PDP suggestions for Shawarma Bowl → suggest Mint Lemonade + Baklava
+  'prod-2': [
+    {
+      id: 3, // matches prod-3 numerically
+      title: 'Mint Lemonade',
+      price: '4.50',
+      currency: 'EUR',
+      image_url: '',
+      reason: 'product_rule',
+    },
+    {
+      id: 4, // matches prod-4 numerically
+      title: 'Baklava',
+      price: '6.00',
+      currency: 'EUR',
+      image_url: 'https://images.example.com/baklava.jpg',
+      reason: 'category_rule',
+    },
+  ],
+  // PDP suggestions for Falafel Wrap → suggest Mint Lemonade
+  'prod-1': [
+    {
+      id: 3,
+      title: 'Mint Lemonade',
+      price: '4.50',
+      currency: 'EUR',
+      image_url: '',
+      reason: 'product_rule',
+    },
+  ],
+  // Cart-level suggestions (used for any cart)
+  cart: [
+    {
+      id: 3,
+      title: 'Mint Lemonade',
+      price: '4.50',
+      currency: 'EUR',
+      image_url: '',
+      reason: 'global_rule',
+    },
+  ],
 };

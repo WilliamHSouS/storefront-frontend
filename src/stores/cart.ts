@@ -1,6 +1,16 @@
 import { atom, computed } from 'nanostores';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 import { normalizeCart } from '@/lib/normalize';
+import { getClient } from '@/lib/api';
+
+export interface Suggestion {
+  id: number;
+  title: string;
+  price: string;
+  currency: string;
+  image_url: string;
+  reason: 'product_rule' | 'category_rule' | 'global_rule' | 'co_purchase';
+}
 
 export interface CartLineItem {
   id: string;
@@ -125,4 +135,28 @@ async function _doEnsureCart(client: StorefrontClient): Promise<string> {
   $cart.set(newCart);
   setStoredCartId(newCart.id);
   return newCart.id;
+}
+
+export type AddSuggestionResult = 'added' | 'requires_options' | 'error';
+
+/** Add a suggested item to cart (quantity 1, no modifiers). Shared by both upsell surfaces. */
+export async function addSuggestionToCart(
+  productId: string | number,
+): Promise<AddSuggestionResult> {
+  const client = getClient();
+  const cartId = await ensureCart(client);
+  const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
+    params: { path: { cart_id: cartId } },
+    body: { product_id: productId, quantity: 1 },
+  });
+  if (data) {
+    const cartData = data as Cart;
+    $cart.set(cartData);
+    if (cartData.id) setStoredCartId(cartData.id);
+    return 'added';
+  }
+  if (error && 'status' in error && error.status === 400) {
+    return 'requires_options';
+  }
+  return 'error';
 }

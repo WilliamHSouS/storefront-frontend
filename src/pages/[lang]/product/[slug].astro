@@ -5,6 +5,7 @@ import Footer from '@/components/astro/Footer.astro';
 import SEOHead from '@/components/astro/SEOHead.astro';
 import StructuredData from '@/components/astro/StructuredData.astro';
 import AddToCartButton from '@/components/interactive/AddToCartButton';
+import ProductSuggestions from '@/components/interactive/ProductSuggestions';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import {
   getEffectivePrice,
@@ -308,6 +309,8 @@ const breadcrumbs = [
             lang={lang}
           />
         </div>
+
+        <ProductSuggestions client:idle productId={String(product.id)} lang={lang} />
 
         <a
           href={`/${lang}/`}

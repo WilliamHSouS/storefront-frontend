@@ -1,8 +1,16 @@
 import { useStore } from '@nanostores/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { $selectedProduct } from '@/stores/ui';
-import { $cart, $cartLoading, ensureCart, setStoredCartId } from '@/stores/cart';
+import {
+  $cart,
+  $cartLoading,
+  ensureCart,
+  setStoredCartId,
+  addSuggestionToCart,
+  type Suggestion,
+} from '@/stores/cart';
 import { normalizeCart } from '@/lib/normalize';
+import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
@@ -48,7 +56,6 @@ interface ProductData {
   image?: string | null;
   modifier_groups?: MappedModifierGroup[];
   attribute_values?: AttributeValue[];
-  cross_sells?: Array<{ id: string; name: string; price: string; image?: string | null }>;
 }
 
 /** Map an API modifier group to the shape this component expects for rendering. */
@@ -105,6 +112,9 @@ export default function ProductDetail({ lang }: Props) {
   const [shakeGroup, setShakeGroup] = useState<string | null>(null);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [fetchError, setFetchError] = useState(false);
+  const [step, setStep] = useState<'detail' | 'upsell'>('detail');
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [addedSuggestions, setAddedSuggestions] = useState<Set<number>>(new Set());
 
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
@@ -118,15 +128,22 @@ export default function ProductDetail({ lang }: Props) {
     setFetchError(false);
     try {
       const client = getClient();
-      const { data, error } = await client.GET(`/api/v1/products/{id}/`, {
-        params: { path: { id: productId } },
-      });
-      if (!data) {
-        if (error) console.error('[ProductDetail] SDK error loading product:', error);
+      const [productRes, suggestionsRes] = await Promise.all([
+        client.GET(`/api/v1/products/{id}/`, {
+          params: { path: { id: productId } },
+        }),
+        client.GET(`/api/v1/products/{id}/suggestions/`, {
+          params: { path: { id: productId } },
+        }),
+      ]);
+      if (!productRes.data) {
+        if (productRes.error)
+          console.error('[ProductDetail] SDK error loading product:', productRes.error);
         setFetchError(true);
         return;
       }
-      setProduct(toProductData(data as Record<string, unknown>));
+      setProduct(toProductData(productRes.data as Record<string, unknown>));
+      if (suggestionsRes.data) setSuggestions(suggestionsRes.data as Suggestion[]);
     } catch (err) {
       console.error('[ProductDetail] failed to load product:', err);
       setFetchError(true);
@@ -135,16 +152,52 @@ export default function ProductDetail({ lang }: Props) {
     }
   };
 
-  // Fetch product detail when selected
+  // Fetch product detail + suggestions when selected
   useEffect(() => {
-    if (!selectedProduct) {
-      setProduct(null);
-      setSelections({});
-      setQuantities({});
-      setQuantity(1);
-      setNotes('');
-      setShowNotes(false);
-      setFetchError(false);
+    // Always reset state (handles both null and product-to-product transitions)
+    setProduct(null);
+    setSelections({});
+    setQuantities({});
+    setQuantity(1);
+    setNotes('');
+    setShowNotes(false);
+    setFetchError(false);
+    setStep('detail');
+    setSuggestions([]);
+    setAddedSuggestions(new Set());
+
+    if (!selectedProduct) return;
+
+    if (selectedProduct.skipToUpsell) {
+      // Product already added — only fetch suggestions for the upsell step
+      const fetchSuggestionsOnly = async () => {
+        setLoadingProduct(true);
+        try {
+          const client = getClient();
+          const { data } = await client.GET(`/api/v1/products/{id}/suggestions/`, {
+            params: { path: { id: String(selectedProduct.id) } },
+          });
+          const items = (data as Suggestion[] | null) ?? [];
+          if (items.length > 0) {
+            setProduct({
+              id: selectedProduct.id,
+              name: selectedProduct.name,
+              price: '0',
+            });
+            setSuggestions(items);
+            setStep('upsell');
+          } else {
+            showToast(t('toastAddedToCart', lang), 'success');
+            close();
+          }
+        } catch {
+          showToast(t('toastAddedToCart', lang), 'success');
+          close();
+        } finally {
+          setLoadingProduct(false);
+        }
+      };
+      fetchSuggestionsOnly();
       return;
     }
 
@@ -203,7 +256,7 @@ export default function ProductDetail({ lang }: Props) {
     if (!group) return false;
     if (group.type === 'quantity') {
       const groupQtys = quantities[groupId] ?? {};
-      return Object.values(groupQtys).some((q) => q > 0);
+      return Object.values(groupQtys).some((q) => (q as number) > 0);
     }
     return (selections[groupId]?.length ?? 0) > 0;
   };
@@ -267,8 +320,30 @@ export default function ProductDetail({ lang }: Props) {
       });
 
       if (error) {
+        // Handle structured API errors (e.g. REQUIRED_OPTIONS_MISSING)
+        const apiBody = 'body' in error ? (error.body as Record<string, unknown>) : null;
+        const apiError = apiBody?.error as
+          | {
+              code?: string;
+              message?: string;
+              details?: { missing_groups?: Array<{ group_id: number }> };
+            }
+          | undefined;
+
+        if (apiError?.code === 'REQUIRED_OPTIONS_MISSING' && apiError.details?.missing_groups) {
+          const missingIds = apiError.details.missing_groups.map((g) => String(g.group_id));
+          if (missingIds.length > 0) {
+            setShakeGroup(missingIds[0]);
+            const el = document.getElementById(`modifier-group-${missingIds[0]}`);
+            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => setShakeGroup(null), 600);
+          }
+          showToast(apiError.message ?? t('toastAddToCartFailed', lang));
+          return;
+        }
+
         console.error('[ProductDetail] SDK error adding to cart:', error);
-        showToast(t('toastAddToCartFailed', lang));
+        showToast(apiError?.message ?? t('toastAddToCartFailed', lang));
         return;
       }
 
@@ -276,8 +351,12 @@ export default function ProductDetail({ lang }: Props) {
         const cartData = normalizeCart(data as Record<string, unknown>);
         $cart.set(cartData);
         if (cartData.id) setStoredCartId(cartData.id);
-        showToast(t('toastAddedToCart', lang), 'success');
-        close();
+        if (suggestions.length > 0) {
+          setStep('upsell');
+        } else {
+          showToast(t('toastAddedToCart', lang), 'success');
+          close();
+        }
       }
     } catch (err) {
       console.error('[ProductDetail] add to cart error:', err);
@@ -384,8 +463,8 @@ export default function ProductDetail({ lang }: Props) {
               </svg>
             </button>
 
-            {/* Product image */}
-            {product.image && (
+            {/* Product image (hidden during upsell step) */}
+            {step === 'detail' && product.image && (
               <div class="aspect-video w-full overflow-hidden bg-card-image">
                 <img
                   src={optimizedImageUrl(product.image, { width: 900 })}
@@ -402,197 +481,359 @@ export default function ProductDetail({ lang }: Props) {
               class="overflow-y-auto px-4 py-4"
               style={{ maxHeight: product.image ? 'calc(90vh - 340px)' : 'calc(90vh - 160px)' }}
             >
-              <h2 class="font-heading text-xl font-bold text-card-foreground">{product.name}</h2>
-              {product.description && (
-                <p class="mt-1 text-sm text-muted-foreground">{product.description}</p>
-              )}
-              <p class="mt-2 text-lg font-semibold text-card-foreground">
-                {formatPrice(product.price, currency, locale)}
-              </p>
+              {step === 'upsell' ? (
+                /* ── Upsell step: shown after successful add ── */
+                <div>
+                  <div class="flex items-center gap-2 text-card-foreground">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="text-green-600"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <h2 class="font-heading text-lg font-bold">{t('addedToCart', lang)}</h2>
+                  </div>
+                  <p class="mt-1 text-sm text-muted-foreground">{product.name}</p>
 
-              {/* Attributes */}
-              {product.attribute_values && product.attribute_values.length > 0 && (
-                <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-                  {product.attribute_values.map((attr) => {
-                    let display: string | null = null;
-                    if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
-                      const labels = attr.selected_choices
-                        .map((c) => c.value || c.slug?.replace(/_/g, ' ') || '')
-                        .filter(Boolean);
-                      display = labels.length > 0 ? labels.join(', ') : null;
-                    } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
-                      display = attr.value_boolean ? t('yes', lang) : t('no', lang);
-                    } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
-                      display = String(Math.round(Number(attr.value_numeric)));
-                    } else if (attr.value_text) {
-                      display = attr.value_text;
-                    }
-                    if (!display) return null;
-                    return (
-                      <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
-                        <span class="font-medium">{attr.attribute_name}:</span> {display}
-                      </span>
-                    );
-                  })}
+                  {/* Attributes */}
+                  {product.attribute_values && product.attribute_values.length > 0 && (
+                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                      {product.attribute_values.map((attr) => {
+                        let display: string | null = null;
+                        if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
+                          const labels = attr.selected_choices
+                            .map((c) => c.value || c.slug?.replace(/_/g, ' ') || '')
+                            .filter(Boolean);
+                          display = labels.length > 0 ? labels.join(', ') : null;
+                        } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
+                          display = attr.value_boolean ? t('yes', lang) : t('no', lang);
+                        } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
+                          display = String(Math.round(Number(attr.value_numeric)));
+                        } else if (attr.value_text) {
+                          display = attr.value_text;
+                        }
+                        if (!display) return null;
+                        return (
+                          <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
+                            <span class="font-medium">{attr.attribute_name}:</span> {display}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {suggestions.length > 0 && (
+                    <div class="mt-4">
+                      <h3 class="text-sm font-semibold text-card-foreground">
+                        {t('frequentlyCombined', lang)}
+                      </h3>
+                      <div class="mt-2 space-y-2">
+                        {suggestions
+                          .filter((s) => !addedSuggestions.has(s.id))
+                          .map((s) => (
+                            <div
+                              key={s.id}
+                              class="flex items-center gap-3 rounded-lg border border-border p-2"
+                            >
+                              {s.image_url && (
+                                <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
+                                  <img
+                                    src={s.image_url}
+                                    alt=""
+                                    class="h-full w-full object-cover"
+                                    width="40"
+                                    height="40"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              )}
+                              <div class="min-w-0 flex-1">
+                                <span class="text-sm text-card-foreground">{s.title}</span>
+                                <span class="ml-1 text-xs text-muted-foreground">
+                                  {formatPrice(s.price, currency, locale)}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const result = await addSuggestionToCart(s.id);
+                                  if (result === 'added') {
+                                    setAddedSuggestions((prev) => new Set([...prev, s.id]));
+                                  } else if (result === 'requires_options') {
+                                    $selectedProduct.set({ id: String(s.id), name: s.title });
+                                  }
+                                }}
+                                class="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 before:absolute before:inset-[-4px]"
+                                aria-label={`${t('addToCart', lang)} ${s.title}`}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path d="M12 5v14" />
+                                  <path d="M5 12h14" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              ) : (
+                /* ── Detail step: normal product view ── */
+                <div>
+                  <h2 class="font-heading text-xl font-bold text-card-foreground">
+                    {product.name}
+                  </h2>
+                  {product.description && (
+                    <p class="mt-1 text-sm text-muted-foreground">{product.description}</p>
+                  )}
+                  <p class="mt-2 text-lg font-semibold text-card-foreground">
+                    {formatPrice(product.price, currency, locale)}
+                  </p>
 
-              {/* Modifier groups */}
-              {(product.modifier_groups ?? []).map((group) => (
-                <div
-                  key={group.id}
-                  id={`modifier-group-${group.id}`}
-                  class={`mt-4 rounded-lg border border-border p-3 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
-                >
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-semibold text-card-foreground">{group.name}</h3>
-                    {group.required && (
-                      <span
-                        class={`text-xs font-medium ${
-                          isGroupFilled(group.id) ? 'text-green-600' : 'text-destructive'
-                        }`}
+                  {/* Attributes */}
+                  {product.attribute_values && product.attribute_values.length > 0 && (
+                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                      {product.attribute_values.map((attr) => {
+                        let display: string | null = null;
+                        if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
+                          display = attr.selected_choices.map((c) => c.value).join(', ');
+                        } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
+                          display = attr.value_boolean ? t('yes', lang) : t('no', lang);
+                        } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
+                          display = String(Math.round(Number(attr.value_numeric)));
+                        } else if (attr.value_text) {
+                          display = attr.value_text;
+                        }
+                        if (!display) return null;
+                        return (
+                          <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
+                            <span class="font-medium">{attr.attribute_name}:</span> {display}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Modifier groups */}
+                  {(product.modifier_groups ?? []).map((group) => (
+                    <div
+                      key={group.id}
+                      id={`modifier-group-${group.id}`}
+                      class={`mt-4 rounded-lg border border-border p-3 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
+                    >
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-card-foreground">{group.name}</h3>
+                        {group.required && (
+                          <span
+                            class={`text-xs font-medium ${
+                              isGroupFilled(group.id) ? 'text-green-600' : 'text-destructive'
+                            }`}
+                          >
+                            {isGroupFilled(group.id) ? '✓' : t('required', lang)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div class="mt-2 space-y-2">
+                        {group.options.map((opt) => {
+                          const isSelected = (selections[group.id] ?? []).includes(opt.id);
+                          const optQty = quantities[group.id]?.[opt.id] ?? 0;
+                          const optPrice = Number(opt.price);
+
+                          return (
+                            <div key={opt.id} class="flex items-center justify-between">
+                              {group.type === 'radio' || group.type === 'checkbox' ? (
+                                <label class="flex flex-1 cursor-pointer items-center gap-2">
+                                  {group.type === 'radio' ? (
+                                    <input
+                                      type="radio"
+                                      name={group.id}
+                                      checked={isSelected}
+                                      onChange={() => handleRadioSelect(group.id, opt.id)}
+                                      class="h-4 w-4 accent-primary"
+                                    />
+                                  ) : (
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() =>
+                                        handleCheckboxToggle(group.id, opt.id, group.max_selections)
+                                      }
+                                      class="h-4 w-4 accent-primary"
+                                    />
+                                  )}
+                                  <span class="text-sm text-card-foreground">{opt.name}</span>
+                                  {optPrice > 0 && (
+                                    <span class="ml-auto text-xs text-muted-foreground">
+                                      +{formatPrice(opt.price, currency, locale)}
+                                    </span>
+                                  )}
+                                </label>
+                              ) : (
+                                <>
+                                  <span class="text-sm text-card-foreground">{opt.name}</span>
+                                  <div class="flex items-center gap-2">
+                                    {optPrice > 0 && (
+                                      <span class="text-xs text-muted-foreground">
+                                        +{formatPrice(opt.price, currency, locale)}
+                                      </span>
+                                    )}
+                                    <div
+                                      class="inline-flex items-center gap-1"
+                                      role="group"
+                                      aria-label={opt.name}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuantityChange(group.id, opt.id, -1)}
+                                        disabled={optQty === 0}
+                                        aria-label={`${t('remove', lang)} ${opt.name}`}
+                                        class="relative inline-flex h-8 w-8 items-center justify-center rounded border border-border text-sm disabled:opacity-30 before:absolute before:inset-[-4px]"
+                                      >
+                                        −
+                                      </button>
+                                      <span class="w-6 text-center text-sm" aria-live="polite">
+                                        {optQty}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuantityChange(group.id, opt.id, 1)}
+                                        aria-label={`${t('addToCart', lang)} ${opt.name}`}
+                                        class="relative inline-flex h-8 w-8 items-center justify-center rounded border border-border text-sm before:absolute before:inset-[-4px]"
+                                      >
+                                        +
+                                      </button>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Suggestions (PDP surface) */}
+                  {suggestions.length > 0 && (
+                    <div class="mt-4">
+                      <h3 class="text-sm font-semibold text-card-foreground">
+                        {t('frequentlyCombined', lang)}
+                      </h3>
+                      <div class="mt-2 space-y-2">
+                        {suggestions.map((s) => (
+                          <div
+                            key={s.id}
+                            class="flex items-center gap-3 rounded-lg border border-border p-2"
+                          >
+                            {s.image_url && (
+                              <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
+                                <img
+                                  src={s.image_url}
+                                  alt=""
+                                  class="h-full w-full object-cover"
+                                  width="40"
+                                  height="40"
+                                  loading="lazy"
+                                />
+                              </div>
+                            )}
+                            <div class="min-w-0 flex-1">
+                              <span class="text-sm text-card-foreground">{s.title}</span>
+                              <span class="ml-1 text-xs text-muted-foreground">
+                                {formatPrice(s.price, currency, locale)}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={addedSuggestions.has(s.id)}
+                              onClick={async () => {
+                                const result = await addSuggestionToCart(s.id);
+                                if (result === 'added') {
+                                  setAddedSuggestions((prev) => new Set([...prev, s.id]));
+                                } else if (result === 'requires_options') {
+                                  $selectedProduct.set({ id: String(s.id), name: s.title });
+                                }
+                              }}
+                              class="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground before:absolute before:inset-[-4px]"
+                              aria-label={`${t('addToCart', lang)} ${s.title}`}
+                            >
+                              {addedSuggestions.has(s.id) ? (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path d="M20 6 9 17l-5-5" />
+                                </svg>
+                              ) : (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path d="M12 5v14" />
+                                  <path d="M5 12h14" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  <div class="mt-4">
+                    {!showNotes ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowNotes(true)}
+                        class="text-sm text-primary hover:underline"
                       >
-                        {isGroupFilled(group.id) ? '✓' : t('required', lang)}
-                      </span>
+                        {t('addNotes', lang)}
+                      </button>
+                    ) : (
+                      <textarea
+                        value={notes}
+                        onInput={(e) => setNotes((e.target as HTMLTextAreaElement).value)}
+                        placeholder={t('addNotes', lang)}
+                        class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        rows={2}
+                      />
                     )}
                   </div>
-
-                  <div class="mt-2 space-y-2">
-                    {group.options.map((opt) => {
-                      const isSelected = (selections[group.id] ?? []).includes(opt.id);
-                      const optQty = quantities[group.id]?.[opt.id] ?? 0;
-                      const optPrice = Number(opt.price);
-
-                      return (
-                        <div key={opt.id} class="flex items-center justify-between">
-                          {group.type === 'radio' || group.type === 'checkbox' ? (
-                            <label class="flex flex-1 cursor-pointer items-center gap-2">
-                              {group.type === 'radio' ? (
-                                <input
-                                  type="radio"
-                                  name={group.id}
-                                  checked={isSelected}
-                                  onChange={() => handleRadioSelect(group.id, opt.id)}
-                                  class="h-4 w-4 accent-primary"
-                                />
-                              ) : (
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() =>
-                                    handleCheckboxToggle(group.id, opt.id, group.max_selections)
-                                  }
-                                  class="h-4 w-4 accent-primary"
-                                />
-                              )}
-                              <span class="text-sm text-card-foreground">{opt.name}</span>
-                              {optPrice > 0 && (
-                                <span class="ml-auto text-xs text-muted-foreground">
-                                  +{formatPrice(opt.price, currency, locale)}
-                                </span>
-                              )}
-                            </label>
-                          ) : (
-                            <>
-                              <span class="text-sm text-card-foreground">{opt.name}</span>
-                              <div class="flex items-center gap-2">
-                                {optPrice > 0 && (
-                                  <span class="text-xs text-muted-foreground">
-                                    +{formatPrice(opt.price, currency, locale)}
-                                  </span>
-                                )}
-                                <div
-                                  class="inline-flex items-center gap-1"
-                                  role="group"
-                                  aria-label={opt.name}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => handleQuantityChange(group.id, opt.id, -1)}
-                                    disabled={optQty === 0}
-                                    aria-label={`${t('remove', lang)} ${opt.name}`}
-                                    class="relative inline-flex h-8 w-8 items-center justify-center rounded border border-border text-sm disabled:opacity-30 before:absolute before:inset-[-4px]"
-                                  >
-                                    −
-                                  </button>
-                                  <span class="w-6 text-center text-sm" aria-live="polite">
-                                    {optQty}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleQuantityChange(group.id, opt.id, 1)}
-                                    aria-label={`${t('addToCart', lang)} ${opt.name}`}
-                                    class="relative inline-flex h-8 w-8 items-center justify-center rounded border border-border text-sm before:absolute before:inset-[-4px]"
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {/* Cross-sells */}
-              {product.cross_sells && product.cross_sells.length > 0 && (
-                <div class="mt-4">
-                  <h3 class="text-sm font-semibold text-card-foreground">
-                    {t('frequentlyCombined', lang)}
-                  </h3>
-                  <div class="mt-2 space-y-2">
-                    {product.cross_sells.map((cs) => (
-                      <div
-                        key={cs.id}
-                        class="flex items-center gap-3 rounded-lg border border-border p-2"
-                      >
-                        {cs.image && (
-                          <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
-                            <img
-                              src={cs.image}
-                              alt=""
-                              class="h-full w-full object-cover"
-                              width="40"
-                              height="40"
-                              loading="lazy"
-                            />
-                          </div>
-                        )}
-                        <div class="flex-1">
-                          <span class="text-sm text-card-foreground">{cs.name}</span>
-                          <span class="ml-1 text-xs text-muted-foreground">
-                            {formatPrice(cs.price, currency, locale)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
-
-              {/* Notes */}
-              <div class="mt-4">
-                {!showNotes ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowNotes(true)}
-                    class="text-sm text-primary hover:underline"
-                  >
-                    {t('addNotes', lang)}
-                  </button>
-                ) : (
-                  <textarea
-                    value={notes}
-                    onInput={(e) => setNotes((e.target as HTMLTextAreaElement).value)}
-                    placeholder={t('addNotes', lang)}
-                    class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    rows={2}
-                  />
-                )}
-              </div>
             </div>
 
             {/* Sticky bottom CTA */}
@@ -600,25 +841,47 @@ export default function ProductDetail({ lang }: Props) {
               class="border-t border-border px-4 py-3"
               style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
             >
-              <div class="flex items-center gap-3">
-                <QuantitySelector
-                  quantity={quantity}
-                  onIncrement={() => setQuantity((q) => q + 1)}
-                  onDecrement={() => setQuantity((q) => Math.max(1, q - 1))}
-                  onRemove={close}
-                  lang={lang}
-                  min={1}
-                />
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  class="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  <span>{t('addToOrder', lang)}</span>
-                  <span>&middot;</span>
-                  <span>{formatPrice(String(total), currency, locale)}</span>
-                </button>
-              </div>
+              {step === 'upsell' ? (
+                <div class="space-y-2">
+                  <button
+                    type="button"
+                    onClick={close}
+                    class="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    {t('done', lang)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      $isCartOpen.set(true);
+                    }}
+                    class="flex h-10 w-full items-center justify-center text-sm font-medium text-primary hover:underline"
+                  >
+                    {t('viewCart', lang)}
+                  </button>
+                </div>
+              ) : (
+                <div class="flex items-center gap-3">
+                  <QuantitySelector
+                    quantity={quantity}
+                    onIncrement={() => setQuantity((q) => q + 1)}
+                    onDecrement={() => setQuantity((q) => Math.max(1, q - 1))}
+                    onRemove={close}
+                    lang={lang}
+                    min={1}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    class="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    <span>{t('addToOrder', lang)}</span>
+                    <span>&middot;</span>
+                    <span>{formatPrice(String(total), currency, locale)}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}

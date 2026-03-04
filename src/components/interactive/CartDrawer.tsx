@@ -9,6 +9,7 @@ import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { t } from '@/i18n';
 import { optimizedImageUrl } from '@/lib/image';
 import QuantitySelector from './QuantitySelector';
+import CartSuggestions from './CartSuggestions';
 import { setCartItemQuantity } from '@/stores/cart-actions';
 import { showToast } from '@/stores/toast';
 
@@ -103,6 +104,7 @@ function CartFooter({ savings, cartTotal, currency, locale, lang, style }: CartF
           {formatPrice(cartTotal, currency, locale)}
         </span>
       </div>
+      <CartSuggestions lang={lang} />
       <a
         href={`/${lang}/checkout`}
         class="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"

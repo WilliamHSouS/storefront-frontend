@@ -6,7 +6,13 @@
  * Cart state is kept in-memory and can be reset via POST /test/reset.
  */
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { products, categories, shawarmaDetail, falafelDetail } from '../fixtures/products';
+import {
+  products,
+  categories,
+  shawarmaDetail,
+  falafelDetail,
+  suggestions,
+} from '../fixtures/products';
 import { aboutPage, contactPage } from '../fixtures/cms';
 import { emptyCart, type CartFixture } from '../fixtures/cart';
 
@@ -140,6 +146,14 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // ── Product suggestions (PDP surface) ──
+  const productSuggestionsMatch = path.match(/^\/api\/v1\/products\/([^/]+)\/suggestions\/$/);
+  if (method === 'GET' && productSuggestionsMatch) {
+    const id = productSuggestionsMatch[1];
+    json(res, suggestions[id] ?? []);
+    return;
+  }
+
   // ── Product detail ──
   const productDetailMatch = path.match(/^\/api\/v1\/products\/([^/]+)\/$/);
   if (method === 'GET' && productDetailMatch) {
@@ -151,7 +165,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       // Return basic product data if no detail fixture exists
       const product = products.find((p) => p.id === id);
       if (product) {
-        json(res, { ...product, modifier_groups: [], cross_sells: [] });
+        json(res, { ...product, modifier_groups: [] });
       } else {
         notFound(res);
       }
@@ -194,6 +208,19 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // ── Cart suggestions ──
+  const cartSuggestionsMatch = path.match(/^\/api\/v1\/cart\/([^/]+)\/suggestions\/$/);
+  if (method === 'GET' && cartSuggestionsMatch) {
+    // Filter out suggestions for products already in cart
+    const state = getCartState(req);
+    const cartProductIds = new Set(state.cart.line_items.map((li) => li.product_id));
+    const cartSuggestions = (suggestions['cart'] ?? []).filter(
+      (s) => !cartProductIds.has(`prod-${s.id}`),
+    );
+    json(res, cartSuggestions);
+    return;
+  }
+
   // ── Cart: get by ID ──
   const cartGetMatch = path.match(/^\/api\/v1\/cart\/([^/]+)\/$/);
   if (method === 'GET' && cartGetMatch) {
@@ -207,7 +234,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   if (method === 'POST' && cartAddMatch) {
     const state = getCartState(req);
     const body = JSON.parse(await readBody(req));
-    const product = products.find((p) => p.id === body.product_id);
+    // Match by exact ID or by numeric suffix (suggestion IDs are numeric, fixture IDs are 'prod-N')
+    const productId = body.product_id;
+    const product = products.find(
+      (p) => p.id === productId || p.id === `prod-${productId}` || p.id === String(productId),
+    );
     if (!product) {
       json(res, { detail: 'Product not found' }, 400);
       return;

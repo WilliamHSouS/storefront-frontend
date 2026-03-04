@@ -4,6 +4,8 @@ import { atom } from 'nanostores';
 export interface SelectedProduct {
   id: string | number;
   name: string;
+  /** When true, skip the detail view and show the upsell step directly. */
+  skipToUpsell?: boolean;
 }
 
 export const $activeCategory = atom<string>('');

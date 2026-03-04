@@ -159,12 +159,17 @@ test.describe('Product detail modal — modifier groups', () => {
     const sizeSection = modal.locator(`#modifier-group-${sizeGroup.id}`);
     await expect(sizeSection.getByText('Verplicht')).toBeHidden();
 
-    // Submit should now work — clicking the CTA should close the modal.
+    // Submit should now work — clicking the CTA should add to cart.
     const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
     // eslint-disable-next-line playwright/no-force-option -- bypass pointer-event interception in modal
     await ctaButton.click({ force: true });
 
-    // Modal should close after successful add
+    // Product has suggestions, so the modal transitions to the upsell step
+    // instead of closing immediately. Dismiss via the Done button.
+    await expect(modal.getByText('Toegevoegd')).toBeVisible({ timeout: 5_000 });
+    await modal.getByRole('button', { name: 'Klaar' }).click();
+
+    // Modal should close after dismissing upsell step
     await expect(modal).toBeHidden();
 
     // Cart state should be updated — the header cart trigger is always visible,

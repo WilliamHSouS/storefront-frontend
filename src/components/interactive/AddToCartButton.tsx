@@ -28,8 +28,11 @@ export default function AddToCartButton({
   const [collapsed, setCollapsed] = useState(true);
   const collapseTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  const cartItem = cart?.line_items.find((item) => String(item.product_id) === String(productId));
-  const quantity = cartItem?.quantity ?? 0;
+  const cartItems =
+    cart?.line_items.filter((item) => String(item.product_id) === String(productId)) ?? [];
+  const quantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  // For simple products, use the single line item for stepper updates
+  const cartItem = cartItems[0];
 
   // Auto-collapse stepper after 3 seconds of inactivity
   useEffect(() => {
@@ -87,6 +90,8 @@ export default function AddToCartButton({
         const cartData = data as typeof cart;
         $cart.set(cartData);
         if (cartData?.id) setStoredCartId(cartData.id);
+        // Open modal in upsell mode so suggestions are shown if available
+        $selectedProduct.set({ id: productId, name: productName, skipToUpsell: true });
       }
     } catch (err) {
       console.error('[AddToCart] error:', err);
@@ -110,6 +115,26 @@ export default function AddToCartButton({
     );
   }
 
+  // Modifier products: always show add button (opens modal), with quantity badge
+  if (hasModifiers) {
+    return (
+      <button
+        type="button"
+        onClick={handleAdd}
+        disabled={loading}
+        class="group relative inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+      >
+        {t('addToCart', lang)}
+        {quantity > 0 && (
+          <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground group-hover:animate-badge-bounce">
+            {quantity}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  // Simple products: quantity stepper when in cart
   if (quantity > 0 && collapsed) {
     return (
       <button
