@@ -1,0 +1,23 @@
+e2e/cart.spec.ts
+  9c00098c844830a3 346-406
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "73519c69411db1415e629fb5f5275862bc7d033b",
+  "prompts": {
+    "9c00098c844830a3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bfbb100-ed07-4ed0-80d7-e5d417e3384c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 69,
+      "total_deletions": 2,
+      "accepted_lines": 1291,
+      "overriden_lines": 0
+    }
+  }
+}
