@@ -9,6 +9,8 @@ import CartDrawer from '@/components/interactive/CartDrawer';
 import ProductDetail from '@/components/interactive/ProductDetail';
 import SearchBar from '@/components/interactive/SearchBar';
 import Toast from '@/components/interactive/Toast';
+import MerchantComms from '@/components/interactive/MerchantComms';
+import type { CommsMessage } from '@/stores/comms';
 
 interface Props {
   title: string;
@@ -22,6 +24,18 @@ const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
 const merchantJSON = merchant ? JSON.stringify(merchant) : '';
 const langValue = lang ?? 'en';
+
+let commsMessages: CommsMessage[] = [];
+if (Astro.locals.sdk) {
+  try {
+    const { data } = await Astro.locals.sdk.GET('/api/v1/merchant-comms/widget/active/', {
+      params: { query: { surfaces: 'top_banner,bottom_banner,modal,toast' } },
+    });
+    if (data) commsMessages = data as CommsMessage[];
+  } catch {
+    // Silent degradation — no banners is better than a broken page
+  }
+}
 ---
 
 <!doctype html>
@@ -64,6 +78,8 @@ const langValue = lang ?? 'en';
       )
     }
     <slot />
+
+    <MerchantComms client:idle lang={langValue} messages={commsMessages} />
 
     {/* Shared islands: cart, product detail modal, search */}
     <CartBar client:idle lang={langValue} />
