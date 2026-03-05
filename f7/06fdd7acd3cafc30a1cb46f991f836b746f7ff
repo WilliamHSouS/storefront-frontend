@@ -1,0 +1,29 @@
+src/components/interactive/BottomBanner.tsx
+  5e33d33d26ce2884 1-95
+src/components/interactive/CommsModal.tsx
+  5e33d33d26ce2884 1-136
+src/components/interactive/InlineCallout.tsx
+  5e33d33d26ce2884 1-101
+src/components/interactive/TopBanner.tsx
+  5e33d33d26ce2884 1-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "f706fdd7acd3cafc30a1cb46f991f836b746f7ff",
+  "prompts": {
+    "5e33d33d26ce2884": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1deae4ac-f750-4be1-b9e7-4f93be802d75",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 460,
+      "total_deletions": 19,
+      "accepted_lines": 2065,
+      "overriden_lines": 0
+    }
+  }
+}
