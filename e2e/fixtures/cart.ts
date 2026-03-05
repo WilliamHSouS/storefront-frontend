@@ -10,11 +10,11 @@ export interface CartFixture {
     quantity: number;
     unit_price: string;
     line_total: string;
-    selected_options: Array<{
-      id: string;
-      name: string;
-      group_name?: string;
-      price: string;
+    options: Array<{
+      option_id: string;
+      option_title: string;
+      option_group_title: string;
+      price_modifier: string;
       quantity: number;
     }>;
     discount?: {
@@ -62,7 +62,7 @@ export function cartWithOneItem(): CartFixture {
         quantity: 1,
         unit_price: '8.50',
         line_total: '8.50',
-        selected_options: [],
+        options: [],
       },
     ],
     cart_total: '8.50',
@@ -82,7 +82,7 @@ export function cartWithMultipleItems(): CartFixture {
         quantity: 2,
         unit_price: '8.50',
         line_total: '17.00',
-        selected_options: [],
+        options: [],
       },
       {
         id: 'li-2',
@@ -92,8 +92,14 @@ export function cartWithMultipleItems(): CartFixture {
         quantity: 1,
         unit_price: '14.50',
         line_total: '14.50',
-        selected_options: [
-          { id: '201', name: 'Regular', group_name: 'Size', price: '0.00', quantity: 1 },
+        options: [
+          {
+            option_id: 'opt-regular',
+            option_title: 'Regular',
+            option_group_title: 'Size',
+            price_modifier: '0.00',
+            quantity: 1,
+          },
         ],
       },
     ],
@@ -114,13 +120,19 @@ export function cartWithModifiers(): CartFixture {
         quantity: 1,
         unit_price: '14.50',
         line_total: '16.50',
-        selected_options: [
-          { id: '201', name: 'Regular', group_name: 'Size', price: '0.00', quantity: 1 },
+        options: [
           {
-            id: '205',
-            name: 'Extra Cheese',
-            group_name: 'Extras',
-            price: '2.00',
+            option_id: '201',
+            option_title: 'Regular',
+            option_group_title: 'Size',
+            price_modifier: '0.00',
+            quantity: 1,
+          },
+          {
+            option_id: '205',
+            option_title: 'Extra Cheese',
+            option_group_title: 'Extras',
+            price_modifier: '2.00',
             quantity: 1,
           },
         ],
@@ -143,7 +155,7 @@ export function cartWithDiscount(): CartFixture {
         quantity: 1,
         unit_price: '5.10',
         line_total: '5.10',
-        selected_options: [],
+        options: [],
         discount: {
           type: 'percentage',
           label: '15% off',

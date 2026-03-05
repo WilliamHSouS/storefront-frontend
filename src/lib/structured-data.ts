@@ -1,14 +1,16 @@
 import type { MerchantConfig } from '@/types/merchant';
+import { getMerchantDescription } from '@/types/merchant';
 
 export function generateRestaurantLD(
   merchant: MerchantConfig,
   siteUrl: string,
+  lang?: string,
 ): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
     '@type': 'Restaurant',
     name: merchant.name,
-    description: merchant.description,
+    description: getMerchantDescription(merchant, lang ?? merchant.defaultLanguage),
     url: siteUrl,
     telephone: merchant.contact.phone,
     image: merchant.heroImage,

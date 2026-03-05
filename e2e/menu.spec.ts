@@ -34,7 +34,7 @@ test.describe('Menu page', () => {
 
   test('product card shows name, price, and description', async ({ page }) => {
     const falafel = products[0];
-    await expect(page.getByText(falafel.name)).toBeVisible();
+    await expect(page.getByText(falafel.title)).toBeVisible();
     await expect(page.getByText(falafel.description)).toBeVisible();
     // Price formatted in EUR/nl-NL: "€ 8,50"
     await expect(page.getByText(/8,50/)).toBeVisible();

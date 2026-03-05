@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { resetMockApi, menuPage, blockAnalytics, waitForHydration } from './helpers/test-utils';
+import {
+  resetMockApi,
+  menuPage,
+  blockAnalytics,
+  waitForHydration,
+  openSearchOverlay,
+} from './helpers/test-utils';
 
 test.describe('Search', () => {
   test.beforeEach(async ({ page }) => {
@@ -11,11 +17,7 @@ test.describe('Search', () => {
     await page.goto(menuPage());
     await waitForHydration(page);
 
-    // Open the search overlay via the header search trigger button
-    await page.getByRole('button', { name: 'Zoeken' }).click();
-
-    // The search input should appear and be focusable
-    const searchInput = page.getByRole('searchbox', { name: 'Zoeken' });
+    const searchInput = await openSearchOverlay(page);
     await expect(searchInput).toBeVisible();
 
     // Type a query that matches multiple products (debounced 300ms)
@@ -35,9 +37,7 @@ test.describe('Search', () => {
     await page.goto(menuPage());
     await waitForHydration(page);
 
-    await page.getByRole('button', { name: 'Zoeken' }).click();
-
-    const searchInput = page.getByRole('searchbox', { name: 'Zoeken' });
+    const searchInput = await openSearchOverlay(page);
     await searchInput.fill('falafel');
 
     // Wait for results (300ms debounce + network)
@@ -55,9 +55,7 @@ test.describe('Search', () => {
     await page.goto(menuPage());
     await waitForHydration(page);
 
-    await page.getByRole('button', { name: 'Zoeken' }).click();
-
-    const searchInput = page.getByRole('searchbox', { name: 'Zoeken' });
+    const searchInput = await openSearchOverlay(page);
     await searchInput.fill('shawarma');
 
     const listbox = page.getByRole('listbox', { name: 'Zoeken' });
@@ -76,9 +74,7 @@ test.describe('Search', () => {
     await page.goto(menuPage());
     await waitForHydration(page);
 
-    await page.getByRole('button', { name: 'Zoeken' }).click();
-
-    const searchInput = page.getByRole('searchbox', { name: 'Zoeken' });
+    const searchInput = await openSearchOverlay(page);
     await searchInput.fill('xyznonexistent');
 
     // Wait for debounce + response, then check for empty state message (Dutch: "Geen resultaten gevonden")
@@ -92,9 +88,7 @@ test.describe('Search', () => {
     await page.goto(menuPage());
     await waitForHydration(page);
 
-    await page.getByRole('button', { name: 'Zoeken' }).click();
-
-    const searchInput = page.getByRole('searchbox', { name: 'Zoeken' });
+    const searchInput = await openSearchOverlay(page);
     await expect(searchInput).toBeVisible();
 
     // Type something, then press Escape

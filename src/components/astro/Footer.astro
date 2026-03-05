@@ -1,5 +1,6 @@
 ---
 import type { MerchantConfig } from '@/types/merchant';
+import { getMerchantDescription } from '@/types/merchant';
 import { t } from '@/i18n';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 const { merchant, lang } = Astro.props;
+const description = getMerchantDescription(merchant, lang);
 const socialEntries = Object.entries(merchant.social);
 
 // Fetch CMS pages from API for footer links
@@ -36,7 +38,7 @@ function displayHost(url: string): string {
       <h3 class="font-heading text-sm font-semibold uppercase tracking-wider text-foreground">
         {merchant.name}
       </h3>
-      <p class="mt-2 text-sm text-muted-foreground">{merchant.description}</p>
+      <p class="mt-2 text-sm text-muted-foreground">{description}</p>
       {
         merchant.website && (
           <a

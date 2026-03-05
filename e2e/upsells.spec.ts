@@ -87,7 +87,7 @@ test.describe('Upsells — post-add upsell step', () => {
 
     // Wait for the upsell step to appear
     await expect(modal.getByText('Toegevoegd')).toBeVisible({ timeout: 5_000 });
-    await expect(modal.getByText(shawarma.name)).toBeVisible();
+    await expect(modal.getByText(shawarma.title)).toBeVisible();
 
     // Suggestions should be shown
     await expect(modal.getByText('Vaak gecombineerd met')).toBeVisible();

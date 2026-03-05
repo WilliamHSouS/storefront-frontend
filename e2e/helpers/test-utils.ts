@@ -96,6 +96,28 @@ export async function blockAnalytics(page: Page) {
   );
 }
 
+/**
+ * Open the search overlay via the header search button.
+ *
+ * Retries clicking up to 3 times because the SearchBar island uses
+ * client:load — hydration may not be complete on the first click.
+ */
+export async function openSearchOverlay(page: Page) {
+  const searchInput = page.getByRole('searchbox', { name: 'Zoeken' });
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.getByRole('button', { name: 'Zoeken' }).click();
+    try {
+      await searchInput.waitFor({ state: 'visible', timeout: 2_000 });
+      return searchInput;
+    } catch {
+      // Island may not have hydrated yet — retry
+    }
+  }
+
+  return searchInput;
+}
+
 /** Collect page errors for assertions. */
 export function collectPageErrors(page: Page): string[] {
   const errors: string[] = [];

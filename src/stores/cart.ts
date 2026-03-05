@@ -1,5 +1,6 @@
 import { atom, computed } from 'nanostores';
 import type { StorefrontClient } from '@/lib/sdk-stub';
+import { normalizeCart } from '@/lib/normalize';
 import { getClient } from '@/lib/api';
 
 export interface Suggestion {
@@ -142,8 +143,9 @@ async function _doEnsureCart(client: StorefrontClient): Promise<string> {
       params: { path: { id: storedId } },
     });
     if (data) {
-      $cart.set(data as Cart);
-      return (data as Cart).id;
+      const cart = normalizeCart(data as Record<string, unknown>);
+      $cart.set(cart);
+      return cart.id;
     }
     if (error) {
       console.warn('Stored cart expired or invalid, creating new cart:', error);
@@ -155,7 +157,7 @@ async function _doEnsureCart(client: StorefrontClient): Promise<string> {
   if (!data) {
     throw new Error(`Failed to create cart: ${errorDetail(error)}`);
   }
-  const newCart = data as Cart;
+  const newCart = normalizeCart(data as Record<string, unknown>);
   $cart.set(newCart);
   setStoredCartId(newCart.id);
   return newCart.id;

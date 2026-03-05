@@ -2,7 +2,10 @@
   "slug": "brasserie-van-dam",
   "merchantId": "BRASSERIE_VD_01",
   "name": "Brasserie Van Dam",
-  "description": "Classic Dutch brasserie in the heart of Amsterdam.",
+  "description": {
+    "nl": "Klassieke Hollandse brasserie in het hart van Amsterdam.",
+    "en": "Classic Dutch brasserie in the heart of Amsterdam."
+  },
   "logo": "/merchants/brasserie-van-dam/logo.svg",
   "heroImage": "https://placehold.co/1200x400/1a1a1a/fff?text=Brasserie+Van+Dam",
   "favicon": "/merchants/brasserie-van-dam/favicon.ico",

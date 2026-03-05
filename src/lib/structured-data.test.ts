@@ -34,7 +34,7 @@ const merchant = {
 
 describe('generateRestaurantLD', () => {
   it('returns a Restaurant schema with correct fields', () => {
-    const ld = generateRestaurantLD(merchant, 'https://bar-sumac.poweredbysous.com');
+    const ld = generateRestaurantLD(merchant, 'https://bar-sumac.poweredbysous.com', 'nl');
     expect(ld['@context']).toBe('https://schema.org');
     expect(ld['@type']).toBe('Restaurant');
     expect(ld.name).toBe('Bar Sumac');
@@ -44,8 +44,22 @@ describe('generateRestaurantLD', () => {
     expect(ld.image).toBe('/merchants/bar-sumac/hero.jpg');
   });
 
+  it('resolves per-language description', () => {
+    const multiLangMerchant = {
+      ...merchant,
+      description: {
+        nl: 'Mediterraans geïnspireerde keuken',
+        en: 'Mediterranean-inspired kitchen',
+      },
+    };
+    const ldNl = generateRestaurantLD(multiLangMerchant, 'https://example.com', 'nl');
+    expect(ldNl.description).toBe('Mediterraans geïnspireerde keuken');
+    const ldEn = generateRestaurantLD(multiLangMerchant, 'https://example.com', 'en');
+    expect(ldEn.description).toBe('Mediterranean-inspired kitchen');
+  });
+
   it('includes address', () => {
-    const ld = generateRestaurantLD(merchant, 'https://example.com');
+    const ld = generateRestaurantLD(merchant, 'https://example.com', 'nl');
     expect(ld.address).toEqual({
       '@type': 'PostalAddress',
       streetAddress: 'Keizersgracht 123, 1015 Amsterdam',

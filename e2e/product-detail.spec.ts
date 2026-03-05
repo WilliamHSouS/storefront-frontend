@@ -26,7 +26,7 @@ test.describe('Product detail modal — open and close', () => {
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // Verify product info is displayed
-    await expect(modal.getByRole('heading', { name: shawarma.name })).toBeVisible();
+    await expect(modal.getByRole('heading', { name: shawarma.title })).toBeVisible();
     await expect(modal.getByText(shawarma.description)).toBeVisible();
     // Base price: €14.50 -> "€ 14,50" — use .first() to avoid matching the CTA button text
     await expect(modal.getByText('€ 14,50').first()).toBeVisible();

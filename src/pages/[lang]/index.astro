@@ -51,10 +51,10 @@ const productIds = allProducts.map((p) => String(p.id));
     lang={lang}
     canonicalUrl={`${Astro.url.origin}/${lang}/`}
   />
-  <StructuredData slot="head" type="restaurant" merchant={merchant} />
+  <StructuredData slot="head" type="restaurant" merchant={merchant} lang={lang} />
 
   <Header merchant={merchant} lang={lang} />
-  <HeroSection merchant={merchant} />
+  <HeroSection merchant={merchant} lang={lang} />
 
   <CategoryTabs client:idle categories={categories} />
 

@@ -28,11 +28,22 @@ export interface MerchantHours {
   close: string;
 }
 
+/**
+ * Resolve the merchant description for the given language.
+ * Handles both legacy plain-string descriptions and per-language maps.
+ */
+export function getMerchantDescription(merchant: MerchantConfig, lang: string): string {
+  const desc = merchant.description;
+  if (typeof desc === 'string') return desc;
+  return desc[lang] ?? desc[merchant.defaultLanguage] ?? Object.values(desc)[0] ?? '';
+}
+
 export interface MerchantConfig {
   slug: string;
   merchantId: string;
   name: string;
-  description: string;
+  /** Plain string (legacy) or per-language map, e.g. `{ nl: "...", en: "..." }`. */
+  description: string | Record<string, string>;
   logo: string;
   heroImage: string;
   favicon: string;

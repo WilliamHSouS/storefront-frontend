@@ -1,12 +1,15 @@
 ---
 import type { MerchantConfig } from '@/types/merchant';
+import { getMerchantDescription } from '@/types/merchant';
 import { responsiveImage } from '@/lib/image';
 
 interface Props {
   merchant: MerchantConfig;
+  lang: string;
 }
 
-const { merchant } = Astro.props;
+const { merchant, lang } = Astro.props;
+const description = getMerchantDescription(merchant, lang);
 const heroAttrs = merchant.heroImage
   ? responsiveImage(merchant.heroImage, [640, 960, 1280, 1920], '100vw', 80)
   : null;
@@ -53,7 +56,7 @@ const heroAttrs = merchant.heroImage
           {merchant.name}
         </h1>
         <p class="mt-0.5 text-sm text-muted-foreground">
-          {merchant.description}
+          {description}
         </p>
       </div>
     </div>

@@ -6,6 +6,8 @@
  * to know about the raw API shape.
  */
 
+import type { Cart, CartLineItem } from '@/stores/cart';
+
 /**
  * Extract the product ID from a URL slug.
  * Slugs use a `--` separator: `{name}--{id}` (e.g. "bitterballen--42", "falafel-wrap--prod-1").
@@ -224,4 +226,63 @@ export function flattenCategories(categories: Record<string, unknown>[]): Normal
   }
 
   return result;
+}
+
+/**
+ * Normalize a raw API cart response to the shape frontend components expect.
+ *
+ * Maps `options[].option_title` → `selected_options[].name` and
+ * `options[].price_modifier` → `selected_options[].price`, consistent
+ * with the boundary-normalization pattern used for products and categories.
+ */
+export function normalizeCart(raw: Record<string, unknown>): Cart {
+  const r = raw as Record<string, unknown>;
+  const lineItems = (r.line_items ?? []) as Array<Record<string, unknown>>;
+
+  return {
+    id: r.id as string,
+    line_items: lineItems.map((item): CartLineItem => {
+      const rawOptions = (item.options ?? []) as Array<Record<string, unknown>>;
+      const fallbackOptions = (item.selected_options ?? []) as Array<{
+        id: number | string;
+        name: string;
+        price: string;
+        quantity: number;
+      }>;
+
+      const selectedOptions =
+        rawOptions.length > 0
+          ? rawOptions.map((opt) => ({
+              id: (opt.option_id ?? opt.id) as number | string,
+              name: (opt.option_title ?? opt.name ?? '') as string,
+              group_name: (opt.option_group_title ?? opt.group_name) as string | undefined,
+              price: (opt.price_modifier ?? opt.price ?? '0') as string,
+              quantity: (opt.quantity ?? 1) as number,
+            }))
+          : fallbackOptions;
+
+      return {
+        id: item.id as string,
+        product_id: item.product_id as number | string,
+        product_title: item.product_title as string,
+        product_image: item.product_image as string | undefined,
+        quantity: item.quantity as number,
+        unit_price: item.unit_price as string,
+        line_total: item.line_total as string,
+        selected_options: selectedOptions,
+        discount: item.discount as CartLineItem['discount'],
+        notes: item.notes as string | undefined,
+      };
+    }),
+    cart_total: r.cart_total as string,
+    cart_savings: r.cart_savings as string | undefined,
+    item_count: r.item_count as number,
+    subtotal: r.subtotal as string | undefined,
+    tax_total: r.tax_total as string | undefined,
+    tax_included: r.tax_included as boolean | undefined,
+    shipping_cost: r.shipping_cost as string | undefined,
+    discount_amount: r.discount_amount as string | undefined,
+    promotion_discount_amount: r.promotion_discount_amount as string | undefined,
+    applied_discount: r.applied_discount as Cart['applied_discount'],
+  };
 }

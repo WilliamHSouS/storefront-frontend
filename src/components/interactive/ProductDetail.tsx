@@ -7,9 +7,9 @@ import {
   ensureCart,
   setStoredCartId,
   addSuggestionToCart,
-  type Cart,
   type Suggestion,
 } from '@/stores/cart';
+import { normalizeCart } from '@/lib/normalize';
 import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
@@ -45,7 +45,7 @@ interface AttributeValue {
   value_text: string;
   value_numeric: string | null;
   value_boolean: boolean | null;
-  selected_choices: Array<{ value: string }>;
+  selected_choices: Array<{ value: string; slug?: string }>;
 }
 
 interface ProductData {
@@ -348,7 +348,7 @@ export default function ProductDetail({ lang }: Props) {
       }
 
       if (data) {
-        const cartData = data as Cart;
+        const cartData = normalizeCart(data as Record<string, unknown>);
         $cart.set(cartData);
         if (cartData.id) setStoredCartId(cartData.id);
         if (suggestions.length > 0) {
@@ -503,6 +503,32 @@ export default function ProductDetail({ lang }: Props) {
                   </div>
                   <p class="mt-1 text-sm text-muted-foreground">{product.name}</p>
 
+                  {/* Attributes */}
+                  {product.attribute_values && product.attribute_values.length > 0 && (
+                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                      {product.attribute_values.map((attr) => {
+                        let display: string | null = null;
+                        if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
+                          const labels = attr.selected_choices
+                            .map((c) => c.value || c.slug?.replace(/_/g, ' ') || '')
+                            .filter(Boolean);
+                          display = labels.length > 0 ? labels.join(', ') : null;
+                        } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
+                          display = attr.value_boolean ? t('yes', lang) : t('no', lang);
+                        } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
+                          display = String(Math.round(Number(attr.value_numeric)));
+                        } else if (attr.value_text) {
+                          display = attr.value_text;
+                        }
+                        if (!display) return null;
+                        return (
+                          <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
+                            <span class="font-medium">{attr.attribute_name}:</span> {display}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                   {suggestions.length > 0 && (
                     <div class="mt-4">
                       <h3 class="text-sm font-semibold text-card-foreground">

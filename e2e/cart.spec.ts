@@ -38,7 +38,7 @@ test.describe('Cart — adding items', () => {
     // Click the Shawarma Bowl add button — has modifiers so opens modal
     const modal = await openProductDetailModal(page, shawarma.id);
     await expect(modal).toBeVisible({ timeout: 5_000 });
-    await expect(modal.getByRole('heading', { name: shawarma.name })).toBeVisible();
+    await expect(modal.getByRole('heading', { name: shawarma.title })).toBeVisible();
   });
 });
 
@@ -67,7 +67,7 @@ test.describe('Cart drawer — display and interaction', () => {
     const drawer = await openCartDrawer(page);
     await expect(drawer).toBeVisible({ timeout: 5_000 });
 
-    await expect(drawer.getByRole('heading', { name: falafel.name })).toBeVisible();
+    await expect(drawer.getByRole('heading', { name: falafel.title })).toBeVisible();
     // nl-NL formats EUR as "€ 8,50" — scope to the line item to avoid matching
     // the order total (which is also €8,50 for a single item)
     await expect(drawer.locator('li').first().getByText('€ 8,50')).toBeVisible();
