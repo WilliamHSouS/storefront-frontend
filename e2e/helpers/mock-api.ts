@@ -15,6 +15,7 @@ import {
 } from '../fixtures/products';
 import { aboutPage, contactPage } from '../fixtures/cms';
 import { emptyCart, type CartFixture } from '../fixtures/cart';
+import { allSurfaceMessages } from '../fixtures/comms';
 
 const PORT = 4322;
 const ALLOWED_ORIGIN = 'http://localhost:4321';
@@ -305,6 +306,19 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     state.cart.line_items = state.cart.line_items.filter((li) => li.id !== id);
     recalcCart(state.cart);
     json(res, state.cart);
+    return;
+  }
+
+  // ── Comms: active messages ──
+  if (method === 'GET' && path.startsWith('/api/v1/merchant-comms/widget/active/')) {
+    json(res, allSurfaceMessages());
+    return;
+  }
+
+  // ── Comms: events ingest (fire-and-forget) ──
+  if (method === 'POST' && path === '/api/v1/merchant-comms/widget/events/') {
+    await readBody(req); // consume body
+    json(res, { status: 'ok' }, 202);
     return;
   }
 
