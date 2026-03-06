@@ -5,6 +5,7 @@ import { $selectedProduct } from '@/stores/ui';
 import { getClient } from '@/lib/api';
 import { showToast } from '@/stores/toast';
 import { setCartItemQuantity } from '@/stores/cart-actions';
+import { normalizeCart } from '@/lib/normalize';
 import { t } from '@/i18n';
 import QuantitySelector from './QuantitySelector';
 
@@ -87,7 +88,7 @@ export default function AddToCartButton({
           showToast(t('toastAddToCartFailed', lang));
         }
       } else if (data) {
-        const cartData = data as typeof cart;
+        const cartData = normalizeCart(data as Record<string, unknown>);
         $cart.set(cartData);
         if (cartData?.id) setStoredCartId(cartData.id);
         // Open modal in upsell mode so suggestions are shown if available

@@ -27,6 +27,23 @@ export interface CartFixture {
   cart_total: string;
   cart_savings?: string;
   item_count: number;
+  subtotal?: string;
+  tax_total?: string;
+  tax_included?: boolean;
+  shipping_cost?: string;
+  discount_amount?: string;
+  promotion_discount_amount?: string;
+  applied_discount?: {
+    id: string;
+    code: string;
+    name: string;
+    discount_amount: string;
+  };
+  promotion?: {
+    id: number;
+    name: string;
+    discount_amount: string;
+  } | null;
 }
 
 export function emptyCart(): CartFixture {
@@ -93,6 +110,41 @@ export function cartWithMultipleItems(): CartFixture {
     ],
     cart_total: '31.50',
     item_count: 3,
+  };
+}
+
+export function cartWithModifiers(): CartFixture {
+  return {
+    id: 'cart-test-001',
+    line_items: [
+      {
+        id: 'li-1',
+        product_id: 'prod-2',
+        product_title: 'Shawarma Bowl',
+        product_image: 'https://images.example.com/shawarma-bowl.jpg',
+        quantity: 1,
+        unit_price: '14.50',
+        line_total: '16.50',
+        options: [
+          {
+            option_id: '201',
+            option_title: 'Regular',
+            option_group_title: 'Size',
+            price_modifier: '0.00',
+            quantity: 1,
+          },
+          {
+            option_id: '205',
+            option_title: 'Extra Cheese',
+            option_group_title: 'Extras',
+            price_modifier: '2.00',
+            quantity: 1,
+          },
+        ],
+      },
+    ],
+    cart_total: '16.50',
+    item_count: 1,
   };
 }
 

@@ -78,7 +78,7 @@ function readBody(req: IncomingMessage): Promise<string> {
 }
 
 function recalcCart(cart: CartFixture) {
-  let total = 0;
+  let subtotal = 0;
   let count = 0;
   for (const item of cart.line_items) {
     const modTotal = item.options.reduce(
@@ -87,11 +87,34 @@ function recalcCart(cart: CartFixture) {
     );
     const lineTotal = (parseFloat(item.unit_price) + modTotal) * item.quantity;
     item.line_total = lineTotal.toFixed(2);
-    total += lineTotal;
+    subtotal += lineTotal;
     count += item.quantity;
   }
-  cart.cart_total = total.toFixed(2);
+  cart.subtotal = subtotal.toFixed(2);
+  // Test approximation: 9% BTW tax-inclusive. Real backend uses per-product
+  // vat_rate and may use Stripe Tax or Avalara. This is sufficient for E2E.
+  const taxRate = 0.09;
+  cart.tax_total = ((subtotal * taxRate) / (1 + taxRate)).toFixed(2);
+  cart.tax_included = true;
+  cart.shipping_cost = cart.shipping_cost ?? '0.00';
+  const discount = parseFloat(cart.discount_amount ?? '0');
+  const promoDiscount = parseFloat(cart.promotion_discount_amount ?? '0');
+  cart.cart_total = (subtotal + parseFloat(cart.shipping_cost) - discount - promoDiscount).toFixed(
+    2,
+  );
   cart.item_count = count;
+
+  // Auto-apply promotions: Buy 2 Falafel Wraps get 1 free
+  const falafelItem = cart.line_items.find((li) => li.product_id === 'prod-1');
+  if (falafelItem && falafelItem.quantity >= 2) {
+    cart.promotion = {
+      id: 1,
+      name: 'Koop 2 Falafel Wraps, krijg 1 gratis!',
+      discount_amount: parseFloat(falafelItem.unit_price).toFixed(2),
+    };
+  } else {
+    cart.promotion = null;
+  }
 }
 
 // ── Product detail lookup ────────────────────────────────────────
@@ -247,15 +270,15 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
     const options = (body.options ?? body.modifiers ?? []).map(
       (m: { option_id: string; option_group_id?: string; quantity: number }) => {
-        // Look up modifier title/price from product details
         const detail = productDetails[product.id] as typeof shawarmaDetail | undefined;
         const allGroups = detail?.modifier_groups ?? [];
+        const optId = String(m.option_id);
         const allOpts = allGroups.flatMap((g) => g.options) ?? [];
-        const opt = allOpts.find((o) => o.id === m.option_id);
-        const group = allGroups.find((g) => g.options.some((o) => o.id === m.option_id));
+        const opt = allOpts.find((o) => String(o.id) === optId);
+        const group = allGroups.find((g) => g.options.some((o) => String(o.id) === optId));
         return {
           option_id: m.option_id,
-          option_title: opt?.title ?? String(m.option_id),
+          option_title: opt?.title ?? optId,
           option_group_title: group?.title ?? '',
           price_modifier: opt?.price_modifier ?? '0.00',
           quantity: m.quantity,
@@ -304,6 +327,100 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     const state = getCartState(req);
     const id = cartDeleteMatch[2];
     state.cart.line_items = state.cart.line_items.filter((li) => li.id !== id);
+    recalcCart(state.cart);
+    json(res, state.cart);
+    return;
+  }
+
+  // ── Promotions: eligible ──
+  if (method === 'POST' && path === '/api/v1/promotions/eligible/') {
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(await readBody(req));
+    } catch {
+      json(res, { detail: 'Invalid request body' }, 400);
+      return;
+    }
+    const cartItems =
+      (body.cart_items as Array<{ product_id: string; quantity: number; price: string }>) ?? [];
+    const eligible: unknown[] = [];
+
+    // Test promotion: Buy 2 Falafel Wraps get 1 free
+    const falafelItem = cartItems.find((i) => i.product_id === 'prod-1');
+    if (falafelItem && falafelItem.quantity >= 2) {
+      eligible.push({
+        id: 1,
+        name: 'Buy 2 Falafel Wraps, get 1 free!',
+        promotion_type: 'bogo',
+        benefit_type: 'free',
+        benefit_product_ids: ['prod-1'],
+        benefit_quantity: 1,
+        discount_amount: falafelItem.price,
+        is_best_deal: true,
+      });
+    }
+
+    json(res, {
+      eligible_promotions: eligible,
+      best_promotion_id: eligible.length > 0 ? 1 : null,
+    });
+    return;
+  }
+
+  // ── Cart: apply discount code ──
+  const cartDiscountApplyMatch = path.match(/^\/api\/v1\/cart\/([^/]+)\/apply-discount\/$/);
+  if (method === 'POST' && cartDiscountApplyMatch) {
+    const state = getCartState(req);
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(await readBody(req));
+    } catch {
+      json(res, { detail: 'Invalid request body' }, 400);
+      return;
+    }
+    const code = (body.code as string)?.toUpperCase();
+
+    const testDiscounts: Record<string, { id: string; name: string; type: string; value: number }> =
+      {
+        SAVE10: { id: 'disc-1', name: '10% Off', type: 'percentage', value: 10 },
+        FLAT5: { id: 'disc-2', name: '€5 Off', type: 'fixed_amount', value: 5 },
+        EXPIRED: { id: 'disc-3', name: 'Expired Code', type: 'percentage', value: 0 },
+      };
+
+    const discount = testDiscounts[code];
+    if (!discount) {
+      json(res, { detail: 'Invalid discount code' }, 400);
+      return;
+    }
+    if (code === 'EXPIRED') {
+      json(res, { detail: 'Discount code expired' }, 400);
+      return;
+    }
+
+    const subtotal = parseFloat(state.cart.subtotal ?? state.cart.cart_total);
+    const discountAmount =
+      discount.type === 'percentage'
+        ? (subtotal * discount.value) / 100
+        : Math.min(discount.value, subtotal);
+
+    state.cart.applied_discount = {
+      id: discount.id,
+      code,
+      name: discount.name,
+      discount_amount: discountAmount.toFixed(2),
+    };
+    state.cart.discount_amount = discountAmount.toFixed(2);
+    recalcCart(state.cart);
+    json(res, state.cart);
+    return;
+  }
+
+  // ── Cart: remove discount code ──
+  const cartDiscountRemoveMatch = path.match(/^\/api\/v1\/cart\/([^/]+)\/remove-discount\/$/);
+  if (method === 'DELETE' && cartDiscountRemoveMatch) {
+    const state = getCartState(req);
+    delete state.cart.applied_discount;
+    state.cart.discount_amount = '0.00';
     recalcCart(state.cart);
     json(res, state.cart);
     return;

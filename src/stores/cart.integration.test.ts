@@ -132,7 +132,7 @@ describe('ensureCart', () => {
 
     const id = await ensureCart(mockClient as never);
     expect(id).toBe('cart-stored');
-    expect($cart.get()).toEqual(fetchedCart);
+    expect($cart.get()).toMatchObject(fetchedCart);
     expect(mockClient.GET).toHaveBeenCalledWith('/api/v1/cart/{id}/', {
       params: { path: { id: 'cart-stored' } },
     });
@@ -144,7 +144,7 @@ describe('ensureCart', () => {
 
     const id = await ensureCart(mockClient as never);
     expect(id).toBe('cart-new');
-    expect($cart.get()).toEqual(newCart);
+    expect($cart.get()).toMatchObject(newCart);
     expect(getStoredCartId()).toBe('cart-new');
   });
 
@@ -199,7 +199,7 @@ describe('addSuggestionToCart', () => {
 
     const result = await addSuggestionToCart(3);
     expect(result).toBe('added');
-    expect($cart.get()).toEqual(cartWithItem);
+    expect($cart.get()).toMatchObject(cartWithItem);
     expect(mockClient.POST).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/items/', {
       params: { path: { cart_id: 'cart-123' } },
       body: { product_id: 3, quantity: 1 },

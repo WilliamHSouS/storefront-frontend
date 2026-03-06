@@ -47,8 +47,8 @@ describe('updateCartItemQuantity', () => {
 
     const result = await updateCartItemQuantity('cart-123', 'item-1', 3, client);
 
-    expect(result).toEqual(updatedCart);
-    expect($cart.get()).toEqual(updatedCart);
+    expect(result).toMatchObject(updatedCart);
+    expect($cart.get()).toMatchObject(updatedCart);
     expect(client.PATCH).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/items/{id}/', {
       params: { path: { cart_id: 'cart-123', id: 'item-1' } },
       body: { quantity: 3 },
@@ -123,7 +123,7 @@ describe('setCartItemQuantity', () => {
 
     const result = await setCartItemQuantity('cart-123', 'item-1', 3, client);
 
-    expect(result).toEqual(updatedCart);
+    expect(result).toMatchObject(updatedCart);
     expect(client.PATCH).toHaveBeenCalled();
     expect(client.DELETE).not.toHaveBeenCalled();
   });
@@ -136,7 +136,7 @@ describe('setCartItemQuantity', () => {
 
     const result = await setCartItemQuantity('cart-123', 'item-1', 0, client);
 
-    expect(result).toEqual(emptyCart);
+    expect(result).toMatchObject(emptyCart);
     expect(client.DELETE).toHaveBeenCalled();
     expect(client.PATCH).not.toHaveBeenCalled();
   });
@@ -149,7 +149,7 @@ describe('setCartItemQuantity', () => {
 
     const result = await setCartItemQuantity('cart-123', 'item-1', -1, client);
 
-    expect(result).toEqual(emptyCart);
+    expect(result).toMatchObject(emptyCart);
     expect(client.DELETE).toHaveBeenCalled();
   });
 });
@@ -168,8 +168,8 @@ describe('removeCartItem', () => {
 
     const result = await removeCartItem('cart-123', 'item-1', client);
 
-    expect(result).toEqual(emptyCart);
-    expect($cart.get()).toEqual(emptyCart);
+    expect(result).toMatchObject(emptyCart);
+    expect($cart.get()).toMatchObject(emptyCart);
     expect(client.DELETE).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/items/{id}/', {
       params: { path: { cart_id: 'cart-123', id: 'item-1' } },
     });

@@ -284,23 +284,31 @@ export default function ProductDetail({ lang }: Props) {
 
     $cartLoading.set(true);
     try {
-      const options: Array<{ option_id: number; option_group_id: number; quantity: number }> = [];
+      const options: Array<{
+        option_id: string | number;
+        option_group_id: string | number;
+        quantity: number;
+      }> = [];
 
       for (const group of product.modifier_groups ?? []) {
         const selected = selections[group.id] ?? [];
         const groupQtys = quantities[group.id] ?? {};
 
         for (const opt of group.options) {
+          // Preserve original ID types — the backend may use numeric or string IDs
+          const optId = /^\d+$/.test(opt.id) ? Number(opt.id) : opt.id;
+          const grpId = /^\d+$/.test(group.id) ? Number(group.id) : group.id;
+
           if (group.type === 'quantity' && (groupQtys[opt.id] ?? 0) > 0) {
             options.push({
-              option_id: Number(opt.id),
-              option_group_id: Number(group.id),
+              option_id: optId,
+              option_group_id: grpId,
               quantity: groupQtys[opt.id],
             });
           } else if (selected.includes(opt.id)) {
             options.push({
-              option_id: Number(opt.id),
-              option_group_id: Number(group.id),
+              option_id: optId,
+              option_group_id: grpId,
               quantity: 1,
             });
           }
