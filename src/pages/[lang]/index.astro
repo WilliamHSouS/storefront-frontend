@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import Header from '@/components/astro/Header.astro';
 import HeroSection from '@/components/astro/HeroSection.astro';
+import StickyNav from '@/components/astro/StickyNav.astro';
 import MenuSection from '@/components/astro/MenuSection.astro';
 import Footer from '@/components/astro/Footer.astro';
 import SEOHead from '@/components/astro/SEOHead.astro';
@@ -10,7 +10,6 @@ import { normalizeProduct } from '@/lib/normalize';
 import { fetchCollectionsOrCategories } from '@/lib/collections';
 
 // Interactive Preact islands
-import CategoryTabs from '@/components/interactive/CategoryTabs';
 import FreshnessProvider from '@/components/interactive/FreshnessProvider';
 
 const { merchant, lang, sdk } = Astro.locals;
@@ -53,10 +52,8 @@ const productIds = allProducts.map((p) => String(p.id));
   />
   <StructuredData slot="head" type="restaurant" merchant={merchant} lang={lang} />
 
-  <Header merchant={merchant} lang={lang} />
   <HeroSection merchant={merchant} lang={lang} />
-
-  <CategoryTabs client:idle categories={categories} />
+  <StickyNav categories={categories} merchant={merchant} lang={lang} />
 
   <main>
     {

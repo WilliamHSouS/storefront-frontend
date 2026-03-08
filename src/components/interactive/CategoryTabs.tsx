@@ -103,46 +103,40 @@ export default function CategoryTabs({ categories }: Props) {
   };
 
   return (
-    <div class="sticky top-14 z-30 border-b border-border bg-background">
-      <div class="mx-auto flex max-w-screen-xl items-center px-4">
-        <div
-          ref={scrollRef}
-          role="tablist"
-          aria-label="Menu"
-          class="relative flex flex-1 gap-1 overflow-x-auto scrollbar-none py-2"
+    <div
+      ref={scrollRef}
+      role="tablist"
+      aria-label="Menu"
+      class="relative flex flex-1 gap-2 overflow-x-auto scrollbar-none"
+    >
+      {/* Sliding indicator */}
+      <div
+        ref={indicatorRef}
+        class="absolute top-0 h-10 rounded-[14px] bg-primary z-0 transition-all duration-200"
+        aria-hidden="true"
+      />
+
+      {categories.map((cat, i) => (
+        <button
+          key={cat.id}
+          ref={(el) => {
+            if (el) tabRefs.current.set(String(cat.id), el);
+          }}
+          role="tab"
+          type="button"
+          aria-selected={activeCategory === String(cat.id)}
+          tabIndex={activeCategory === String(cat.id) ? 0 : -1}
+          onClick={() => handleTabClick(String(cat.id))}
+          onKeyDown={(e) => handleKeyDown(e, i)}
+          class={`relative z-10 shrink-0 whitespace-nowrap rounded-[14px] px-4 h-10 text-sm font-medium transition-colors duration-300 ${
+            activeCategory === String(cat.id)
+              ? 'text-primary-foreground'
+              : 'text-foreground hover:bg-foreground/5'
+          }`}
         >
-          {/* Sliding indicator */}
-          <div
-            ref={indicatorRef}
-            class="absolute bottom-2 left-0 h-8 rounded-md bg-accent transition-all duration-200"
-            aria-hidden="true"
-          />
-
-          {categories.map((cat, i) => (
-            <button
-              key={cat.id}
-              ref={(el) => {
-                if (el) tabRefs.current.set(String(cat.id), el);
-              }}
-              role="tab"
-              type="button"
-              aria-selected={activeCategory === String(cat.id)}
-              tabIndex={activeCategory === String(cat.id) ? 0 : -1}
-              onClick={() => handleTabClick(String(cat.id))}
-              onKeyDown={(e) => handleKeyDown(e, i)}
-              class={`relative z-10 shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                activeCategory === String(cat.id)
-                  ? 'text-accent-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Category drawer trigger — TODO: implement CategoryDrawer component */}
-      </div>
+          {cat.name}
+        </button>
+      ))}
     </div>
   );
 }
