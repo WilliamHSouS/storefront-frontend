@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from 'astro';
 import { loadMerchantConfig } from './merchants';
 import { resolveMerchantSlug } from './lib/resolve-merchant';
 import { createStorefrontClient } from './lib/sdk-stub';
+import { negotiateLanguage } from './lib/negotiate-language';
 
 const CACHEABLE_PATTERNS = [
   /^\/[a-z]{2}\/?$/, // menu page
@@ -63,10 +64,17 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   const restOfPath = pathMatch?.[2] ?? '/';
 
   if (!lang || !merchant.languages.includes(lang)) {
-    // Redirect to default language, preserving path + query
+    // Detect preferred language from Accept-Language header
+    const fallback = negotiateLanguage(
+      request.headers.get('accept-language') ?? '',
+      merchant.languages,
+      merchant.defaultLanguage,
+    );
+
+    // Redirect to best language, preserving path + query
     const targetPath = lang
-      ? `/${merchant.defaultLanguage}${restOfPath}${url.search}`
-      : `/${merchant.defaultLanguage}${url.pathname}${url.search}`;
+      ? `/${fallback}${restOfPath}${url.search}`
+      : `/${fallback}${url.pathname}${url.search}`;
     return redirect(targetPath);
   }
 

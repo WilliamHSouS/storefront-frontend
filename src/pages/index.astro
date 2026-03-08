@@ -1,25 +1,5 @@
 ---
-import { loadMerchantConfig } from '@/merchants';
-import { resolveMerchantSlug } from '@/lib/resolve-merchant';
-
-const hostname =
-  Astro.request.headers.get('x-forwarded-host') ?? new URL(Astro.request.url).hostname;
-const customDomains = process.env.CUSTOM_DOMAINS ?? import.meta.env.CUSTOM_DOMAINS;
-const defaultMerchant = process.env.DEFAULT_MERCHANT ?? import.meta.env.DEFAULT_MERCHANT;
-const slug = resolveMerchantSlug(hostname, customDomains, defaultMerchant);
-const merchant = loadMerchantConfig(slug);
-
-if (!merchant) {
-  return Astro.rewrite('/404');
-}
-
-const acceptLang = Astro.request.headers.get('accept-language') ?? '';
-const browserLangs = acceptLang
-  .split(',')
-  .map((part) => part.split(';')[0].trim().slice(0, 2).toLowerCase())
-  .filter(Boolean);
-
-const lang = browserLangs.find((l) => merchant.languages.includes(l)) ?? merchant.defaultLanguage;
-
-return Astro.redirect(`/${lang}/`);
+// Root path — middleware handles the redirect to /{lang}/ with
+// browser language detection. This file exists so Astro has a
+// route to match, preventing a 404 status on the redirect.
 ---
