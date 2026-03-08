@@ -26,7 +26,7 @@ export const products = [
     image: 'https://images.example.com/shawarma-bowl.jpg',
     category_id: 'cat-2',
     sold_out: false,
-    modifier_groups: [{ id: 'mod-size' }, { id: 'mod-extras' }],
+    modifier_groups: [{ id: '100' }, { id: '101' }],
   },
   {
     id: 'prod-3',

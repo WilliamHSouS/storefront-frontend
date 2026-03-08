@@ -23,6 +23,7 @@ export interface CartLineItem {
   selected_options?: Array<{
     id: number | string;
     name: string;
+    group_name?: string;
     price: string;
     quantity: number;
   }>;
@@ -40,6 +41,23 @@ export interface Cart {
   cart_total: string;
   cart_savings?: string;
   item_count: number;
+  subtotal?: string;
+  tax_total?: string;
+  tax_included?: boolean;
+  shipping_cost?: string;
+  discount_amount?: string;
+  promotion_discount_amount?: string;
+  applied_discount?: {
+    id: string;
+    code: string;
+    name: string;
+    discount_amount: string;
+  };
+  promotion?: {
+    id: number;
+    name: string;
+    discount_amount: string;
+  } | null;
 }
 
 export const $cart = atom<Cart | null>(null);
@@ -49,14 +67,35 @@ export const $itemCount = computed($cart, (cart) => cart?.item_count ?? 0);
 
 export const $cartTotal = computed($cart, (cart) => cart?.cart_total ?? '0.00');
 
+export interface EligiblePromotion {
+  id: number;
+  name: string;
+  promotion_type: string;
+  benefit_type: string;
+  benefit_product_ids?: string[];
+  benefit_quantity: number;
+  discount_amount: string;
+  is_best_deal: boolean;
+}
+
+export const $eligiblePromotions = atom<EligiblePromotion[]>([]);
+
 /** Extract a human-readable detail string from an SDK error (ApiError or Error). */
 export function errorDetail(error: unknown): string {
   if (!error || typeof error !== 'object') return 'Unknown error';
+  const e = error as Record<string, unknown>;
+  // SDK ApiError wraps the response body: { status, statusText, body: { detail: "..." } }
+  if (e.body && typeof e.body === 'object') {
+    const body = e.body as Record<string, unknown>;
+    if (typeof body.detail === 'string') return body.detail;
+  }
+  // Raw DRF-style response body: { detail: "..." }
+  if (typeof e.detail === 'string') return e.detail;
   if ('message' in error && typeof (error as Error).message === 'string')
     return (error as Error).message;
   if ('statusText' in error) {
-    const e = error as { status: number; statusText: string };
-    return `${e.status} ${e.statusText}`;
+    const err = error as { status: number; statusText: string };
+    return `${err.status} ${err.statusText}`;
   }
   return 'Unknown error';
 }
@@ -150,7 +189,7 @@ export async function addSuggestionToCart(
     body: { product_id: productId, quantity: 1 },
   });
   if (data) {
-    const cartData = data as Cart;
+    const cartData = normalizeCart(data as Record<string, unknown>);
     $cart.set(cartData);
     if (cartData.id) setStoredCartId(cartData.id);
     return 'added';

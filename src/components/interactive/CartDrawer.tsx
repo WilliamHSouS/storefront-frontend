@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/preact';
-import { useRef } from 'preact/hooks';
-import { $cart, $cartTotal } from '@/stores/cart';
-import type { CartLineItem as CartLineItemType } from '@/stores/cart';
+import { useRef, useEffect, useCallback } from 'preact/hooks';
+import { $cart, $cartTotal, $cartLoading, $eligiblePromotions } from '@/stores/cart';
+import type { CartLineItem as CartLineItemType, Cart } from '@/stores/cart';
 import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
@@ -10,8 +10,10 @@ import { t } from '@/i18n';
 import { optimizedImageUrl } from '@/lib/image';
 import QuantitySelector from './QuantitySelector';
 import CartSuggestions from './CartSuggestions';
-import { setCartItemQuantity } from '@/stores/cart-actions';
+import { setCartItemQuantity, checkPromotionEligibility } from '@/stores/cart-actions';
 import { showToast } from '@/stores/toast';
+import PromoBanner from './PromoBanner';
+import DiscountCodeInput from './DiscountCodeInput';
 
 /* ------------------------------------------------------------------ */
 /*  Shared sub-components (used by both inline and drawer modes)      */
@@ -52,9 +54,18 @@ function CartLineItem({
         <div>
           <h3 class="text-sm font-medium text-card-foreground">{item.product_title}</h3>
           {item.selected_options && item.selected_options.length > 0 && (
-            <p class="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-              {item.selected_options.map((m) => m.name).join(', ')}
-            </p>
+            <div class="mt-0.5 space-y-0.5">
+              {item.selected_options.map((opt) => (
+                <p key={String(opt.id)} class="text-xs text-muted-foreground">
+                  {opt.group_name ? `${opt.group_name}: ` : ''}
+                  {opt.name}
+                  {opt.quantity > 1 ? ` x${opt.quantity}` : ''}
+                  {parseFloat(opt.price) > 0
+                    ? ` (+${formatPrice(opt.price, currency, locale)})`
+                    : ''}
+                </p>
+              ))}
+            </div>
           )}
         </div>
         <div class="mt-1 flex items-center justify-between">
@@ -80,25 +91,91 @@ function CartLineItem({
 }
 
 interface CartFooterProps {
-  savings: string | null;
+  cart: Cart;
   cartTotal: string;
   currency: string;
   locale: string;
   lang: string;
-  /** Optional inline style for the footer wrapper (e.g. safe-area padding). */
+  loading: boolean;
   style?: Record<string, string>;
 }
 
-function CartFooter({ savings, cartTotal, currency, locale, lang, style }: CartFooterProps) {
+function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }: CartFooterProps) {
+  const subtotal = cart.subtotal;
+  const shipping = cart.shipping_cost;
+  const taxTotal = cart.tax_total;
+  const taxIncluded = cart.tax_included ?? true;
+  const discountNum = cart.discount_amount ? parseFloat(cart.discount_amount) : 0;
+  const promoNum = cart.promotion_discount_amount ? parseFloat(cart.promotion_discount_amount) : 0;
+  const shippingNum = shipping ? parseFloat(shipping) : 0;
+
+  // "You save" only for product-level savings (not code/promo discounts)
+  const hasDiscounts = discountNum > 0 || promoNum > 0;
+  const savings =
+    !hasDiscounts && cart.cart_savings && parseFloat(cart.cart_savings) > 0
+      ? cart.cart_savings
+      : null;
+
   return (
     <div class="border-t border-border px-4 py-3" style={style}>
+      <DiscountCodeInput cart={cart} lang={lang} />
+
+      {/* Subtotal */}
+      {subtotal && (
+        <div class="mb-1 flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">{t('subtotal', lang)}</span>
+          <span class="text-card-foreground">{formatPrice(subtotal, currency, locale)}</span>
+        </div>
+      )}
+
+      {/* Shipping */}
+      {shipping && (
+        <div class="mb-1 flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">{t('shipping', lang)}</span>
+          <span class="text-card-foreground">
+            {shippingNum === 0 ? t('shippingFree', lang) : formatPrice(shipping, currency, locale)}
+          </span>
+        </div>
+      )}
+
+      {/* Discount code savings */}
+      {discountNum > 0 && (
+        <div class="mb-1 flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">{t('discount', lang)}</span>
+          <span class="font-medium text-destructive">
+            -{formatPrice(cart.discount_amount!, currency, locale)}
+          </span>
+        </div>
+      )}
+
+      {/* Promotion savings */}
+      {promoNum > 0 && (
+        <div class="mb-1 flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">{t('promotion', lang)}</span>
+          <span class="font-medium text-destructive">
+            -{formatPrice(cart.promotion_discount_amount!, currency, locale)}
+          </span>
+        </div>
+      )}
+
+      {/* You save (product-level only -- hidden when code/promo discounts are active) */}
       {savings && (
-        <div class="mb-2 flex items-center justify-between text-sm">
+        <div class="mb-1 flex items-center justify-between text-sm">
           <span class="text-muted-foreground">{t('youSave', lang)}</span>
           <span class="font-medium text-destructive">{formatPrice(savings, currency, locale)}</span>
         </div>
       )}
-      <div class="mb-3 flex items-center justify-between">
+
+      {/* Tax */}
+      {taxTotal && (
+        <div class="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+          <span>{taxIncluded ? t('taxIncluded', lang) : t('tax', lang)}</span>
+          <span>{formatPrice(taxTotal, currency, locale)}</span>
+        </div>
+      )}
+
+      {/* Total */}
+      <div class="mb-3 flex items-center justify-between border-t border-border pt-2">
         <span class="text-sm font-medium text-card-foreground">{t('orderTotal', lang)}</span>
         <span class="text-lg font-bold text-card-foreground">
           {formatPrice(cartTotal, currency, locale)}
@@ -107,7 +184,8 @@ function CartFooter({ savings, cartTotal, currency, locale, lang, style }: CartF
       <CartSuggestions lang={lang} />
       <a
         href={`/${lang}/checkout`}
-        class="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+        class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+        aria-disabled={loading}
       >
         {t('nextCheckout', lang)}
       </a>
@@ -132,10 +210,41 @@ export default function CartDrawer({ lang, inline = false }: Props) {
   const merchant = useStore($merchant);
   const drawerRef = useRef<HTMLDivElement>(null);
 
+  const loading = useStore($cartLoading);
+  const eligiblePromotions = useStore($eligiblePromotions);
+
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
 
-  const close = () => $isCartOpen.set(false);
+  // Stable fingerprint of cart contents — catches product swaps at same price/count
+  const cartFingerprint =
+    cart?.line_items.map((li) => `${li.product_id}:${li.quantity}`).join(',') ?? '';
+
+  // Check promotion eligibility when cart changes (debounced + cancellable)
+  useEffect(() => {
+    if (!cart || cart.line_items.length === 0) {
+      $eligiblePromotions.set([]);
+      return;
+    }
+
+    // Backend already applied a promotion — no need to check eligibility
+    if (cart.promotion) {
+      $eligiblePromotions.set([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      checkPromotionEligibility(cart, undefined, controller.signal).catch(() => {});
+    }, 300);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [cartFingerprint, cart?.promotion?.id]);
+
+  const close = useCallback(() => $isCartOpen.set(false), []);
 
   // Skip focus trap when inline — the page itself handles focus
   useFocusTrap(drawerRef, !inline && isOpen, close);
@@ -172,14 +281,14 @@ export default function CartDrawer({ lang, inline = false }: Props) {
   if (!inline && !isOpen) return null;
 
   const lineItems = cart?.line_items ?? [];
-  const savings =
-    cart?.cart_savings && parseFloat(cart.cart_savings) > 0 ? cart.cart_savings : null;
 
   // Inline mode: render directly without overlay/modal chrome
   if (inline) {
     return (
       <div ref={drawerRef}>
-        <div class="px-4 py-3">
+        <div
+          class={`px-4 py-3 transition-opacity duration-150 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+        >
           {lineItems.length === 0 ? (
             <div class="py-8 text-center">
               <p class="text-sm text-muted-foreground">{t('emptyCart', lang)}</p>
@@ -191,28 +300,38 @@ export default function CartDrawer({ lang, inline = false }: Props) {
               </a>
             </div>
           ) : (
-            <ul class="divide-y divide-border">
-              {lineItems.map((item) => (
-                <CartLineItem
-                  key={item.id}
-                  item={item}
-                  currency={currency}
-                  locale={locale}
+            <>
+              {lineItems.length > 0 && (
+                <PromoBanner
+                  promotion={cart?.promotion}
+                  eligiblePromotions={eligiblePromotions}
                   lang={lang}
-                  onUpdateQuantity={handleUpdateQuantity}
-                  onRemove={handleRemove}
                 />
-              ))}
-            </ul>
+              )}
+              <ul class="divide-y divide-border">
+                {lineItems.map((item) => (
+                  <CartLineItem
+                    key={item.id}
+                    item={item}
+                    currency={currency}
+                    locale={locale}
+                    lang={lang}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemove={handleRemove}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </div>
         {lineItems.length > 0 && (
           <CartFooter
-            savings={savings}
+            cart={cart!}
             cartTotal={cartTotal}
             currency={currency}
             locale={locale}
             lang={lang}
+            loading={loading}
           />
         )}
       </div>
@@ -262,7 +381,10 @@ export default function CartDrawer({ lang, inline = false }: Props) {
         </div>
 
         {/* Body */}
-        <div class="overflow-y-auto px-4 py-3" style={{ maxHeight: 'calc(85vh - 140px)' }}>
+        <div
+          class={`overflow-y-auto px-4 py-3 transition-opacity duration-150 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+          style={{ maxHeight: 'calc(85vh - 140px)' }}
+        >
           {lineItems.length === 0 ? (
             <div class="py-8 text-center">
               <p class="text-sm text-muted-foreground">{t('emptyCart', lang)}</p>
@@ -275,30 +397,40 @@ export default function CartDrawer({ lang, inline = false }: Props) {
               </button>
             </div>
           ) : (
-            <ul class="divide-y divide-border">
-              {lineItems.map((item) => (
-                <CartLineItem
-                  key={item.id}
-                  item={item}
-                  currency={currency}
-                  locale={locale}
+            <>
+              {lineItems.length > 0 && (
+                <PromoBanner
+                  promotion={cart?.promotion}
+                  eligiblePromotions={eligiblePromotions}
                   lang={lang}
-                  onUpdateQuantity={handleUpdateQuantity}
-                  onRemove={handleRemove}
                 />
-              ))}
-            </ul>
+              )}
+              <ul class="divide-y divide-border">
+                {lineItems.map((item) => (
+                  <CartLineItem
+                    key={item.id}
+                    item={item}
+                    currency={currency}
+                    locale={locale}
+                    lang={lang}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemove={handleRemove}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </div>
 
         {/* Footer */}
         {lineItems.length > 0 && (
           <CartFooter
-            savings={savings}
+            cart={cart!}
             cartTotal={cartTotal}
             currency={currency}
             locale={locale}
             lang={lang}
+            loading={loading}
             style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
           />
         )}

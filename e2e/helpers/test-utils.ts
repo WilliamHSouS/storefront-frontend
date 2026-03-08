@@ -155,6 +155,16 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   );
   await addButton.click();
   await responsePromise;
+
+  // Dismiss the upsell dialog if it appears (added by upsells feature).
+  // The dialog has "Klaar" and "Bekijk winkelwagen" buttons; pressing Escape
+  // is the most reliable way to close it without side effects.
+  const upsellDialog = page.getByRole('dialog').filter({ hasText: 'Toegevoegd' });
+  await upsellDialog.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
+  if (await upsellDialog.isVisible()) {
+    await page.keyboard.press('Escape');
+    await upsellDialog.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
+  }
 }
 
 /**

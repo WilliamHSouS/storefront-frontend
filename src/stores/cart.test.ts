@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { $cart, ensureCart, getStoredCartId, setStoredCartId } from './cart';
+import { $cart, ensureCart, getStoredCartId, setStoredCartId, errorDetail } from './cart';
 import type { Cart } from './cart';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 
@@ -166,6 +166,37 @@ describe('ensureCart', () => {
     expect(id2).toBe('dedup-cart');
     // Only one POST call should have been made
     expect(client.POST).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('errorDetail', () => {
+  it('extracts detail from SDK ApiError with body.detail', () => {
+    expect(
+      errorDetail({
+        status: 400,
+        statusText: 'Bad Request',
+        body: { detail: 'Discount code expired' },
+      }),
+    ).toBe('Discount code expired');
+  });
+
+  it('extracts detail from raw DRF error', () => {
+    expect(errorDetail({ detail: 'Invalid discount code' })).toBe('Invalid discount code');
+  });
+
+  it('falls back to status + statusText', () => {
+    expect(errorDetail({ status: 500, statusText: 'Internal Server Error' })).toBe(
+      '500 Internal Server Error',
+    );
+  });
+
+  it('extracts message from Error objects', () => {
+    expect(errorDetail(new Error('Network failure'))).toBe('Network failure');
+  });
+
+  it('returns Unknown error for null/undefined', () => {
+    expect(errorDetail(null)).toBe('Unknown error');
+    expect(errorDetail(undefined)).toBe('Unknown error');
   });
 });
 

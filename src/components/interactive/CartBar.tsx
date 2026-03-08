@@ -1,11 +1,12 @@
 import { useStore } from '@nanostores/preact';
 import { useEffect } from 'preact/hooks';
-import { $cart, $itemCount, $cartTotal, getStoredCartId, type Cart } from '@/stores/cart';
+import { $cart, $itemCount, $cartTotal, getStoredCartId } from '@/stores/cart';
 import { $isCartOpen, $isCategoryDrawerOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { t } from '@/i18n';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
+import { normalizeCart } from '@/lib/normalize';
 
 interface Props {
   lang: string;
@@ -23,7 +24,7 @@ export default function CartBar({ lang }: Props) {
         params: { path: { id: cartId } },
       })
       .then(({ data }) => {
-        if (data) $cart.set(data as Cart);
+        if (data) $cart.set(normalizeCart(data as Record<string, unknown>));
       })
       .catch(() => {
         /* cart may have expired */
