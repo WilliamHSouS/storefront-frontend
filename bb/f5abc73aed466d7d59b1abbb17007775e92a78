@@ -1,0 +1,36 @@
+src/merchants/bar-sumac.json
+  bef1c4ca0cbf7e5a 48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "bbf5abc73aed466d7d59b1abbb17007775e92a78",
+  "prompts": {
+    "0bbaa7408bd77114": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4af36f00-8a5c-4c91-b8f6-527112f3a778",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 914,
+      "overriden_lines": 0
+    },
+    "bef1c4ca0cbf7e5a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e93964b8-c387-44ab-b1ae-79b42e95d05c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
