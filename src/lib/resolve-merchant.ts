@@ -8,7 +8,7 @@ const PLATFORM_SUFFIXES = ['.poweredbysous.com', '.poweredbysous.localhost'];
  *  - Local dev:        bar-sumac.poweredbysous.localhost:4321 → "bar-sumac"
  *  - Vercel preview:   bar-sumac--branch.vercel.app       → "bar-sumac"
  *  - Custom domain:    barsumac.nl                        → looked up via customDomainsJson
- *  - Fallback:         uses defaultMerchant               → for plain localhost / CI
+ *  - Fallback:         uses defaultMerchant               → for plain localhost / CI / Vercel
  *
  * Pure function — all env values passed as parameters for testability.
  */
@@ -38,5 +38,5 @@ export function resolveMerchantSlug(
   }
 
   // Bare localhost / unknown host: fall back to default
-  return defaultMerchant || 'bar-sumac';
+  return defaultMerchant || 'demo-restaurant';
 }

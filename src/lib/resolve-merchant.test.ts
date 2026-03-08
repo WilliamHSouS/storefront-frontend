@@ -27,7 +27,7 @@ describe('resolveMerchantSlug', () => {
   });
 
   it('handles malformed CUSTOM_DOMAINS JSON gracefully', () => {
-    expect(resolveMerchantSlug('barsumac.nl', 'not-json')).toBe('bar-sumac');
+    expect(resolveMerchantSlug('barsumac.nl', 'not-json')).toBe('demo-restaurant');
   });
 
   it('logs a warning when CUSTOM_DOMAINS JSON is malformed', () => {
@@ -41,7 +41,7 @@ describe('resolveMerchantSlug', () => {
     expect(resolveMerchantSlug('localhost:4321', '{}', 'test-merchant')).toBe('test-merchant');
   });
 
-  it('falls back to bar-sumac when no DEFAULT_MERCHANT', () => {
-    expect(resolveMerchantSlug('localhost:4321')).toBe('bar-sumac');
+  it('falls back to demo-restaurant when no DEFAULT_MERCHANT', () => {
+    expect(resolveMerchantSlug('localhost:4321')).toBe('demo-restaurant');
   });
 });
