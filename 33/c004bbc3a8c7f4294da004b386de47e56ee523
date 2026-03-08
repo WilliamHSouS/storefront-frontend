@@ -1,0 +1,23 @@
+src/components/astro/ProductCard.astro
+  0bbaa7408bd77114 49,57,61-68,72,94-96,98-99,105-108,128,137-138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "33c004bbc3a8c7f4294da004b386de47e56ee523",
+  "prompts": {
+    "0bbaa7408bd77114": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4af36f00-8a5c-4c91-b8f6-527112f3a778",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 944,
+      "overriden_lines": 0
+    }
+  }
+}
