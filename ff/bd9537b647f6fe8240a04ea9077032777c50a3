@@ -1,0 +1,23 @@
+src/lib/sdk-stub.ts
+  bef1c4ca0cbf7e5a 79,81,83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "ffbd9537b647f6fe8240a04ea9077032777c50a3",
+  "prompts": {
+    "bef1c4ca0cbf7e5a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e93964b8-c387-44ab-b1ae-79b42e95d05c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
