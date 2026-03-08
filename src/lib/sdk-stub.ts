@@ -4,6 +4,9 @@
  * The real SDK returns openapi-fetch's `{ data?, error?, response }` shape.
  * This wrapper adapts responses to the `ApiResult` discriminated union that
  * all consumer code already relies on, so zero call-site changes are needed.
+ *
+ * When an `hmacSecret` is provided, write requests (POST/PATCH/PUT/DELETE) are
+ * signed with HMAC-SHA256 via the Web Crypto API / Node crypto module.
  */
 
 import { createStorefrontClient as createRealClient } from '@poweredbysous/storefront-sdk';
@@ -40,7 +43,48 @@ export interface CreateClientOptions {
   vendorId: string;
   language: string;
   token?: string;
+  hmacSecret?: string;
   fetch?: typeof globalThis.fetch;
+}
+
+const WRITE_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
+
+async function computeHmac(body: string, secret: string): Promise<string> {
+  if (typeof globalThis.crypto?.subtle !== 'undefined') {
+    // Browser / Node 18+ with Web Crypto
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(body));
+    return Array.from(new Uint8Array(sig))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  // Node.js fallback (SSR)
+  const { createHmac } = await import('node:crypto');
+  return createHmac('sha256', secret).update(body).digest('hex');
+}
+
+function createSigningFetch(
+  baseFetch: typeof globalThis.fetch,
+  secret: string,
+): typeof globalThis.fetch {
+  return async (input, init?) => {
+    const method = (init?.method ?? 'GET').toUpperCase();
+    if (WRITE_METHODS.has(method) && init?.body != null) {
+      const bodyStr = typeof init.body === 'string' ? init.body : JSON.stringify(init.body);
+      const signature = await computeHmac(bodyStr, secret);
+      const headers = new Headers(init.headers);
+      headers.set('X-Vendor-Signature', signature);
+      return baseFetch(input, { ...init, headers });
+    }
+    return baseFetch(input, init);
+  };
 }
 
 /** Adapt openapi-fetch's `{ data?, error?, response }` to our `ApiResult` union. */
@@ -73,12 +117,17 @@ function wrapCall(promise: Promise<RawSdkResponse>): Promise<ApiResult> {
 }
 
 export function createStorefrontClient(options: CreateClientOptions): StorefrontClient {
+  const baseFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
+  const fetchFn = options.hmacSecret
+    ? createSigningFetch(baseFetch, options.hmacSecret)
+    : baseFetch;
+
   const realClient = createRealClient({
     baseUrl: options.baseUrl,
     vendorId: options.vendorId,
     language: options.language,
     token: options.token,
-    fetch: options.fetch,
+    fetch: fetchFn,
   });
 
   /* eslint-disable @typescript-eslint/no-explicit-any -- intentional: shim erases strict OpenAPI path-literal types */
