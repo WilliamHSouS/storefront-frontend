@@ -1,0 +1,25 @@
+src/lib/resolve-merchant.ts
+  bef1c4ca0cbf7e5a 11,41
+src/lib/resolve-merchant.test.ts
+  bef1c4ca0cbf7e5a 30,44-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "0d44d5f6af7d123e9c43a0a2ef8aba48d3b6aa2f",
+  "prompts": {
+    "bef1c4ca0cbf7e5a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e93964b8-c387-44ab-b1ae-79b42e95d05c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 5,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
