@@ -1,0 +1,25 @@
+public/merchants/bar-sumac/logo.svg
+  bef1c4ca0cbf7e5a 1-4
+vercel.json
+  bef1c4ca0cbf7e5a 5,9,11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "fe0e0181985354cc34a462a81482eba481472794",
+  "prompts": {
+    "bef1c4ca0cbf7e5a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e93964b8-c387-44ab-b1ae-79b42e95d05c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 4,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
