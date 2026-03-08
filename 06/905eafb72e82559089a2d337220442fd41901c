@@ -1,0 +1,27 @@
+src/components/interactive/CategoryTabs.tsx
+  0bbaa7408bd77114 106,110,115,131-135,139
+src/components/astro/StickyNav.astro
+  0bbaa7408bd77114 1-35
+src/pages/[lang]/index.astro
+  0bbaa7408bd77114 4,56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "06905eafb72e82559089a2d337220442fd41901c",
+  "prompts": {
+    "0bbaa7408bd77114": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4af36f00-8a5c-4c91-b8f6-527112f3a778",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 89,
+      "total_deletions": 46,
+      "accepted_lines": 977,
+      "overriden_lines": 0
+    }
+  }
+}
