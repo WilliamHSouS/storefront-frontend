@@ -11,6 +11,7 @@ import SearchBar from '@/components/interactive/SearchBar';
 import Toast from '@/components/interactive/Toast';
 import MerchantComms from '@/components/interactive/MerchantComms';
 import { FulfillmentOverlay } from '@/components/interactive/FulfillmentOverlay';
+import { DeliveryBanner } from '@/components/interactive/DeliveryBanner';
 import type { CommsMessage } from '@/stores/comms';
 
 interface Props {
@@ -85,6 +86,7 @@ let commsMessages: CommsMessage[] = [];
       )
     }
     <MerchantComms client:idle lang={langValue} messages={commsMessages} />
+    <DeliveryBanner client:idle lang={langValue} />
 
     <slot />
 
