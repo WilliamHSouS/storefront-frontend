@@ -1,0 +1,27 @@
+src/lib/normalize.ts
+  c60b2abb423b2d10 295
+src/stores/cart.ts
+  c60b2abb423b2d10 48,64-77
+src/lib/normalize.test.ts
+  c60b2abb423b2d10 5,497-538
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "4287802593431d824e4cd672190464ead504f422",
+  "prompts": {
+    "c60b2abb423b2d10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "886378c5-2fbb-464e-8998-3466bf4f30f6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 59,
+      "total_deletions": 0,
+      "accepted_lines": 2644,
+      "overriden_lines": 0
+    }
+  }
+}
