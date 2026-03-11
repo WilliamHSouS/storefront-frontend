@@ -1,0 +1,29 @@
+src/lib/collections.test.ts
+  c60b2abb423b2d10 133,146-148
+lighthouserc.json
+  c60b2abb423b2d10 4
+package.json
+  c60b2abb423b2d10 64
+.github/workflows/preview.yml
+  c60b2abb423b2d10 34-37,41-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "19a435a2df08cff716cb0cec6730e42ac2c8b362",
+  "prompts": {
+    "c60b2abb423b2d10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "886378c5-2fbb-464e-8998-3466bf4f30f6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 5,
+      "accepted_lines": 2599,
+      "overriden_lines": 0
+    }
+  }
+}
