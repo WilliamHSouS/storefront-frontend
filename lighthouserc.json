@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "url": ["${LHCI_TARGET_URL}/nl/"],
+      "url": [],
       "numberOfRuns": 3,
       "settings": {
         "preset": "perf",
