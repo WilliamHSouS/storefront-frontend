@@ -1,0 +1,38 @@
+src/components/interactive/AddressBar.tsx
+  deff22980a62bb2f 139-141,143-146,152,158,160-161,191,198-199
+src/stores/address-actions.ts
+  c60b2abb423b2d10 122-124,127-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "d2df86d7d6c4cac9369a2ab0e3092c3e8a644819",
+  "prompts": {
+    "c60b2abb423b2d10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "886378c5-2fbb-464e-8998-3466bf4f30f6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 10,
+      "accepted_lines": 2598,
+      "overriden_lines": 0
+    },
+    "deff22980a62bb2f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d8e298e-12a0-4b98-b636-3de6587c19cf",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 49,
+      "total_deletions": 42,
+      "accepted_lines": 18,
+      "overriden_lines": 0
+    }
+  }
+}
