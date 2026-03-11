@@ -1,0 +1,36 @@
+lighthouserc.json
+  c60b2abb423b2d10 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "ca081ce4193848e3e6b5058a5c0287e9c4d839d6",
+  "prompts": {
+    "c60b2abb423b2d10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "886378c5-2fbb-464e-8998-3466bf4f30f6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 2586,
+      "overriden_lines": 0
+    },
+    "f0d0888ce843d7ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e44f6c9b-660d-41fa-8860-e9e8259e606e",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 3,
+      "accepted_lines": 243,
+      "overriden_lines": 0
+    }
+  }
+}
