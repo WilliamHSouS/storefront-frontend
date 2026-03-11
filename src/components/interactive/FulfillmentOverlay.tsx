@@ -160,7 +160,10 @@ async function fetchAndApplyFulfillment(
     for (const product of r.results as Array<Record<string, unknown>>) {
       fulfillmentMap.set(String(product.id), {
         productId: String(product.id),
-        availableFulfillmentTypes: (product.available_fulfillment_types as string[]) ?? [],
+        availableFulfillmentTypes:
+          (product.address_fulfillment_types as string[]) ??
+          (product.available_fulfillment_types as string[]) ??
+          [],
         pickupOnly: product.pickup_only === true,
       });
     }

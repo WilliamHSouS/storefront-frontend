@@ -10,9 +10,11 @@ describe('DeliveryBanner', () => {
     $addressEligibility.set(null);
   });
 
-  it('renders nothing when no address is set', () => {
+  it('renders empty placeholder when no address is set', () => {
     const { container } = render(<DeliveryBanner lang="en" />);
-    expect(container.innerHTML).toBe('');
+    const banner = container.querySelector('[data-delivery-banner]');
+    expect(banner).toBeTruthy();
+    expect(banner!.textContent).toBe('');
   });
 
   it('shows delivery unavailable message', () => {

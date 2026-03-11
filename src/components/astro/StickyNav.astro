@@ -3,6 +3,7 @@ import type { MerchantConfig } from '@/types/merchant';
 import { t } from '@/i18n';
 import CategoryTabs from '@/components/interactive/CategoryTabs';
 import CartBadge from '@/components/interactive/CartBadge';
+import { AddressBar } from '@/components/interactive/AddressBar';
 
 interface Props {
   categories: { id: string | number; name: string }[];
@@ -16,6 +17,8 @@ const { categories, merchant: _merchant, lang } = Astro.props;
 <div class="sticky top-0 z-30 bg-background pt-2 pb-3 sm:pt-3 sm:pb-4">
   <div class="mx-auto flex max-w-[1160px] items-center gap-3 px-4 sm:px-6 lg:px-8">
     <CategoryTabs client:idle categories={categories} />
+
+    <AddressBar client:idle lang={lang} />
 
     <div class="flex items-center gap-1">
       <button
