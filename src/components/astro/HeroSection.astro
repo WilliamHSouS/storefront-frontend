@@ -2,6 +2,7 @@
 import type { MerchantConfig } from '@/types/merchant';
 import { getMerchantDescription } from '@/types/merchant';
 import { responsiveImage } from '@/lib/image';
+import LanguageSwitcher from './LanguageSwitcher.astro';
 
 interface Props {
   merchant: MerchantConfig;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 const { merchant, lang } = Astro.props;
+const currentPath = Astro.url.pathname;
 const description = getMerchantDescription(merchant, lang);
 const heroAttrs = merchant.heroImage
   ? responsiveImage(merchant.heroImage, [640, 960, 1280, 1920], '100vw', 80)
@@ -83,7 +85,7 @@ const closeTime = todayHours?.close ?? null;
       </p>
     </div>
 
-    {/* Meta: location + hours */}
+    {/* Meta: location + hours + language */}
     <div class="mt-3 flex items-center gap-4 pb-4 text-muted-foreground sm:pb-5">
       <span class="inline-flex items-center gap-1.5 text-xs sm:text-sm">
         <svg
@@ -123,6 +125,7 @@ const closeTime = todayHours?.close ?? null;
           </span>
         )
       }
+      <LanguageSwitcher lang={lang} languages={merchant.languages} currentPath={currentPath} />
     </div>
   </div>
 </section>

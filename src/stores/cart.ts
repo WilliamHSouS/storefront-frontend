@@ -2,6 +2,7 @@ import { atom, computed } from 'nanostores';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 import { normalizeCart } from '@/lib/normalize';
 import { getClient } from '@/lib/api';
+import { $addressCoords } from '@/stores/address';
 
 export interface Suggestion {
   id: number;
@@ -45,6 +46,7 @@ export interface Cart {
   tax_total?: string;
   tax_included?: boolean;
   shipping_cost?: string;
+  shipping_estimate?: ShippingEstimate;
   discount_amount?: string;
   promotion_discount_amount?: string;
   applied_discount?: {
@@ -58,6 +60,20 @@ export interface Cart {
     name: string;
     discount_amount: string;
   } | null;
+}
+
+export interface ShippingEstimateGroup {
+  provider_name: string;
+  fulfillment_type: string;
+  status: 'quoted' | 'calculated' | 'pending' | 'unavailable';
+  estimated_cost: string | null;
+  items: string[];
+}
+
+export interface ShippingEstimate {
+  groups: ShippingEstimateGroup[];
+  total_shipping: string | null;
+  ships_in_parts: boolean;
 }
 
 export const $cart = atom<Cart | null>(null);
@@ -98,6 +114,23 @@ export function errorDetail(error: unknown): string {
     return `${err.status} ${err.statusText}`;
   }
   return 'Unknown error';
+}
+
+/** Carry forward the previous shipping_estimate when a mutation response lacks one. */
+export function mergeShippingEstimate(newCart: Cart, prevCart: Cart | null): Cart {
+  if (newCart.shipping_estimate !== undefined || !prevCart?.shipping_estimate) return newCart;
+  return { ...newCart, shipping_estimate: prevCart.shipping_estimate };
+}
+
+/** Build query params for cart GET requests, including coords if available. */
+export function cartCoordsQuery(): Record<string, string | number> | undefined {
+  const coords = $addressCoords.get();
+  if (!coords) return undefined;
+  return {
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    postal_code: coords.postalCode,
+  };
 }
 
 const CART_ID_KEY = 'sous_cart_id';
@@ -153,7 +186,7 @@ async function _doEnsureCart(client: StorefrontClient): Promise<string> {
   const storedId = getStoredCartId();
   if (storedId) {
     const { data, error } = await client.GET(`/api/v1/cart/{id}/`, {
-      params: { path: { id: storedId } },
+      params: { path: { id: storedId }, query: cartCoordsQuery() },
     });
     if (data) {
       const cart = normalizeCart(data as Record<string, unknown>);
@@ -190,12 +223,41 @@ export async function addSuggestionToCart(
   });
   if (data) {
     const cartData = normalizeCart(data as Record<string, unknown>);
-    $cart.set(cartData);
+    $cart.set(mergeShippingEstimate(cartData, $cart.get()));
     if (cartData.id) setStoredCartId(cartData.id);
+    backgroundRefreshShipping(cartData.id);
     return 'added';
   }
   if (error && 'status' in error && error.status === 400) {
     return 'requires_options';
   }
   return 'error';
+}
+
+/** Generation counter — only the latest background refresh writes to $cart. */
+let refreshGeneration = 0;
+
+/** Fire-and-forget cart re-fetch with coordinates to refresh shipping_estimate. */
+export function backgroundRefreshShipping(cartId: string): void {
+  const query = cartCoordsQuery();
+  if (!query) return;
+  const gen = ++refreshGeneration;
+  const client = getClient();
+  client
+    .GET('/api/v1/cart/{cart_id}/', {
+      params: { path: { cart_id: cartId }, query },
+    })
+    .then(({ data }) => {
+      if (data && gen === refreshGeneration) {
+        const fresh = normalizeCart(data as Record<string, unknown>);
+        const current = $cart.get();
+        // Only update shipping_estimate — preserve current item order and totals
+        if (current) {
+          $cart.set({ ...current, shipping_estimate: fresh.shipping_estimate });
+        } else {
+          $cart.set(fresh);
+        }
+      }
+    })
+    .catch(() => {}); // non-blocking
 }

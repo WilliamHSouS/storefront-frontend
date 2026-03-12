@@ -130,7 +130,7 @@ describe('fetchCollectionsOrCategories', () => {
     consoleSpy.mockRestore();
   });
 
-  it('returns empty sections when both collections and categories fail', async () => {
+  it('returns fallback "Menu" section when both collections and categories fail', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const sdk = makeSdk({
@@ -143,7 +143,9 @@ describe('fetchCollectionsOrCategories', () => {
     const result = await fetchCollectionsOrCategories(sdk);
 
     expect(result.source).toBe('categories');
-    expect(result.sections).toEqual([]);
+    expect(result.sections).toHaveLength(1);
+    expect(result.sections[0].name).toBe('Menu');
+    expect(result.sections[0].id).toBe(0);
     expect(consoleSpy).toHaveBeenCalledTimes(2);
 
     consoleSpy.mockRestore();

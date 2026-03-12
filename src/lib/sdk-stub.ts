@@ -81,20 +81,19 @@ function createSigningFetch(
     const method = (
       init?.method ?? (input instanceof Request ? input.method : 'GET')
     ).toUpperCase();
+    // Resolve body: prefer init.body, then clone+read the Request body.
+    let bodyStr = '';
     if (WRITE_METHODS.has(method)) {
-      // Resolve body: prefer init.body, then clone+read the Request body.
-      let bodyStr = '';
       if (init?.body != null) {
         bodyStr = typeof init.body === 'string' ? init.body : JSON.stringify(init.body);
       } else if (input instanceof Request && input.body) {
         bodyStr = await input.clone().text();
       }
-      const signature = await computeHmac(bodyStr, secret);
-      const headers = new Headers(init?.headers);
-      headers.set('X-Vendor-Signature', signature);
-      return baseFetch(input, { ...init, headers });
     }
-    return baseFetch(input, init);
+    const signature = await computeHmac(bodyStr, secret);
+    const headers = new Headers(init?.headers);
+    headers.set('X-Vendor-Signature', signature);
+    return baseFetch(input, { ...init, headers });
   };
 }
 

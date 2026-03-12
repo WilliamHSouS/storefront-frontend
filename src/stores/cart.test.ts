@@ -1,6 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { $cart, ensureCart, getStoredCartId, setStoredCartId, errorDetail } from './cart';
-import type { Cart } from './cart';
+import { $addressCoords } from './address';
+
+const mockGetClient = vi.fn();
+vi.mock('@/lib/api', () => ({
+  getClient: (...args: unknown[]) => mockGetClient(...args),
+}));
+
+import {
+  $cart,
+  ensureCart,
+  getStoredCartId,
+  setStoredCartId,
+  errorDetail,
+  mergeShippingEstimate,
+  cartCoordsQuery,
+  backgroundRefreshShipping,
+} from './cart';
+import type { Cart, ShippingEstimate } from './cart';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 
 function makeCart(overrides: Partial<Cart> = {}): Cart {
@@ -75,7 +91,7 @@ describe('ensureCart', () => {
 
     expect(cartId).toBe('stored-cart');
     expect(client.GET).toHaveBeenCalledWith('/api/v1/cart/{id}/', {
-      params: { path: { id: 'stored-cart' } },
+      params: { path: { id: 'stored-cart' }, query: undefined },
     });
     expect($cart.get()).toEqual(storedCart);
   });
@@ -212,5 +228,167 @@ describe('getStoredCartId / setStoredCartId', () => {
   it('returns stored cart ID after setStoredCartId', () => {
     setStoredCartId('abc-123');
     expect(getStoredCartId()).toBe('abc-123');
+  });
+});
+
+const SHIPPING_ESTIMATE: ShippingEstimate = {
+  groups: [
+    {
+      provider_name: 'Local Bike Courier',
+      fulfillment_type: 'local_delivery',
+      status: 'quoted',
+      estimated_cost: '4.95',
+      items: ['item-1'],
+    },
+  ],
+  total_shipping: '4.95',
+  ships_in_parts: false,
+};
+
+describe('mergeShippingEstimate', () => {
+  it('returns newCart as-is when it has its own shipping_estimate', () => {
+    const newEstimate: ShippingEstimate = { ...SHIPPING_ESTIMATE, total_shipping: '6.00' };
+    const newCart = makeCart({ shipping_estimate: newEstimate });
+    const prevCart = makeCart({ shipping_estimate: SHIPPING_ESTIMATE });
+
+    const result = mergeShippingEstimate(newCart, prevCart);
+    expect(result.shipping_estimate).toBe(newEstimate);
+  });
+
+  it('carries forward previous shipping_estimate when newCart lacks one', () => {
+    const newCart = makeCart();
+    const prevCart = makeCart({ shipping_estimate: SHIPPING_ESTIMATE });
+
+    const result = mergeShippingEstimate(newCart, prevCart);
+    expect(result.shipping_estimate).toBe(SHIPPING_ESTIMATE);
+    // Should be a new object (spread), not mutate newCart
+    expect(result).not.toBe(newCart);
+  });
+
+  it('returns newCart as-is when prevCart is null', () => {
+    const newCart = makeCart();
+    const result = mergeShippingEstimate(newCart, null);
+    expect(result).toBe(newCart);
+    expect(result.shipping_estimate).toBeUndefined();
+  });
+
+  it('returns newCart as-is when prevCart also has no estimate', () => {
+    const newCart = makeCart();
+    const prevCart = makeCart();
+    const result = mergeShippingEstimate(newCart, prevCart);
+    expect(result).toBe(newCart);
+  });
+});
+
+describe('cartCoordsQuery', () => {
+  beforeEach(() => {
+    $addressCoords.set(null);
+  });
+
+  it('returns undefined when no address coords are set', () => {
+    expect(cartCoordsQuery()).toBeUndefined();
+  });
+
+  it('returns lat/lng/postal_code when address coords are set', () => {
+    $addressCoords.set({
+      postalCode: '1015 BS',
+      country: 'NL',
+      latitude: 52.3738,
+      longitude: 4.884,
+    });
+
+    expect(cartCoordsQuery()).toEqual({
+      latitude: 52.3738,
+      longitude: 4.884,
+      postal_code: '1015 BS',
+    });
+  });
+});
+
+describe('backgroundRefreshShipping', () => {
+  beforeEach(() => {
+    $cart.set(null);
+    $addressCoords.set(null);
+    mockGetClient.mockReset();
+  });
+
+  it('does nothing when no address coords are set', () => {
+    const mockGet = vi.fn();
+    mockGetClient.mockReturnValue({ GET: mockGet });
+
+    backgroundRefreshShipping('cart-1');
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('fires a GET with coords and updates $cart on success', async () => {
+    const updatedCart = makeCart({ id: 'cart-1', shipping_estimate: SHIPPING_ESTIMATE });
+    const mockGet = vi.fn().mockResolvedValue({ data: updatedCart, error: null });
+    mockGetClient.mockReturnValue({ GET: mockGet });
+
+    $addressCoords.set({
+      postalCode: '1015 BS',
+      country: 'NL',
+      latitude: 52.3738,
+      longitude: 4.884,
+    });
+
+    backgroundRefreshShipping('cart-1');
+
+    await vi.waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/', {
+        params: {
+          path: { cart_id: 'cart-1' },
+          query: { latitude: 52.3738, longitude: 4.884, postal_code: '1015 BS' },
+        },
+      });
+    });
+
+    await vi.waitFor(() => {
+      expect($cart.get()?.shipping_estimate).toEqual(SHIPPING_ESTIMATE);
+    });
+  });
+
+  it('silently ignores fetch failures', async () => {
+    const mockGet = vi.fn().mockRejectedValue(new Error('Network error'));
+    mockGetClient.mockReturnValue({ GET: mockGet });
+
+    $addressCoords.set({
+      postalCode: '1015 BS',
+      country: 'NL',
+      latitude: 52.3738,
+      longitude: 4.884,
+    });
+
+    backgroundRefreshShipping('cart-1');
+
+    await vi.waitFor(() => {
+      expect(mockGet).toHaveBeenCalled();
+    });
+
+    expect($cart.get()).toBeNull();
+  });
+
+  it('ensureCart includes coords when address is set', async () => {
+    const storedCart = makeCart({ id: 'stored-cart', shipping_estimate: SHIPPING_ESTIMATE });
+    $addressCoords.set({
+      postalCode: '1015 BS',
+      country: 'NL',
+      latitude: 52.3738,
+      longitude: 4.884,
+    });
+    localStorageMock.setItem('sous_cart_id', 'stored-cart');
+
+    const client = makeClient({
+      GET: vi.fn().mockResolvedValue({ data: storedCart, error: null }),
+    });
+
+    await ensureCart(client);
+
+    expect(client.GET).toHaveBeenCalledWith('/api/v1/cart/{id}/', {
+      params: {
+        path: { id: 'stored-cart' },
+        query: { latitude: 52.3738, longitude: 4.884, postal_code: '1015 BS' },
+      },
+    });
   });
 });

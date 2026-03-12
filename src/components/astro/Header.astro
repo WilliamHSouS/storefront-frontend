@@ -2,6 +2,8 @@
 import type { MerchantConfig } from '@/types/merchant';
 import { t } from '@/i18n';
 import CartBadge from '@/components/interactive/CartBadge';
+import { AddressBar } from '@/components/interactive/AddressBar';
+import LanguageSwitcher from './LanguageSwitcher.astro';
 
 interface Props {
   merchant: MerchantConfig;
@@ -9,6 +11,7 @@ interface Props {
 }
 
 const { merchant, lang } = Astro.props;
+const currentPath = Astro.url.pathname;
 ---
 
 <header
@@ -24,7 +27,10 @@ const { merchant, lang } = Astro.props;
       <span class="font-heading text-lg font-semibold">{merchant.name}</span>
     </a>
 
+    <AddressBar client:idle lang={lang} />
+
     <nav class="flex items-center gap-2">
+      <LanguageSwitcher lang={lang} languages={merchant.languages} currentPath={currentPath} />
       <button
         type="button"
         class="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"

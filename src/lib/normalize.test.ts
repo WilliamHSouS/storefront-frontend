@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   slugify,
   normalizeProduct,
+  normalizeCart,
   extractIdFromSlug,
   normalizeCollection,
   flattenCategories,
@@ -220,6 +221,32 @@ describe('normalizeProduct', () => {
     const product = normalizeProduct(makeRawProduct({ description: undefined, intro: undefined }));
     expect(product.description).toBeNull();
     expect(product.intro).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeProduct fulfillment fields
+// ---------------------------------------------------------------------------
+describe('normalizeProduct fulfillment fields', () => {
+  it('extracts available_fulfillment_types and pickup_only', () => {
+    const raw = {
+      id: 42,
+      title: 'Bitterballen',
+      price: '8.50',
+      available_fulfillment_types: ['local_delivery', 'pickup'],
+      pickup_only: false,
+    };
+
+    const product = normalizeProduct(raw);
+    expect(product.availableFulfillmentTypes).toEqual(['local_delivery', 'pickup']);
+    expect(product.pickupOnly).toBe(false);
+  });
+
+  it('defaults fulfillment fields when absent', () => {
+    const raw = { id: 1, title: 'Falafel' };
+    const product = normalizeProduct(raw);
+    expect(product.availableFulfillmentTypes).toEqual([]);
+    expect(product.pickupOnly).toBe(false);
   });
 });
 
@@ -491,5 +518,49 @@ describe('parseMetadataMap', () => {
   it('handles non-array input (object)', () => {
     const map = parseMetadataMap({ key: 'a', value: 'b' });
     expect(map.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeCart shipping_estimate
+// ---------------------------------------------------------------------------
+describe('normalizeCart shipping_estimate', () => {
+  it('extracts shipping_estimate from API response', () => {
+    const raw = {
+      id: 'cart-1',
+      line_items: [],
+      cart_total: '13.50',
+      item_count: 1,
+      shipping_estimate: {
+        groups: [
+          {
+            provider_name: 'Uber Direct',
+            fulfillment_type: 'local_delivery',
+            status: 'quoted',
+            estimated_cost: '3.50',
+            items: ['Burger'],
+          },
+        ],
+        total_shipping: '3.50',
+        ships_in_parts: false,
+      },
+    };
+
+    const cart = normalizeCart(raw);
+    expect(cart.shipping_estimate).toBeDefined();
+    expect(cart.shipping_estimate!.groups).toHaveLength(1);
+    expect(cart.shipping_estimate!.total_shipping).toBe('3.50');
+  });
+
+  it('handles missing shipping_estimate gracefully', () => {
+    const raw = {
+      id: 'cart-2',
+      line_items: [],
+      cart_total: '10.00',
+      item_count: 0,
+    };
+
+    const cart = normalizeCart(raw);
+    expect(cart.shipping_estimate).toBeUndefined();
   });
 });

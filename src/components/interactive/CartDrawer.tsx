@@ -11,9 +11,12 @@ import { optimizedImageUrl } from '@/lib/image';
 import QuantitySelector from './QuantitySelector';
 import CartSuggestions from './CartSuggestions';
 import { setCartItemQuantity, checkPromotionEligibility } from '@/stores/cart-actions';
+import { backgroundRefreshShipping } from '@/stores/cart';
+import { $addressCoords } from '@/stores/address';
 import { showToast } from '@/stores/toast';
 import PromoBanner from './PromoBanner';
 import DiscountCodeInput from './DiscountCodeInput';
+import { ShippingEstimate } from './ShippingEstimate';
 
 /* ------------------------------------------------------------------ */
 /*  Shared sub-components (used by both inline and drawer modes)      */
@@ -117,7 +120,10 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
       : null;
 
   return (
-    <div class="border-t border-border px-4 py-3" style={style}>
+    <div
+      class="max-h-[50vh] shrink-0 overflow-y-auto border-t border-border px-4 py-3"
+      style={style}
+    >
       <DiscountCodeInput cart={cart} lang={lang} />
 
       {/* Subtotal */}
@@ -128,8 +134,11 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
         </div>
       )}
 
-      {/* Shipping */}
-      {shipping && (
+      {/* Shipping estimate (rich breakdown) */}
+      <ShippingEstimate lang={lang} currency={currency} shippingEstimate={cart.shipping_estimate} />
+
+      {/* Shipping (legacy fallback when no shipping_estimate) */}
+      {!cart.shipping_estimate && shipping && (
         <div class="mb-1 flex items-center justify-between text-sm">
           <span class="text-muted-foreground">{t('shipping', lang)}</span>
           <span class="text-card-foreground">
@@ -244,6 +253,14 @@ export default function CartDrawer({ lang, inline = false }: Props) {
     };
   }, [cartFingerprint, cart?.promotion?.id]);
 
+  // Refresh shipping estimate when drawer opens without one
+  const hasShippingEstimate = !!cart?.shipping_estimate;
+  useEffect(() => {
+    if (isOpen && cart?.id && !hasShippingEstimate && $addressCoords.get()) {
+      backgroundRefreshShipping(cart.id);
+    }
+  }, [isOpen, cart?.id, hasShippingEstimate]);
+
   const close = useCallback(() => $isCartOpen.set(false), []);
 
   // Skip focus trap when inline — the page itself handles focus
@@ -350,7 +367,7 @@ export default function CartDrawer({ lang, inline = false }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={t('cart', lang)}
-        class="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-auto md:right-4 md:top-16 md:w-96 md:rounded-lg"
+        class="absolute bottom-0 left-0 right-0 flex max-h-[85vh] flex-col overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-auto md:right-4 md:top-16 md:w-96 md:rounded-lg"
       >
         {/* Header */}
         <div class="flex items-center justify-between border-b border-border px-4 py-3">
@@ -382,8 +399,7 @@ export default function CartDrawer({ lang, inline = false }: Props) {
 
         {/* Body */}
         <div
-          class={`overflow-y-auto px-4 py-3 transition-opacity duration-150 ${loading ? 'pointer-events-none opacity-50' : ''}`}
-          style={{ maxHeight: 'calc(85vh - 140px)' }}
+          class={`shrink overflow-y-auto px-4 py-3 transition-opacity duration-150 ${loading ? 'pointer-events-none opacity-50' : ''}`}
         >
           {lineItems.length === 0 ? (
             <div class="py-8 text-center">

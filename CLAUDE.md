@@ -183,3 +183,5 @@ const cart = useStore($cart);
 - **Slug round-trip invariant.** Any code that generates product URLs must use `--` separator. Any code that reads product IDs from URLs must use `extractIdFromSlug()`.
 - **Import alias.** Use `@/` prefix for `src/` imports (configured in tsconfig).
 - **Bundle budget.** Total client JS must stay under 65 KB gzipped. Run `pnpm size:check` before merging.
+- **Falsy value checks on API data.** Use `== null` or `=== undefined` instead of `!value` when checking API string values that could be `"0"` or `"0.00"`. JavaScript truthiness conflates "missing" with "zero", hiding valid data like free shipping.
+- **Island DOM stability.** Preact islands mounted before `<slot/>` in BaseLayout must never return `null`. Always render a stable wrapper element to prevent Astro from re-evaluating sibling islands on state changes.

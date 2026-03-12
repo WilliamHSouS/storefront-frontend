@@ -53,7 +53,7 @@ function cors(res: ServerResponse) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'Content-Type, X-Vendor-ID, Accept-Language, Accept, Authorization',
+    'Content-Type, X-Vendor-ID, Accept-Language, Accept, Authorization, X-Vendor-Signature',
   );
 }
 
@@ -149,12 +149,88 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // ── Fulfillment: address check ──
+  if (method === 'POST' && path === '/api/v1/fulfillment/address-check/') {
+    const body = JSON.parse(await readBody(req));
+    const postalCode = (body.postal_code ?? '').toString();
+
+    // Valid: starts with "1015" → in delivery zone
+    if (postalCode.startsWith('1015')) {
+      json(res, {
+        latitude: 52.3702,
+        longitude: 4.8952,
+        available_fulfillment_types: ['local_delivery', 'pickup'],
+        available_shipping_providers: [{ id: 1, name: 'PostNL', type: 'postal' }],
+        pickup_locations: [{ id: 1, name: 'Amsterdam Centraal', distance_km: 1.2 }],
+        delivery_unavailable: false,
+        near_delivery_zone: false,
+      });
+      return;
+    }
+
+    // Valid, in delivery zone with free shipping: starts with "2000"
+    if (postalCode.startsWith('2000')) {
+      json(res, {
+        latitude: 52.16,
+        longitude: 4.49,
+        available_fulfillment_types: ['local_delivery', 'pickup'],
+        available_shipping_providers: [{ id: 1, name: 'PostNL', type: 'postal' }],
+        pickup_locations: [{ id: 3, name: 'Leiden Centraal', distance_km: 0.8 }],
+        delivery_unavailable: false,
+        near_delivery_zone: false,
+      });
+      return;
+    }
+
+    // Valid but out of area: starts with "9999"
+    if (postalCode.startsWith('9999')) {
+      json(res, {
+        latitude: 53.2,
+        longitude: 6.5,
+        available_fulfillment_types: ['pickup'],
+        available_shipping_providers: [],
+        pickup_locations: [{ id: 2, name: 'Groningen Station', distance_km: 45.0 }],
+        delivery_unavailable: true,
+        near_delivery_zone: false,
+      });
+      return;
+    }
+
+    // Invalid postcode
+    json(res, { detail: 'Postcode not found' }, 404);
+    return;
+  }
+
   // ── Products list ──
   if (method === 'GET' && path === '/api/v1/products/') {
     const categoryFilter = url.searchParams.get('category');
+    const lat = url.searchParams.get('latitude');
+    const lng = url.searchParams.get('longitude');
     const filtered = categoryFilter
       ? products.filter((p) => p.category_id === categoryFilter)
       : products;
+
+    // When coordinates are present, add fulfillment metadata to products
+    if (lat && lng) {
+      const enriched = filtered.map((p) => {
+        if (p.id === 'prod-3') {
+          // Mint Lemonade: pickup only
+          return {
+            ...p,
+            available_fulfillment_types: ['pickup'],
+            pickup_only: true,
+          };
+        }
+        return {
+          ...p,
+          available_fulfillment_types: ['local_delivery', 'pickup'],
+          pickup_only: false,
+        };
+      });
+      json(res, { results: enriched, next: null });
+      return;
+    }
+
     json(res, { results: filtered, next: null });
     return;
   }
@@ -249,6 +325,33 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   const cartGetMatch = path.match(/^\/api\/v1\/cart\/([^/]+)\/$/);
   if (method === 'GET' && cartGetMatch) {
     const state = getCartState(req);
+    const lat = url.searchParams.get('latitude');
+    const lng = url.searchParams.get('longitude');
+
+    if (lat && lng && state.cart.line_items.length > 0) {
+      // Free shipping for coordinates near Leiden (lat ~52.16)
+      const isFreeShipping = Math.abs(parseFloat(lat) - 52.16) < 0.1;
+      const shippingCost = isFreeShipping ? '0.00' : '4.95';
+      const cartWithShipping = {
+        ...state.cart,
+        shipping_estimate: {
+          groups: [
+            {
+              provider_name: 'PostNL',
+              fulfillment_type: 'local_delivery',
+              status: 'quoted',
+              estimated_cost: shippingCost,
+              items: state.cart.line_items.map((li) => li.product_id),
+            },
+          ],
+          total_shipping: shippingCost,
+          ships_in_parts: false,
+        },
+      };
+      json(res, cartWithShipping);
+      return;
+    }
+
     json(res, state.cart);
     return;
   }

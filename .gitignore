@@ -29,6 +29,7 @@ Thumbs.db
 # playwright
 e2e/.results/
 e2e/.report/
+.playwright-mcp/
 
 # coverage
 coverage/

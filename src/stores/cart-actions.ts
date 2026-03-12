@@ -1,5 +1,12 @@
 import { getClient } from '@/lib/api';
-import { $cart, $cartLoading, $eligiblePromotions, errorDetail } from '@/stores/cart';
+import {
+  $cart,
+  $cartLoading,
+  $eligiblePromotions,
+  errorDetail,
+  mergeShippingEstimate,
+  backgroundRefreshShipping,
+} from '@/stores/cart';
 import type { Cart, EligiblePromotion } from '@/stores/cart';
 import { normalizeCart } from '@/lib/normalize';
 import type { StorefrontClient } from '@/lib/sdk-stub';
@@ -27,7 +34,8 @@ export async function updateCartItemQuantity(
       throw new Error(`Failed to update cart item: ${errorDetail(error)}`);
     }
     const cart = normalizeCart(data as Record<string, unknown>);
-    $cart.set(cart);
+    $cart.set(mergeShippingEstimate(cart, $cart.get()));
+    backgroundRefreshShipping(cart.id);
     return cart;
   } finally {
     $cartLoading.set(false);
@@ -111,7 +119,8 @@ export async function applyDiscountCode(
       throw new DiscountError(errorDetail(error));
     }
     const cart = normalizeCart(data as Record<string, unknown>);
-    $cart.set(cart);
+    $cart.set(mergeShippingEstimate(cart, $cart.get()));
+    backgroundRefreshShipping(cart.id);
     return cart;
   } finally {
     $cartLoading.set(false);
@@ -129,7 +138,8 @@ export async function removeDiscountCode(cartId: string, client?: StorefrontClie
       throw new Error(`Failed to remove discount: ${errorDetail(error)}`);
     }
     const cart = normalizeCart(data as Record<string, unknown>);
-    $cart.set(cart);
+    $cart.set(mergeShippingEstimate(cart, $cart.get()));
+    backgroundRefreshShipping(cart.id);
     return cart;
   } finally {
     $cartLoading.set(false);
@@ -151,7 +161,8 @@ export async function removeCartItem(
       throw new Error(`Failed to remove cart item: ${errorDetail(error)}`);
     }
     const cart = normalizeCart(data as Record<string, unknown>);
-    $cart.set(cart);
+    $cart.set(mergeShippingEstimate(cart, $cart.get()));
+    backgroundRefreshShipping(cart.id);
     return cart;
   } finally {
     $cartLoading.set(false);
