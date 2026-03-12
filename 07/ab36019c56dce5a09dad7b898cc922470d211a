@@ -1,0 +1,56 @@
+src/components/astro/Header.astro
+  cc338c1a894cf22f 6,14,33
+src/lib/normalize.ts
+  c60b2abb423b2d10 236-256,321
+docs/plans/2026-03-10-delivery-options-frontend-plan.md
+  c60b2abb423b2d10 1-2063
+src/i18n/messages/nl.json
+  cc338c1a894cf22f 105-106
+src/stores/address.ts
+  c60b2abb423b2d10 25-28
+src/components/astro/LanguageSwitcher.astro
+  cc338c1a894cf22f 1-48
+src/i18n/messages/de.json
+  cc338c1a894cf22f 105-106
+src/components/astro/HeroSection.astro
+  cc338c1a894cf22f 5,13,88,128
+docs/plans/2026-03-10-delivery-options-frontend-design.md
+  c60b2abb423b2d10 1-522
+src/i18n/messages/en.json
+  cc338c1a894cf22f 105-106
+src/components/interactive/FulfillmentOverlay.tsx
+  c60b2abb423b2d10 138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "07ab36019c56dce5a09dad7b898cc922470d211a",
+  "prompts": {
+    "c60b2abb423b2d10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "886378c5-2fbb-464e-8998-3466bf4f30f6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 4,
+      "accepted_lines": 2612,
+      "overriden_lines": 0
+    },
+    "cc338c1a894cf22f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8c6089ce-bd63-461d-994e-e2687aaa0171",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 69,
+      "total_deletions": 9,
+      "accepted_lines": 65,
+      "overriden_lines": 0
+    }
+  }
+}
