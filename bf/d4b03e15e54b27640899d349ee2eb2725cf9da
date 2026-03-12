@@ -1,0 +1,25 @@
+e2e/delivery.spec.ts
+  c60b2abb423b2d10 12-23,29,162,187-213,217,232-264
+e2e/helpers/mock-api.ts
+  c60b2abb423b2d10 171-184,332-334,343,347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "bfd4b03e15e54b27640899d349ee2eb2725cf9da",
+  "prompts": {
+    "c60b2abb423b2d10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "886378c5-2fbb-464e-8998-3466bf4f30f6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 106,
+      "total_deletions": 14,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    }
+  }
+}
