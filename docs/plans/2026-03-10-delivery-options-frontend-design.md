@@ -56,12 +56,15 @@ interface AddressEligibility {
     name: string;
     distance_km: number;
   }>;
-  deliverySlots: Record<string, Array<{
-    start: string;
-    end: string;
-    available: boolean;
-    remaining_capacity?: number;
-  }>>;
+  deliverySlots: Record<
+    string,
+    Array<{
+      start: string;
+      end: string;
+      available: boolean;
+      remaining_capacity?: number;
+    }>
+  >;
   deliveryUnavailable: boolean;
   nearDeliveryZone: boolean;
   nearestPickupLocation?: {
@@ -81,22 +84,22 @@ Splitting address state into two atoms prevents unnecessary re-renders: componen
 
 ### New Interactive Components (Preact Islands)
 
-| Component | Location | Hydration |
-|-----------|----------|-----------|
-| `AddressBar` | Header | `client:idle` |
-| `FulfillmentOverlay` | BaseLayout (single instance) | `client:idle` |
-| `DeliveryOptionsSheet` | BaseLayout | `client:idle` |
-| `ShippingEstimate` | CartDrawer | `client:idle` |
-| `DeliveryBanner` | BaseLayout (below header) | `client:idle` |
+| Component              | Location                     | Hydration     |
+| ---------------------- | ---------------------------- | ------------- |
+| `AddressBar`           | Header                       | `client:idle` |
+| `FulfillmentOverlay`   | BaseLayout (single instance) | `client:idle` |
+| `DeliveryOptionsSheet` | BaseLayout                   | `client:idle` |
+| `ShippingEstimate`     | CartDrawer                   | `client:idle` |
+| `DeliveryBanner`       | BaseLayout (below header)    | `client:idle` |
 
 ### Modified Components
 
-| Component | Change |
-|-----------|--------|
-| `Header` | Mounts `AddressBar` island |
-| `CartDrawer` | Adds `ShippingEstimate` in totals, routes checkout through `DeliveryOptionsSheet` when slots exist |
-| `ProductCard` (Astro) | Adds `data-product-id` attribute (already exists) and `data-fulfillment-badge` slot element |
-| `BaseLayout.astro` | Mounts `FulfillmentOverlay`, `DeliveryOptionsSheet`, and `DeliveryBanner` shared islands |
+| Component             | Change                                                                                             |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| `Header`              | Mounts `AddressBar` island                                                                         |
+| `CartDrawer`          | Adds `ShippingEstimate` in totals, routes checkout through `DeliveryOptionsSheet` when slots exist |
+| `ProductCard` (Astro) | Adds `data-product-id` attribute (already exists) and `data-fulfillment-badge` slot element        |
+| `BaseLayout.astro`    | Mounts `FulfillmentOverlay`, `DeliveryOptionsSheet`, and `DeliveryBanner` shared islands           |
 
 **Key decision: No `window.__PRODUCTS__` hydration.** Product cards remain server-rendered Astro components. The `FulfillmentOverlay` island handles all address-dependent product UI (badges, visibility toggling) via DOM manipulation targeting `[data-product-id]` elements. This avoids converting `MenuSection`/`ProductCard` to Preact islands, avoids duplicating product data in an inline JSON blob, and avoids 40-80 individual `FulfillmentBadge` island hydrations.
 
@@ -161,11 +164,11 @@ This eliminates race conditions between fulfillment metadata and cart re-fetches
 
 ### Error Handling
 
-| Error | Message | Behavior |
-|-------|---------|----------|
-| 404 (postcode not found) | "Postcode not found" | Stay expanded, clear input |
-| 500 / geocoding service down | "Something went wrong. Try again." | Stay expanded, show retry |
-| Network timeout | "Connection problem. Check your internet." | Stay expanded, show retry |
+| Error                        | Message                                    | Behavior                   |
+| ---------------------------- | ------------------------------------------ | -------------------------- |
+| 404 (postcode not found)     | "Postcode not found"                       | Stay expanded, clear input |
+| 500 / geocoding service down | "Something went wrong. Try again."         | Stay expanded, show retry  |
+| Network timeout              | "Connection problem. Check your internet." | Stay expanded, show retry  |
 
 On any error, `$addressCoords` is not updated. If a previous address was set, it remains active.
 
@@ -204,12 +207,12 @@ This approach: one island, one nanostore subscription, DOM manipulation for badg
 
 Badges only appear when an address is set, and only on products with limited fulfillment. The majority of products (available for local delivery) show no badge.
 
-| Scenario | Badge | Style |
-|----------|-------|-------|
-| No address set | No badges | -- |
-| Address set, product available for local delivery | No badge | -- |
-| Address set, product is pickup only | "Pickup only" | Muted pill, store icon |
-| Address set, product ships nationwide only | "Ships separately" | Muted pill, package icon |
+| Scenario                                          | Badge              | Style                    |
+| ------------------------------------------------- | ------------------ | ------------------------ |
+| No address set                                    | No badges          | --                       |
+| Address set, product available for local delivery | No badge           | --                       |
+| Address set, product is pickup only               | "Pickup only"      | Muted pill, store icon   |
+| Address set, product ships nationwide only        | "Ships separately" | Muted pill, package icon |
 
 Badges also render in `ProductDetail` modal — the modal reads the `data-fulfillment` attribute from the triggering product card.
 
@@ -236,15 +239,15 @@ Sits in the totals section of `CartDrawer`, between subtotal and order total. Re
 
 ### States
 
-| Cart state | Display |
-|------------|---------|
-| No address set | "Add your postcode for shipping costs" (link opens AddressBar) |
-| Single group, calculated | "Shipping: X" (single line, no expand) |
-| Single group, quoted | "Shipping: X" (single line) |
-| Single group, pending | "Shipping: calculated at checkout" (muted) |
-| Single group, unavailable | "Shipping: temporarily unavailable" (muted) |
-| Multiple groups | "Shipping: X" (expandable to per-group breakdown) |
-| `ships_in_parts: true` | Auto-expanded with per-group lines |
+| Cart state                | Display                                                        |
+| ------------------------- | -------------------------------------------------------------- |
+| No address set            | "Add your postcode for shipping costs" (link opens AddressBar) |
+| Single group, calculated  | "Shipping: X" (single line, no expand)                         |
+| Single group, quoted      | "Shipping: X" (single line)                                    |
+| Single group, pending     | "Shipping: calculated at checkout" (muted)                     |
+| Single group, unavailable | "Shipping: temporarily unavailable" (muted)                    |
+| Multiple groups           | "Shipping: X" (expandable to per-group breakdown)              |
+| `ships_in_parts: true`    | Auto-expanded with per-group lines                             |
 
 ### Per-Group Expanded View
 
@@ -282,6 +285,7 @@ A half-sheet modal that appears between cart and checkout for delivery time slot
 ### Trigger
 
 Customer taps "Checkout" in CartDrawer. The sheet opens when ALL of these are true:
+
 - `$addressCoords` is set
 - Delivery slots exist for at least one shipping group
 - Cart has more than one shipping group, OR slots are available beyond just ASAP
@@ -360,12 +364,12 @@ If continuing to checkout returns a 409 (quote delta > €0.50 or 10%), the shee
 
 ### Banner Variants
 
-| Condition | Message | Action |
-|-----------|---------|--------|
-| `delivery_unavailable` | "Delivery isn't available to your area. Pickup available at {name} ({distance} km)" | -- |
-| `delivery_unavailable` + `near_delivery_zone` | "You're just outside the delivery area. Pickup available at {name} ({distance} km)" | -- |
-| Products filtered (some hidden) | "Showing items available for delivery to {postalCode}" | [Clear] to show full menu |
-| Address set, all products available | "Delivering to {postalCode}" | [Change] |
+| Condition                                     | Message                                                                             | Action                    |
+| --------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------- |
+| `delivery_unavailable`                        | "Delivery isn't available to your area. Pickup available at {name} ({distance} km)" | --                        |
+| `delivery_unavailable` + `near_delivery_zone` | "You're just outside the delivery area. Pickup available at {name} ({distance} km)" | --                        |
+| Products filtered (some hidden)               | "Showing items available for delivery to {postalCode}"                              | [Clear] to show full menu |
+| Address set, all products available           | "Delivering to {postalCode}"                                                        | [Change]                  |
 
 ### Styling
 
@@ -392,20 +396,20 @@ All events fire via PostHog. PII guard: postal codes truncated to first 4 charac
 
 ### Launch Events (ship with Phase 1)
 
-| Event | Trigger | Properties |
-|-------|---------|------------|
-| `address_entered` | Address-check returns successfully | `postal_code_prefix`, `country`, `available_fulfillment_types[]`, `has_local_delivery`, `has_pickup` |
-| `delivery_unavailable` | No local delivery for address | `postal_code_prefix`, `country`, `nearest_pickup_distance_km`, `near_delivery_zone` |
-| `delivery_options_completed` | "Continue to checkout" tapped (or sheet skipped) | `group_count`, `total_shipping`, `has_selected_slot` |
+| Event                        | Trigger                                          | Properties                                                                                           |
+| ---------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `address_entered`            | Address-check returns successfully               | `postal_code_prefix`, `country`, `available_fulfillment_types[]`, `has_local_delivery`, `has_pickup` |
+| `delivery_unavailable`       | No local delivery for address                    | `postal_code_prefix`, `country`, `nearest_pickup_distance_km`, `near_delivery_zone`                  |
+| `delivery_options_completed` | "Continue to checkout" tapped (or sheet skipped) | `group_count`, `total_shipping`, `has_selected_slot`                                                 |
 
 ### Post-Launch Events (add when flows stabilize)
 
-| Event | Trigger | Properties |
-|-------|---------|------------|
-| `products_filtered` | Products updated after filtering | `total_products`, `visible_products`, `filtered_out_count` |
-| `shipping_estimate_shown` | Estimate rendered in cart | `total_shipping`, `group_count`, `has_pending_groups` |
-| `delivery_slot_selected` | Slot picked | `provider_type`, `is_asap`, `slot_start`, `slot_end` |
-| `shipping_price_changed` | 409 received, new price shown | `provider_name`, `old_price`, `new_price`, `customer_accepted` |
+| Event                     | Trigger                          | Properties                                                     |
+| ------------------------- | -------------------------------- | -------------------------------------------------------------- |
+| `products_filtered`       | Products updated after filtering | `total_products`, `visible_products`, `filtered_out_count`     |
+| `shipping_estimate_shown` | Estimate rendered in cart        | `total_shipping`, `group_count`, `has_pending_groups`          |
+| `delivery_slot_selected`  | Slot picked                      | `provider_type`, `is_asap`, `slot_start`, `slot_end`           |
+| `shipping_price_changed`  | 409 received, new price shown    | `provider_name`, `old_price`, `new_price`, `customer_accepted` |
 
 ### Funnel
 
@@ -464,18 +468,18 @@ removeFromCart              "Remove from cart"
 
 Current budget: 65 KB gzipped.
 
-| Addition | Estimated Size |
-|----------|---------------|
-| `AddressBar` island | ~2 KB |
-| `$addressCoords` + `$addressEligibility` + `$selectedSlots` stores | ~1 KB |
-| `onAddressChange()` orchestrator + fetch logic | ~1.5 KB |
-| `ShippingEstimate` component | ~1.5 KB |
-| `DeliveryOptionsSheet` component | ~3 KB |
-| `DeliveryBanner` component | ~1 KB |
-| `FulfillmentOverlay` island (single instance, DOM manipulation) | ~2 KB |
-| i18n key additions | ~1 KB |
-| Analytics event helpers | ~0.5 KB |
-| **Total estimated addition** | **~13.5 KB** |
+| Addition                                                           | Estimated Size |
+| ------------------------------------------------------------------ | -------------- |
+| `AddressBar` island                                                | ~2 KB          |
+| `$addressCoords` + `$addressEligibility` + `$selectedSlots` stores | ~1 KB          |
+| `onAddressChange()` orchestrator + fetch logic                     | ~1.5 KB        |
+| `ShippingEstimate` component                                       | ~1.5 KB        |
+| `DeliveryOptionsSheet` component                                   | ~3 KB          |
+| `DeliveryBanner` component                                         | ~1 KB          |
+| `FulfillmentOverlay` island (single instance, DOM manipulation)    | ~2 KB          |
+| i18n key additions                                                 | ~1 KB          |
+| Analytics event helpers                                            | ~0.5 KB        |
+| **Total estimated addition**                                       | **~13.5 KB**   |
 
 No external dependencies added (no Google Maps/Places). The `FulfillmentOverlay` approach avoids per-card island overhead — one island instead of 40-80 `FulfillmentBadge` instances. Run `pnpm size:check` during implementation to validate against actual bundle.
 
@@ -485,18 +489,18 @@ No external dependencies added (no Google Maps/Places). The `FulfillmentOverlay`
 
 ### New Endpoints (from backend)
 
-| Method | Path | Purpose |
-|--------|------|---------|
+| Method | Path                                 | Purpose                                      |
+| ------ | ------------------------------------ | -------------------------------------------- |
 | `POST` | `/api/v1/fulfillment/address-check/` | Geocode postcode, return eligibility + slots |
-| `GET` | `/api/v1/addresses/default/` | Authenticated user's saved address |
+| `GET`  | `/api/v1/addresses/default/`         | Authenticated user's saved address           |
 
 ### Modified Endpoints (existing, with new query params)
 
-| Method | Path | New Params | Purpose |
-|--------|------|------------|---------|
-| `GET` | `/api/v1/products/` | `latitude`, `longitude` | Filter by deliverability |
-| `GET` | `/api/v1/collections/{slug}/products/` | `latitude`, `longitude` | Filter by deliverability |
-| `GET` | `/api/v1/cart/{cart_id}/` | `latitude`, `longitude` | Include `shipping_estimate` |
+| Method | Path                                   | New Params              | Purpose                     |
+| ------ | -------------------------------------- | ----------------------- | --------------------------- |
+| `GET`  | `/api/v1/products/`                    | `latitude`, `longitude` | Filter by deliverability    |
+| `GET`  | `/api/v1/collections/{slug}/products/` | `latitude`, `longitude` | Filter by deliverability    |
+| `GET`  | `/api/v1/cart/{cart_id}/`              | `latitude`, `longitude` | Include `shipping_estimate` |
 
 ### Existing Endpoints (unchanged)
 

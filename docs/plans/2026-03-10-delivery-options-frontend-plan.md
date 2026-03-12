@@ -22,6 +22,7 @@ Create the address state management foundation with localStorage persistence and
 > [DEBATE #12] Dropped promise-lock on `onAddressChange` — the UI loading state already serializes submissions (button disabled while loading).
 
 **Files:**
+
 - Create: `src/stores/address.ts`
 - Create: `src/types/address.ts`
 - Test: `src/stores/address.test.ts`
@@ -236,6 +237,7 @@ Add `onAddressChange()` orchestrator and `clearAddress()` — no separate normal
 > [DEBATE #8] Orchestrator tests assert actual API calls are made and test error paths, not just that stores are set.
 
 **Files:**
+
 - Create: `src/stores/address-actions.ts`
 - Test: `src/stores/address-actions.test.ts`
 
@@ -423,7 +425,13 @@ Expected: FAIL — `onAddressChange` and `clearAddress` not exported.
 Create `src/stores/address-actions.ts`:
 
 ```typescript
-import { $addressCoords, $addressEligibility, setStoredAddress, clearStoredAddress, getStoredAddress } from './address';
+import {
+  $addressCoords,
+  $addressEligibility,
+  setStoredAddress,
+  clearStoredAddress,
+  getStoredAddress,
+} from './address';
 import { $cart, getStoredCartId } from './cart';
 import { getClient } from '@/lib/api';
 import { normalizeCart } from '@/lib/normalize';
@@ -474,9 +482,10 @@ export async function onAddressChange(input: {
       pickupLocations,
       deliveryUnavailable: r.delivery_unavailable === true,
       nearDeliveryZone: r.near_delivery_zone === true,
-      nearestPickupLocation: pickupLocations.length > 0
-        ? { name: pickupLocations[0].name, distance_km: pickupLocations[0].distance_km }
-        : undefined,
+      nearestPickupLocation:
+        pickupLocations.length > 0
+          ? { name: pickupLocations[0].name, distance_km: pickupLocations[0].distance_km }
+          : undefined,
     };
 
     // 1. Set stores
@@ -513,10 +522,7 @@ export function clearAddress(): void {
 }
 
 /** [DEBATE #1] Uses normalizeCart() to maintain boundary normalization invariant */
-async function refreshCartWithCoords(
-  cartId: string,
-  coords: AddressCoords,
-): Promise<void> {
+async function refreshCartWithCoords(cartId: string, coords: AddressCoords): Promise<void> {
   try {
     const client = getClient();
     const { data } = await client.GET('/api/v1/cart/{cart_id}/', {
@@ -562,8 +568,11 @@ function truncatePostcode(postalCode: string): string {
 
 function capture(event: string, properties: Record<string, unknown>): void {
   if (typeof window !== 'undefined' && 'posthog' in window) {
-    (window as unknown as { posthog?: { capture: (e: string, p: Record<string, unknown>) => void } })
-      .posthog?.capture(event, properties);
+    (
+      window as unknown as {
+        posthog?: { capture: (e: string, p: Record<string, unknown>) => void };
+      }
+    ).posthog?.capture(event, properties);
   }
 }
 
@@ -606,6 +615,7 @@ git commit -m "feat: add onAddressChange orchestrator with inline analytics"
 > [DEBATE #1, #2] The Cart interface at `src/stores/cart.ts:38-61` needs a `shipping_estimate` field, and `normalizeCart()` at `src/lib/normalize.ts:238-296` must extract it from API responses.
 
 **Files:**
+
 - Modify: `src/stores/cart.ts:38-61` (add shipping_estimate to Cart interface)
 - Modify: `src/lib/normalize.ts:238-296` (extract shipping_estimate in normalizeCart)
 - Modify: `src/lib/normalize.test.ts` (add test for shipping_estimate extraction)
@@ -651,13 +661,15 @@ describe('normalizeCart shipping_estimate', () => {
       cart_total: '13.50',
       item_count: 1,
       shipping_estimate: {
-        groups: [{
-          provider_name: 'Uber Direct',
-          fulfillment_type: 'local_delivery',
-          status: 'quoted',
-          estimated_cost: '3.50',
-          items: ['Burger'],
-        }],
+        groups: [
+          {
+            provider_name: 'Uber Direct',
+            fulfillment_type: 'local_delivery',
+            status: 'quoted',
+            estimated_cost: '3.50',
+            items: ['Burger'],
+          },
+        ],
         total_shipping: '3.50',
         ships_in_parts: false,
       },
@@ -717,6 +729,7 @@ git commit -m "feat: add shipping_estimate to Cart type and normalizeCart"
 > [DEBATE #10] The `NormalizedProduct` interface at `src/lib/normalize.ts:59-77` has a `[key: string]: unknown` pass-through so new backend fields survive, but we should explicitly declare `availableFulfillmentTypes` and `pickupOnly` for type safety.
 
 **Files:**
+
 - Modify: `src/lib/normalize.ts:59-77` (add fields to NormalizedProduct)
 - Modify: `src/lib/normalize.ts:127-151` (extract in normalizeProduct)
 - Modify: `src/lib/normalize.test.ts` (add test)
@@ -794,6 +807,7 @@ Add translation keys for delivery features across all three languages.
 > [DEBATE #13] Reduced from 32 to ~20 keys. Cut keys for deferred DeliveryOptionsSheet (asap, estimatedMinutes, estimatedDelivery, continueToCheckout, skipToCheckout, deliveryCostUpdated, deliveryPricingChanging, localDelivery, nationwideShipping, selfDelivery, couldntLoadDelivery, retry, removeFromCart).
 
 **Files:**
+
 - Modify: `src/i18n/messages/en.json`
 - Modify: `src/i18n/messages/nl.json`
 - Modify: `src/i18n/messages/de.json`
@@ -903,6 +917,7 @@ Build the header-mounted postcode input island.
 > [DEBATE #11] Wire up the `address-bar:expand` custom event dispatch from DeliveryBanner and ShippingEstimate so the "add postcode" prompts can expand the AddressBar.
 
 **Files:**
+
 - Create: `src/components/interactive/AddressBar.tsx`
 - Modify: `src/components/astro/Header.astro`
 - Test: `src/components/interactive/AddressBar.test.tsx`
@@ -1073,7 +1088,13 @@ export function AddressBar({ lang }: Props) {
   }
 
   const pinIcon = (
-    <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg
+      class="h-4 w-4 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
       <circle cx="12" cy="10" r="3" />
     </svg>
@@ -1097,7 +1118,13 @@ export function AddressBar({ lang }: Props) {
           class="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
           aria-label={t('clearAddress', lang)}
         >
-          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="h-3.5 w-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -1123,11 +1150,7 @@ export function AddressBar({ lang }: Props) {
 
   // Expanded state: input mode
   return (
-    <form
-      onSubmit={handleSubmit}
-      class="flex items-center gap-1.5"
-      onKeyDown={handleKeyDown}
-    >
+    <form onSubmit={handleSubmit} class="flex items-center gap-1.5" onKeyDown={handleKeyDown}>
       <span class="text-muted-foreground">{pinIcon}</span>
       <input
         ref={inputRef}
@@ -1145,7 +1168,13 @@ export function AddressBar({ lang }: Props) {
         class="rounded bg-primary px-2.5 py-1 text-sm font-medium text-primary-foreground disabled:opacity-50"
       >
         {loading ? (
-          <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="h-4 w-4 animate-spin"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32" />
           </svg>
         ) : (
@@ -1204,6 +1233,7 @@ Single island that handles all product badge/visibility changes via safe DOM man
 > [DEBATE #7] Added DOM integration tests using happy-dom to verify actual badge creation and product hiding.
 
 **Files:**
+
 - Create: `src/components/interactive/FulfillmentOverlay.tsx`
 - Modify: `src/components/astro/ProductCard.astro` (add badge slot element)
 - Modify: `src/components/astro/MenuSection.astro` (add data attribute)
@@ -1230,11 +1260,7 @@ Create `src/components/interactive/FulfillmentOverlay.test.tsx`:
 
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  getBadgeForProduct,
-  shouldHideProduct,
-  applyFulfillmentToDOM,
-} from './FulfillmentOverlay';
+import { getBadgeForProduct, shouldHideProduct, applyFulfillmentToDOM } from './FulfillmentOverlay';
 
 // ── Pure logic tests ───────────────────────────────────────────
 
@@ -1407,7 +1433,8 @@ export function shouldHideProduct(
 /** Create a badge element using safe DOM methods (no innerHTML) */
 function createBadgeElement(text: string): HTMLSpanElement {
   const badge = document.createElement('span');
-  badge.className = 'inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground';
+  badge.className =
+    'inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground';
   badge.textContent = text;
   return badge;
 }
@@ -1502,10 +1529,7 @@ export function FulfillmentOverlay({ lang }: Props) {
   return null;
 }
 
-async function fetchAndApplyFulfillment(
-  coords: AddressCoords,
-  lang: string,
-): Promise<void> {
+async function fetchAndApplyFulfillment(coords: AddressCoords, lang: string): Promise<void> {
   try {
     const client = getClient();
     const { data } = await client.GET('/api/v1/products/', {
@@ -1544,7 +1568,7 @@ Expected: PASS
 Modify `src/layouts/BaseLayout.astro`. Add import and mount with other shared islands:
 
 ```astro
-import { FulfillmentOverlay } from '@/components/interactive/FulfillmentOverlay';
+import {FulfillmentOverlay} from '@/components/interactive/FulfillmentOverlay';
 ```
 
 ```astro
@@ -1565,6 +1589,7 @@ git commit -m "feat: add FulfillmentOverlay island for product badges and visibi
 Inline banner below header showing delivery status context.
 
 **Files:**
+
 - Create: `src/components/interactive/DeliveryBanner.tsx`
 - Modify: `src/layouts/BaseLayout.astro`
 - Test: `src/components/interactive/DeliveryBanner.test.tsx`
@@ -1662,6 +1687,7 @@ git commit -m "feat: add DeliveryBanner for address context and delivery status"
 Collapsible shipping cost breakdown in CartDrawer.
 
 **Files:**
+
 - Create: `src/components/interactive/ShippingEstimate.tsx`
 - Modify: `src/components/interactive/CartDrawer.tsx` (line ~130, between subtotal and existing shipping rows)
 - Test: `src/components/interactive/ShippingEstimate.test.tsx`
@@ -1784,6 +1810,7 @@ git commit -m "feat: add ShippingEstimate component in cart drawer"
 > [DEBATE #9] Full Playwright test implementations with actual mock API endpoint code, not just bullet points.
 
 **Files:**
+
 - Create: `e2e/delivery.spec.ts`
 - Modify: `e2e/helpers/mock-api.ts` (add address-check endpoint, shipping estimate on cart)
 
@@ -1802,7 +1829,11 @@ if (method === 'POST' && pathname === '/api/v1/fulfillment/address-check/') {
   const postalCode = (body.postal_code ?? '').replace(/\s/g, '');
 
   // Amsterdam area: full delivery
-  if (postalCode.startsWith('1015') || postalCode.startsWith('1016') || postalCode.startsWith('1017')) {
+  if (
+    postalCode.startsWith('1015') ||
+    postalCode.startsWith('1016') ||
+    postalCode.startsWith('1017')
+  ) {
     return json(res, {
       latitude: 52.3702,
       longitude: 4.8952,
@@ -1811,9 +1842,7 @@ if (method === 'POST' && pathname === '/api/v1/fulfillment/address-check/') {
         { id: 1, name: 'Uber Direct', type: 'local_delivery' },
         { id: 2, name: 'SooCool', type: 'nationwide_delivery' },
       ],
-      pickup_locations: [
-        { id: 5, name: "Marco's Amsterdam", distance_km: 1.2 },
-      ],
+      pickup_locations: [{ id: 5, name: "Marco's Amsterdam", distance_km: 1.2 }],
       delivery_unavailable: false,
       near_delivery_zone: false,
     });
@@ -1826,9 +1855,7 @@ if (method === 'POST' && pathname === '/api/v1/fulfillment/address-check/') {
       longitude: 6.5,
       available_fulfillment_types: ['pickup'],
       available_shipping_providers: [],
-      pickup_locations: [
-        { id: 5, name: "Marco's Amsterdam", distance_km: 180 },
-      ],
+      pickup_locations: [{ id: 5, name: "Marco's Amsterdam", distance_km: 180 }],
       delivery_unavailable: true,
       near_delivery_zone: false,
     });
@@ -1840,12 +1867,8 @@ if (method === 'POST' && pathname === '/api/v1/fulfillment/address-check/') {
       latitude: 52.41,
       longitude: 4.92,
       available_fulfillment_types: ['pickup', 'nationwide_delivery'],
-      available_shipping_providers: [
-        { id: 2, name: 'SooCool', type: 'nationwide_delivery' },
-      ],
-      pickup_locations: [
-        { id: 5, name: "Marco's Amsterdam", distance_km: 5.2 },
-      ],
+      available_shipping_providers: [{ id: 2, name: 'SooCool', type: 'nationwide_delivery' }],
+      pickup_locations: [{ id: 5, name: "Marco's Amsterdam", distance_km: 5.2 }],
       delivery_unavailable: true,
       near_delivery_zone: true,
     });
@@ -1876,13 +1899,15 @@ Add shipping_estimate to cart GET response when coordinates are provided:
 // If latitude/longitude query params are present, add shipping_estimate
 if (hasCoords) {
   cartResponse.shipping_estimate = {
-    groups: [{
-      provider_name: 'Uber Direct',
-      fulfillment_type: 'local_delivery',
-      status: 'quoted',
-      estimated_cost: '3.50',
-      items: cart.line_items.map(li => li.product_title),
-    }],
+    groups: [
+      {
+        provider_name: 'Uber Direct',
+        fulfillment_type: 'local_delivery',
+        status: 'quoted',
+        estimated_cost: '3.50',
+        items: cart.line_items.map((li) => li.product_title),
+      },
+    ],
     total_shipping: '3.50',
     ships_in_parts: false,
   };
@@ -1895,7 +1920,12 @@ Create `e2e/delivery.spec.ts`:
 
 ```typescript
 import { test, expect } from '@playwright/test';
-import { resetMockApi, addItemToCart, waitForHydration, blockAnalytics } from './helpers/test-utils';
+import {
+  resetMockApi,
+  addItemToCart,
+  waitForHydration,
+  blockAnalytics,
+} from './helpers/test-utils';
 
 test.describe('Delivery options', () => {
   test.beforeEach(async ({ page }) => {
