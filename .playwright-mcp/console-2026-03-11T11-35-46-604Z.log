@@ -1,0 +1,459 @@
+[     528ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[     528ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[     528ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[     715ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[     716ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[     794ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773228947323&ver=1.357.0:0
+[     826ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773228947405&ver=1.357.0&compression=base64:0
+[    5587ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[   31041ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[   40002ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+  in CartFooter (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:441)
+  in CartDrawer
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[   40103ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+  in CartFooter (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:441)
+  in CartDrawer
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[   40103ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[   40104ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+  in CartFooter (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:441)
+  in CartDrawer
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[   40104ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+  in CartFooter (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:441)
+  in CartDrawer
+  in CartDrawer
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[   40105ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+  in CartFooter (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:441)
+  in CartDrawer
+  in CartDrawer
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[   40161ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+  in CartFooter (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:441)
+  in CartDrawer
+  in CartDrawer
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[   40161ms] [ERROR] Following component has two or more children with the same key attribute: "35". This may cause glitches and misbehavior in rendering process. Component: 
+
+<div class="flex gap-2 overflow-x-auto pb-1">..</div>
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartSuggestions.tsx:61)
+  in CartSuggestions (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/CartDrawer.tsx:190)
+  in CartDrawer
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:212
+[  300933ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773229247407&ver=1.357.0&compression=base64:0
+[  600867ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773229547412&ver=1.357.0&compression=base64:0
+[  900841ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773229847410&ver=1.357.0&compression=base64:0
+[ 1200881ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773230147414&ver=1.357.0&compression=base64:0
+[ 1500849ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773230447414&ver=1.357.0&compression=base64:0
+[ 1800871ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773230747414&ver=1.357.0&compression=base64:0
+[ 1802754ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1802755ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1802755ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1807144ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 1807144ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 1807190ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773230753748&ver=1.357.0:0
+[ 1807233ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773230753801&ver=1.357.0&compression=base64:0
+[ 1808694ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 1812437ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1812437ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1812437ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1812534ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 1812534ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 1812596ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773230759140&ver=1.357.0:0
+[ 1812657ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773230759206&ver=1.357.0&compression=base64:0
+[ 1817939ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1817939ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1817939ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1818074ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 1818074ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 1818166ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773230764682&ver=1.357.0:0
+[ 1818212ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773230764777&ver=1.357.0&compression=base64:0
+[ 1823116ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 1827863ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1827864ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1827864ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1828057ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 1828057ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 1828115ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773230774662&ver=1.357.0:0
+[ 1828178ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773230774726&ver=1.357.0&compression=base64:0
+[ 1833122ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 1923263ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1923264ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1923264ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 1923435ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 1923435ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 1923483ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773230870039&ver=1.357.0:0
+[ 1923548ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773230870093&ver=1.357.0&compression=base64:0
+[ 1928513ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 2223534ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773231170096&ver=1.357.0&compression=base64:0
+[ 2523558ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773231470097&ver=1.357.0&compression=base64:0
+[ 2823537ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773231770100&ver=1.357.0&compression=base64:0
+[ 3123542ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773232070101&ver=1.357.0&compression=base64:0
+[ 3423539ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773232370104&ver=1.357.0&compression=base64:0
+[ 3723553ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773232670105&ver=1.357.0&compression=base64:0
+[ 4023555ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773232970107&ver=1.357.0&compression=base64:0
+[ 4088834ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4088834ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4088835ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4093992ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4093992ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4093993ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4095513ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4095513ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4095588ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233042116&ver=1.357.0:0
+[ 4095779ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233042198&ver=1.357.0&compression=base64:0
+[ 4099117ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 4356077ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4356078ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4356078ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4356094ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4356094ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4356146ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233302699&ver=1.357.0:0
+[ 4356209ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233302756&ver=1.357.0&compression=base64:0
+[ 4361430ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 4362150ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4362150ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4362151ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4362589ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4362589ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4362640ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233309193&ver=1.357.0:0
+[ 4362704ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233309250&ver=1.357.0&compression=base64:0
+[ 4365673ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4365673ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4365674ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4365702ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4365702ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4365795ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233312307&ver=1.357.0:0
+[ 4365865ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233312406&ver=1.357.0&compression=base64:0
+[ 4370735ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 4482785ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4482786ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4482786ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4483033ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4483033ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4483082ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233429637&ver=1.357.0:0
+[ 4483116ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233429692&ver=1.357.0&compression=base64:0
+[ 4487905ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 4489164ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4489165ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4489165ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4489599ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4489599ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4489663ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233436203&ver=1.357.0:0
+[ 4489698ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233436273&ver=1.357.0&compression=base64:0
+[ 4494305ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 4577011ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4577012ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4577012ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4577059ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4577059ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4577126ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233523664&ver=1.357.0:0
+[ 4577161ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233523737&ver=1.357.0&compression=base64:0
+[ 4582110ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 4595927ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4595927ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4595927ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4596269ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4596269ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4596331ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233542876&ver=1.357.0:0
+[ 4596364ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233542940&ver=1.357.0&compression=base64:0
+[ 4602611ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 4605335ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4605335ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4605336ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4605370ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4605370ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4605429ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233551976&ver=1.357.0:0
+[ 4605468ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233552041&ver=1.357.0&compression=base64:0
+[ 4610743ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4610744ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4610744ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4610769ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4610769ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4610817ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233557376&ver=1.357.0:0
+[ 4610849ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233557427&ver=1.357.0&compression=base64:0
+[ 4616092ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 4724226ms] [ERROR] Expected a DOM node of type "svg" but found "" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in svg (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:91)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4724226ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:108)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4724226ms] [ERROR] Expected a DOM node of type "button" but found "svg" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in button (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:116)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=348493e2:67
+[ 4724432ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config.js:0
+[ 4724432ms] [ERROR] Refused to execute script from 'https://eu-assets.i.posthog.com/array/phc_xxx/config.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:4321/en/:0
+[ 4724503ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://eu-assets.i.posthog.com/array/phc_xxx/config?ip=0&_=1773233671037&ver=1.357.0:0
+[ 4724550ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233671115&ver=1.357.0&compression=base64:0
+[ 4729699ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0
+[ 5025774ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773233971120&ver=1.357.0&compression=base64:0
+[ 5324564ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773234271120&ver=1.357.0&compression=base64:0
+[ 5624555ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773234571120&ver=1.357.0&compression=base64:0
+[ 5924558ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773234871123&ver=1.357.0&compression=base64:0
+[ 6224566ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773235171125&ver=1.357.0&compression=base64:0
+[ 6524799ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773235471126&ver=1.357.0&compression=base64:0
+[ 6824593ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773235771130&ver=1.357.0&compression=base64:0
+[ 7124588ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773236071129&ver=1.357.0&compression=base64:0
+[ 7424563ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773236371126&ver=1.357.0&compression=base64:0
+[ 7724581ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773236671126&ver=1.357.0&compression=base64:0
+[ 8024780ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773236971128&ver=1.357.0&compression=base64:0
+[ 8324577ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773237271132&ver=1.357.0&compression=base64:0
+[ 8624578ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773237571128&ver=1.357.0&compression=base64:0
+[ 8924579ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773237871130&ver=1.357.0&compression=base64:0
+[ 9224582ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://eu.posthog.com/flags/?v=2&ip=0&_=1773238171132&ver=1.357.0&compression=base64:0

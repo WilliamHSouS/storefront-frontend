@@ -102,5 +102,6 @@
   "showingItemsFor": "Showing items available for delivery to {postalCode}",
   "deliveryOptions": "Delivery options",
   "changeAddress": "Change",
-  "clearAddress": "Clear"
+  "clearAddress": "Clear",
+  "changeLanguage": "Change language"
 }

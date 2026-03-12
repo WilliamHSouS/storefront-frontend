@@ -102,5 +102,6 @@
   "showingItemsFor": "Artikel verfügbar für Lieferung nach {postalCode}",
   "deliveryOptions": "Lieferoptionen",
   "changeAddress": "Ändern",
-  "clearAddress": "Löschen"
+  "clearAddress": "Löschen",
+  "changeLanguage": "Sprache ändern"
 }

@@ -22,8 +22,10 @@ export function getStoredAddress(): StoredAddress | null {
     if (!raw) return null;
     const stored: StoredAddress = JSON.parse(raw);
     if (
-      !stored.postalCode ||
-      !stored.country ||
+      typeof stored.postalCode !== 'string' ||
+      stored.postalCode === '' ||
+      typeof stored.country !== 'string' ||
+      stored.country === '' ||
       typeof stored.latitude !== 'number' ||
       typeof stored.longitude !== 'number' ||
       typeof stored.storedAt !== 'number'

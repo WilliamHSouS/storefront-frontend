@@ -102,5 +102,6 @@
   "showingItemsFor": "Items beschikbaar voor bezorging naar {postalCode}",
   "deliveryOptions": "Bezorgopties",
   "changeAddress": "Wijzigen",
-  "clearAddress": "Wissen"
+  "clearAddress": "Wissen",
+  "changeLanguage": "Taal wijzigen"
 }

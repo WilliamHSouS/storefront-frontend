@@ -135,7 +135,7 @@ export function FulfillmentOverlay({ lang }: Props) {
     };
   }, [coords, lang]);
 
-  return null;
+  return <div data-fulfillment-overlay />;
 }
 
 async function fetchAndApplyFulfillment(

@@ -1,0 +1,6 @@
+[     583ms] [ERROR] Expected a DOM node of type "div" but found "button" as available DOM-node(s), this is caused by the SSR'd HTML containing different DOM-nodes compared to the hydrated one.
+
+  in div (at /Users/williamhurst/emdash-projects/worktrees/local-delivery-8i4/src/components/interactive/AddressBar.tsx:106)
+  in AddressBar
+ @ http://localhost:4321/node_modules/.vite/deps/chunk-3AALBTH3.js?v=0e79d10a:67
+[    5646ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:8001/api/v1/merchant-comms/storefront/events/:0

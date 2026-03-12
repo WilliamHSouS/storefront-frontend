@@ -1,0 +1,48 @@
+---
+import { t } from '@/i18n';
+
+interface Props {
+  lang: string;
+  languages: string[];
+  currentPath: string;
+}
+
+const { lang, languages, currentPath } = Astro.props;
+
+// Language display labels (native names)
+const LANGUAGE_LABELS: Record<string, string> = {
+  nl: 'NL',
+  en: 'EN',
+  de: 'DE',
+};
+
+// Strip the current lang prefix to get the rest of the path
+// e.g. "/nl/menu/pizza" → "/menu/pizza"
+const pathWithoutLang = currentPath.replace(new RegExp(`^/${lang}(/|$)`), '/');
+
+function buildLangUrl(targetLang: string): string {
+  return `/${targetLang}${pathWithoutLang === '/' ? '/' : pathWithoutLang}`;
+}
+---
+
+{
+  languages.length > 1 && (
+    <div class="flex items-center gap-1" role="navigation" aria-label={t('changeLanguage', lang)}>
+      {languages.map((l) => (
+        <a
+          href={buildLangUrl(l)}
+          class:list={[
+            'inline-flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text-xs font-medium transition-colors',
+            l === lang
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          ]}
+          aria-current={l === lang ? 'true' : undefined}
+          aria-label={LANGUAGE_LABELS[l] ?? l.toUpperCase()}
+        >
+          {LANGUAGE_LABELS[l] ?? l.toUpperCase()}
+        </a>
+      ))}
+    </div>
+  )
+}
