@@ -35,6 +35,25 @@ test.describe('Navigation and language routing', () => {
     expect(isRedirect || isNotFound || isOk).toBe(true);
   });
 
+  test('category drawer opens and navigates to section', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    // Click the category drawer trigger
+    await page.click('[data-category-drawer-trigger]');
+
+    // Drawer nav should appear
+    const drawerNav = page.locator('[data-category-drawer]');
+    await expect(drawerNav.first()).toBeVisible({ timeout: 3_000 });
+
+    // Click a category
+    const categoryButton = drawerNav.first().locator('button').first();
+    await categoryButton.click();
+
+    // Drawer should close
+    await expect(drawerNav.first()).toBeHidden();
+  });
+
   test('category tab click scrolls to section', async ({ page }) => {
     await page.goto(menuPage());
     await waitForHydration(page);

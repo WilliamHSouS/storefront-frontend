@@ -60,6 +60,30 @@ test.describe('Product detail modal — open and close', () => {
     await expect(modal).toBeHidden();
   });
 
+  test('product card click opens modal and updates URL', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    // Click the product card link (not the Add button)
+    const productLink = page.locator('[data-product-modal]').first();
+    const slug = await productLink.getAttribute('data-product-slug');
+    await productLink.click();
+
+    // Modal should appear
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible({ timeout: 5_000 });
+
+    // URL should contain the product slug
+    expect(page.url()).toContain(`/product/${slug}`);
+
+    // Close modal via Escape
+    await page.keyboard.press('Escape');
+
+    // Modal should close and URL should revert
+    await expect(modal).toBeHidden();
+    expect(page.url()).not.toContain('/product/');
+  });
+
   test('focus is trapped inside modal', async ({ page }) => {
     await page.goto(menuPage());
     await waitForHydration(page);
