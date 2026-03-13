@@ -1,0 +1,36 @@
+src/middleware.ts
+  36ab779692f4dab3 28-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "2c4bc0c537c6fe4066f8d5277bd9c4c2ac56c3aa",
+  "prompts": {
+    "36ab779692f4dab3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "900667be-600a-43ff-9b3b-f4d8863f9209",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "8742028523990a91": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ab86a87-bdcc-4243-aa53-27a48d3d0283",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 786,
+      "overriden_lines": 0
+    }
+  }
+}
