@@ -1,0 +1,42 @@
+src/components/interactive/ProductDetail.tsx
+  36ab779692f4dab3 13,540-546,552-553
+src/lib/image.ts
+  36ab779692f4dab3 6-52,56-57
+src/components/interactive/ProductSuggestions.tsx
+  36ab779692f4dab3 8,63
+src/lib/image.test.ts
+  36ab779692f4dab3 1-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "037569938d6e8de27b4f2dca714c20246c4c4e08",
+  "prompts": {
+    "36ab779692f4dab3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "900667be-600a-43ff-9b3b-f4d8863f9209",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 302,
+      "total_deletions": 141,
+      "accepted_lines": 167,
+      "overriden_lines": 0
+    },
+    "8742028523990a91": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ab86a87-bdcc-4243-aa53-27a48d3d0283",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 358,
+      "total_deletions": 2,
+      "accepted_lines": 358,
+      "overriden_lines": 0
+    }
+  }
+}
