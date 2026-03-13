@@ -1,0 +1,25 @@
+docs/plans/2026-03-13-poke-perfect-setup-design.md
+  b1cc083a59f5c758 1-87
+docs/plans/2026-03-13-poke-perfect-setup.md
+  b1cc083a59f5c758 1-619
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "8ba55d575d5e7d9792328bef78ffdb0ee7516301",
+  "prompts": {
+    "b1cc083a59f5c758": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5a0ece1a-dbf2-4146-b040-19fb433b9806",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 706,
+      "overriden_lines": 0
+    }
+  }
+}
