@@ -1,0 +1,40 @@
+astro.config.mjs
+  36ab779692f4dab3 10-17
+src/lib/image.ts
+  36ab779692f4dab3 62-66,82
+src/lib/image.test.ts
+  36ab779692f4dab3 20-21,23-36,109,111-113,115-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "f2e0bdb823ae599292e5298db65e52a1b9f8d2a5",
+  "prompts": {
+    "36ab779692f4dab3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "900667be-600a-43ff-9b3b-f4d8863f9209",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 43,
+      "total_deletions": 11,
+      "accepted_lines": 42,
+      "overriden_lines": 0
+    },
+    "8742028523990a91": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ab86a87-bdcc-4243-aa53-27a48d3d0283",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 623,
+      "total_deletions": 235,
+      "accepted_lines": 795,
+      "overriden_lines": 0
+    }
+  }
+}
