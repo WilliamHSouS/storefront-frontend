@@ -25,6 +25,10 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 
   // Skip middleware for static assets in public/ (images, fonts, etc.)
   // SEO endpoints (.xml, .txt) are excluded — they need merchant context from below.
+  // Also skip Astro's built-in image optimization endpoint.
+  if (url.pathname.startsWith('/_image')) {
+    return next();
+  }
   if (
     !LANG_EXEMPT_PATHS.has(url.pathname) &&
     url.pathname.match(/\.(svg|png|jpg|jpeg|webp|gif|ico|woff2?|ttf|eot|css|js|json|xml|txt)$/i)
