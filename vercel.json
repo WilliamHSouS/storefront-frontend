@@ -5,13 +5,15 @@
       80, 104, 112, 128, 208, 256, 300, 384, 450, 512, 600, 640, 750, 828, 900, 960, 1080, 1200,
       1280, 1920
     ],
-    "domains": ["v0-embedded-storefront-widget.vercel.app"],
+    "domains": [],
     "remotePatterns": [
       {
         "protocol": "https",
-        "hostname": "v0-embedded-storefront-widget.vercel.app"
+        "hostname": "**"
       }
-    ]
+    ],
+    "formats": ["image/avif", "image/webp"],
+    "minimumCacheTTL": 86400
   },
   "headers": [
     {
