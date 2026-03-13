@@ -80,7 +80,12 @@ export default function CategoryDrawer({ categories, lang }: Props) {
   return (
     <>
       {/* Mobile: full-screen overlay */}
-      <div class="fixed inset-0 z-50 flex flex-col bg-background md:hidden">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('menu', lang)}
+        class="fixed inset-0 z-50 flex flex-col bg-background md:hidden"
+      >
         <div class="flex items-center justify-between border-b border-border px-4 py-3">
           <h2 class="font-heading text-lg font-semibold text-foreground">{t('menu', lang)}</h2>
           <button

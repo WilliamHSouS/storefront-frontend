@@ -1,11 +1,10 @@
 import { useStore } from '@nanostores/preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { $cart, $cartLoading, setStoredCartId, ensureCart } from '@/stores/cart';
+import { $cart, $cartLoading, ensureCart, cartCoordsQuery } from '@/stores/cart';
 import { $selectedProduct } from '@/stores/ui';
 import { getClient } from '@/lib/api';
 import { showToast } from '@/stores/toast';
-import { setCartItemQuantity } from '@/stores/cart-actions';
-import { normalizeCart } from '@/lib/normalize';
+import { setCartItemQuantity, commitCartResponse } from '@/stores/cart-actions';
 import { t } from '@/i18n';
 import QuantitySelector from './QuantitySelector';
 
@@ -76,7 +75,7 @@ export default function AddToCartButton({
       const client = getClient();
       const cartId = await ensureCart(client);
       const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
-        params: { path: { cart_id: cartId } },
+        params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
         body: { product_id: productId, quantity: 1 },
       });
 
@@ -90,9 +89,7 @@ export default function AddToCartButton({
           showToast(t('toastAddToCartFailed', lang));
         }
       } else if (data) {
-        const cartData = normalizeCart(data as Record<string, unknown>);
-        $cart.set(cartData);
-        if (cartData?.id) setStoredCartId(cartData.id);
+        commitCartResponse(data);
         // Open modal in upsell mode so suggestions are shown if available
         $selectedProduct.set({
           id: productId,

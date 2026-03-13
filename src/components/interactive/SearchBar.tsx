@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
 import { $merchant } from '@/stores/merchant';
+import { $selectedProduct } from '@/stores/ui';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { t } from '@/i18n';
 import { getClient } from '@/lib/api';
@@ -93,7 +94,8 @@ export default function SearchBar({ lang }: Props) {
 
   const handleSelect = (result: SearchResult) => {
     closeSearch();
-    window.location.href = `/${lang}/product/${slugify(result.name)}--${result.id}`;
+    const slug = `${slugify(result.name)}--${result.id}`;
+    $selectedProduct.set({ id: String(result.id), name: result.name, slug });
   };
 
   // Close on escape

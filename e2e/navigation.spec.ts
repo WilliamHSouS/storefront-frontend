@@ -54,6 +54,20 @@ test.describe('Navigation and language routing', () => {
     await expect(drawerNav.first()).toBeHidden();
   });
 
+  test('category drawer closes on Escape key', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    await page.click('[data-category-drawer-trigger]');
+
+    const drawerNav = page.locator('[data-category-drawer]');
+    await expect(drawerNav.first()).toBeVisible({ timeout: 3_000 });
+
+    await page.keyboard.press('Escape');
+
+    await expect(drawerNav.first()).toBeHidden();
+  });
+
   test('category tab click scrolls to section', async ({ page }) => {
     await page.goto(menuPage());
     await waitForHydration(page);

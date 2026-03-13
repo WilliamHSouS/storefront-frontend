@@ -1,15 +1,8 @@
 import { useStore } from '@nanostores/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { $selectedProduct } from '@/stores/ui';
-import {
-  $cart,
-  $cartLoading,
-  ensureCart,
-  setStoredCartId,
-  addSuggestionToCart,
-  type Suggestion,
-} from '@/stores/cart';
-import { normalizeCart } from '@/lib/normalize';
+import { $cartLoading, ensureCart, cartCoordsQuery, type Suggestion } from '@/stores/cart';
+import { commitCartResponse, addSuggestionToCart } from '@/stores/cart-actions';
 import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
@@ -121,11 +114,11 @@ export default function ProductDetail({ lang }: Props) {
   const locale = langToLocale(lang);
 
   const close = () => {
-    const wasPushed = didPushState.current;
-    didPushState.current = false;
-    $selectedProduct.set(null);
-    if (wasPushed) {
+    if (didPushState.current) {
       history.back();
+      // popstate handler will clear didPushState and set $selectedProduct to null
+    } else {
+      $selectedProduct.set(null);
     }
   };
 
@@ -198,7 +191,8 @@ export default function ProductDetail({ lang }: Props) {
             showToast(t('toastAddedToCart', lang), 'success');
             close();
           }
-        } catch {
+        } catch (err) {
+          console.error('[ProductDetail] failed to fetch suggestions for upsell:', err);
           showToast(t('toastAddedToCart', lang), 'success');
           close();
         } finally {
@@ -222,17 +216,43 @@ export default function ProductDetail({ lang }: Props) {
     return () => window.removeEventListener('open-product', handler);
   }, []);
 
+  // Open modal from ?product= query param (direct product URL → menu redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product');
+    const productName = params.get('name');
+    const productSlug = params.get('slug');
+    if (productId) {
+      $selectedProduct.set({
+        id: productId,
+        name: productName ?? '',
+        slug: productSlug ?? undefined,
+      });
+      // Clean up the query params from the URL
+      const clean = new URL(window.location.href);
+      clean.searchParams.delete('product');
+      clean.searchParams.delete('name');
+      clean.searchParams.delete('slug');
+      history.replaceState(null, '', clean.pathname + clean.search);
+    }
+  }, []);
+
   // Shallow routing: sync URL with modal state
   useEffect(() => {
     if (selectedProduct?.slug && !selectedProduct.skipToUpsell) {
-      if (!window.location.pathname.includes('/product/')) {
-        const langPrefix = (window as { __LANG__?: string }).__LANG__ || 'en';
-        history.pushState(
-          { productModal: true },
-          '',
-          `/${langPrefix}/product/${selectedProduct.slug}`,
-        );
-        didPushState.current = true;
+      const langPrefix = (window as { __LANG__?: string }).__LANG__ || 'en';
+      const productUrl = `/${langPrefix}/product/${selectedProduct.slug}`;
+      try {
+        if (window.location.pathname.includes('/product/')) {
+          // Product-to-product: replace URL to avoid stale entries in history stack
+          history.replaceState({ productModal: true }, '', productUrl);
+        } else {
+          // Menu → product: push so back button returns to menu
+          history.pushState({ productModal: true }, '', productUrl);
+          didPushState.current = true;
+        }
+      } catch {
+        // Shallow routing unavailable (e.g. iframe sandbox) — modal still works
       }
     }
   }, [selectedProduct]);
@@ -363,7 +383,7 @@ export default function ProductDetail({ lang }: Props) {
       const client = getClient();
       const cartId = await ensureCart(client);
       const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
-        params: { path: { cart_id: cartId } },
+        params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
         body: {
           product_id: product.id,
           quantity,
@@ -401,9 +421,7 @@ export default function ProductDetail({ lang }: Props) {
       }
 
       if (data) {
-        const cartData = normalizeCart(data as Record<string, unknown>);
-        $cart.set(cartData);
-        if (cartData.id) setStoredCartId(cartData.id);
+        commitCartResponse(data);
         if (suggestions.length > 0) {
           setStep('upsell');
         } else {
@@ -419,7 +437,7 @@ export default function ProductDetail({ lang }: Props) {
     }
   };
 
-  if (!selectedProduct) return null;
+  if (!selectedProduct) return <div />;
 
   const total = calculateTotal();
 
@@ -438,7 +456,7 @@ export default function ProductDetail({ lang }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={product?.name ?? ''}
-        class="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg"
+        class="absolute bottom-0 left-0 right-0 flex max-h-[90vh] flex-col overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg"
       >
         {loadingProduct ? (
           <div
@@ -518,7 +536,7 @@ export default function ProductDetail({ lang }: Props) {
 
             {/* Product image (hidden during upsell step) */}
             {step === 'detail' && product.image && (
-              <div class="aspect-video w-full overflow-hidden bg-card-image">
+              <div class="aspect-video w-full shrink-0 overflow-hidden bg-card-image">
                 <img
                   src={optimizedImageUrl(product.image, { width: 900 })}
                   alt={product.name}
@@ -531,7 +549,7 @@ export default function ProductDetail({ lang }: Props) {
 
             {/* Scrollable content */}
             <div
-              class="overflow-y-auto px-4 py-4"
+              class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-8"
               style={{ maxHeight: product.image ? 'calc(90vh - 340px)' : 'calc(90vh - 160px)' }}
             >
               {step === 'upsell' ? (
@@ -558,7 +576,7 @@ export default function ProductDetail({ lang }: Props) {
 
                   {/* Attributes */}
                   {product.attribute_values && product.attribute_values.length > 0 && (
-                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                    <div class="mt-3 grid grid-cols-2 gap-2">
                       {product.attribute_values.map((attr) => {
                         let display: string | null = null;
                         if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
@@ -575,9 +593,12 @@ export default function ProductDetail({ lang }: Props) {
                         }
                         if (!display) return null;
                         return (
-                          <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
-                            <span class="font-medium">{attr.attribute_name}:</span> {display}
-                          </span>
+                          <div key={attr.attribute_slug} class="rounded-md bg-muted px-2.5 py-1.5">
+                            <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              {attr.attribute_name}
+                            </p>
+                            <p class="text-xs text-card-foreground">{display}</p>
+                          </div>
                         );
                       })}
                     </div>
@@ -621,6 +642,8 @@ export default function ProductDetail({ lang }: Props) {
                                     setAddedSuggestions((prev) => new Set([...prev, s.id]));
                                   } else if (result === 'requires_options') {
                                     $selectedProduct.set({ id: String(s.id), name: s.title });
+                                  } else {
+                                    showToast(t('toastAddToCartFailed', lang));
                                   }
                                 }}
                                 class="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 before:absolute before:inset-[-4px]"
@@ -662,7 +685,7 @@ export default function ProductDetail({ lang }: Props) {
 
                   {/* Attributes */}
                   {product.attribute_values && product.attribute_values.length > 0 && (
-                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                    <div class="mt-3 grid grid-cols-2 gap-2">
                       {product.attribute_values.map((attr) => {
                         let display: string | null = null;
                         if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
@@ -676,9 +699,12 @@ export default function ProductDetail({ lang }: Props) {
                         }
                         if (!display) return null;
                         return (
-                          <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
-                            <span class="font-medium">{attr.attribute_name}:</span> {display}
-                          </span>
+                          <div key={attr.attribute_slug} class="rounded-md bg-muted px-2.5 py-1.5">
+                            <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              {attr.attribute_name}
+                            </p>
+                            <p class="text-xs text-card-foreground">{display}</p>
+                          </div>
                         );
                       })}
                     </div>
@@ -823,6 +849,8 @@ export default function ProductDetail({ lang }: Props) {
                                   setAddedSuggestions((prev) => new Set([...prev, s.id]));
                                 } else if (result === 'requires_options') {
                                   $selectedProduct.set({ id: String(s.id), name: s.title });
+                                } else {
+                                  showToast(t('toastAddToCartFailed', lang));
                                 }
                               }}
                               class="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground before:absolute before:inset-[-4px]"
@@ -891,8 +919,8 @@ export default function ProductDetail({ lang }: Props) {
 
             {/* Sticky bottom CTA */}
             <div
-              class="border-t border-border px-4 py-3"
-              style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+              class="shrink-0 border-t border-border px-4 pt-3 pb-6"
+              style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
             >
               {step === 'upsell' ? (
                 <div class="space-y-2">
@@ -906,7 +934,13 @@ export default function ProductDetail({ lang }: Props) {
                   <button
                     type="button"
                     onClick={() => {
-                      close();
+                      if (didPushState.current) {
+                        didPushState.current = false;
+                        $selectedProduct.set(null);
+                        history.back();
+                      } else {
+                        $selectedProduct.set(null);
+                      }
                       $isCartOpen.set(true);
                     }}
                     class="flex h-10 w-full items-center justify-center text-sm font-medium text-primary hover:underline"

@@ -75,7 +75,9 @@ const { categories, merchant: _merchant, lang } = Astro.props;
 </div>
 
 <script is:inline>
-  document.querySelector('[data-category-drawer-trigger]')?.addEventListener('click', function () {
-    window.dispatchEvent(new CustomEvent('toggle-category-drawer'));
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.closest && e.target.closest('[data-category-drawer-trigger]')) {
+      window.dispatchEvent(new CustomEvent('toggle-category-drawer'));
+    }
   });
 </script>

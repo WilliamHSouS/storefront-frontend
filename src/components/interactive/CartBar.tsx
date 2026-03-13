@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/preact';
 import { useEffect } from 'preact/hooks';
-import { $cart, $itemCount, $cartTotal, getStoredCartId } from '@/stores/cart';
+import { $cart, $itemCount, $cartTotal, getStoredCartId, cartCoordsQuery } from '@/stores/cart';
 import { $isCartOpen, $isCategoryDrawerOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { t } from '@/i18n';
@@ -21,7 +21,7 @@ export default function CartBar({ lang }: Props) {
     const client = getClient();
     client
       .GET(`/api/v1/cart/{id}/`, {
-        params: { path: { id: cartId } },
+        params: { path: { id: cartId }, query: cartCoordsQuery() },
       })
       .then(({ data }) => {
         if (data) $cart.set(normalizeCart(data as Record<string, unknown>));

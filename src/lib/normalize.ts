@@ -7,6 +7,7 @@
  */
 
 import type { Cart, CartLineItem } from '@/stores/cart';
+import type { Discount } from '@/lib/pricing';
 
 /**
  * Extract the product ID from a URL slug.
@@ -64,6 +65,7 @@ export interface NormalizedProduct {
   image_alt: string | null;
   price: string;
   compare_at_price: string | null;
+  discount: Discount | null;
   currency: string;
   description: string | null;
   intro: string | null;
@@ -89,7 +91,7 @@ export interface NormalizedCategory {
 }
 
 /** Raw product shape from the API list endpoint. */
-interface RawProduct {
+export interface RawProduct {
   id: number;
   slug?: string;
   title?: string;
@@ -104,6 +106,7 @@ interface RawProduct {
   is_available?: boolean;
   sold_out?: boolean;
   modifier_groups?: ModifierGroup[];
+  discount?: Discount | null;
   tags?: string[];
   [key: string]: unknown;
 }
@@ -126,21 +129,51 @@ interface RawCategory {
  * Normalize a raw API product to the shape components expect.
  * Handles both `title` (API) and `name` (if already normalized).
  */
-export function normalizeProduct(raw: Record<string, unknown>): NormalizedProduct {
+export function normalizeProduct(raw: RawProduct | Record<string, unknown>): NormalizedProduct {
   const r = raw as RawProduct;
   const images = r.images ?? [];
   const primaryImage = images.length > 0 ? images[0] : null;
   const name = r.title ?? r.name ?? '';
 
+  const price = r.price ?? '0';
+  const compareAt = r.compare_at_price ?? null;
+  const explicitDiscount = r.discount ?? null;
+
+  // Derive a percentage discount from compare_at_price when the API doesn't
+  // provide a structured discount object. The API returns price as the
+  // already-discounted value and compare_at_price as the original, but
+  // the pricing system expects price = original + discount to compute
+  // the effective price. Bridge the two models here at the boundary.
+  //
+  // ⚠ PRICE SEMANTIC SWAP: After this block, `normalizedPrice` holds the
+  // *original* (higher) price, not the current sale price. Downstream code
+  // that reads `product.price` gets the original — the effective price is
+  // computed by the pricing module via `getEffectivePrice(product)`.
+  let normalizedPrice = price;
+  let discount: Discount | null = explicitDiscount;
+  if (!discount && compareAt) {
+    const originalNum = Number(compareAt);
+    const currentNum = Number(price);
+    if (originalNum > currentNum && originalNum > 0) {
+      normalizedPrice = compareAt;
+      // Display-only precision: Math.round is acceptable for badge labels.
+      // Do NOT use discount.value for price arithmetic — use getEffectivePrice() instead.
+      discount = { type: 'percentage', value: Math.round((1 - currentNum / originalNum) * 100) };
+    }
+  }
+
+  const { discount: _rawDiscount, ...rest } = r;
+
   return {
-    ...r,
+    ...rest,
     id: r.id,
     slug: r.slug?.includes('--') ? r.slug : `${slugify(r.slug ?? name)}--${r.id}`,
     name,
     image: primaryImage?.image_url ?? r.image ?? null,
     image_alt: primaryImage?.alt_text ?? null,
-    price: r.price ?? '0',
-    compare_at_price: r.compare_at_price ?? null,
+    price: normalizedPrice,
+    compare_at_price: compareAt,
+    discount,
     currency: r.currency ?? 'EUR',
     description: r.description ?? null,
     intro: r.intro ?? null,
@@ -245,7 +278,9 @@ function normalizeShippingEstimate(raw: unknown): Cart['shipping_estimate'] {
       fulfillment_type: String(g.fulfillment_type ?? ''),
       status: (['quoted', 'calculated', 'pending', 'unavailable'].includes(g.status as string)
         ? g.status
-        : 'pending') as 'quoted' | 'calculated' | 'pending' | 'unavailable',
+        : g.cost_known === true
+          ? 'quoted'
+          : 'pending') as 'quoted' | 'calculated' | 'pending' | 'unavailable',
       estimated_cost: typeof g.estimated_cost === 'string' ? g.estimated_cost : null,
       items: Array.isArray(g.items) ? g.items.map(String) : [],
     })),

@@ -84,6 +84,24 @@ test.describe('Product detail modal — open and close', () => {
     expect(page.url()).not.toContain('/product/');
   });
 
+  test('browser back button closes modal and reverts URL', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    const productLink = page.locator('[data-product-modal]').first();
+    await productLink.click();
+
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible({ timeout: 5_000 });
+    expect(page.url()).toContain('/product/');
+
+    // Press browser back button
+    await page.goBack();
+
+    await expect(modal).toBeHidden();
+    expect(page.url()).not.toContain('/product/');
+  });
+
   test('focus is trapped inside modal', async ({ page }) => {
     await page.goto(menuPage());
     await waitForHydration(page);

@@ -55,7 +55,7 @@ export function getDiscountLabel(
 
   switch (item.discount.type) {
     case 'percentage':
-      return `-${item.discount.value}%`;
+      return `${item.discount.value}% ${t('discountOff', lang)}`;
     case 'fixed':
       return `${formatPrice(String(item.discount.value), currency, locale)} ${t('discountOff', lang)}`;
     case 'bogo':

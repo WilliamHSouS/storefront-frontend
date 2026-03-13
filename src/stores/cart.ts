@@ -211,28 +211,9 @@ async function _doEnsureCart(client: StorefrontClient): Promise<string> {
 
 export type AddSuggestionResult = 'added' | 'requires_options' | 'error';
 
-/** Add a suggested item to cart (quantity 1, no modifiers). Shared by both upsell surfaces. */
-export async function addSuggestionToCart(
-  productId: string | number,
-): Promise<AddSuggestionResult> {
-  const client = getClient();
-  const cartId = await ensureCart(client);
-  const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
-    params: { path: { cart_id: cartId } },
-    body: { product_id: productId, quantity: 1 },
-  });
-  if (data) {
-    const cartData = normalizeCart(data as Record<string, unknown>);
-    $cart.set(mergeShippingEstimate(cartData, $cart.get()));
-    if (cartData.id) setStoredCartId(cartData.id);
-    backgroundRefreshShipping(cartData.id);
-    return 'added';
-  }
-  if (error && 'status' in error && error.status === 400) {
-    return 'requires_options';
-  }
-  return 'error';
-}
+// addSuggestionToCart has moved to cart-actions.ts. Re-exported here for
+// backwards compatibility with existing imports.
+export { addSuggestionToCart } from '@/stores/cart-actions';
 
 /** Generation counter — only the latest background refresh writes to $cart. */
 let refreshGeneration = 0;

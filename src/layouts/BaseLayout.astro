@@ -25,6 +25,15 @@ const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
 const merchantJSON = merchant ? JSON.stringify(merchant) : '';
+
+// Build Google Fonts URL from merchant theme fonts
+const fontFamilies = new Set<string>();
+if (merchant?.theme.fontHeading) fontFamilies.add(merchant.theme.fontHeading);
+if (merchant?.theme.fontBody) fontFamilies.add(merchant.theme.fontBody);
+const googleFontsUrl =
+  fontFamilies.size > 0
+    ? `https://fonts.googleapis.com/css2?${[...fontFamilies].map((f) => `family=${f.replace(/ /g, '+')}:wght@400;500;600;700`).join('&')}&display=swap`
+    : null;
 const langValue = lang ?? 'en';
 
 let commsMessages: CommsMessage[] = [];
@@ -54,6 +63,9 @@ let commsMessages: CommsMessage[] = [];
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     <link rel="preconnect" href={import.meta.env.PUBLIC_API_BASE_URL} />
+    {googleFontsUrl && <link rel="preconnect" href="https://fonts.googleapis.com" />}
+    {googleFontsUrl && <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />}
+    {googleFontsUrl && <link rel="stylesheet" href={googleFontsUrl} />}
     {themeCSS && <style set:html={`:root { ${themeCSS} }`} />}
     {/* PostHog queue stub — events pushed before SDK loads are replayed on init */}
     <script is:inline>
@@ -100,14 +112,18 @@ let commsMessages: CommsMessage[] = [];
 
     <script is:inline>
       document.addEventListener('click', function (e) {
+        if (!e.target || typeof e.target.closest !== 'function') return;
         const link = e.target.closest('[data-product-modal]');
         if (!link) return;
+        const id = link.getAttribute('data-product-id');
+        const name = link.getAttribute('data-product-name');
+        if (!id || !name) return;
         e.preventDefault();
         window.dispatchEvent(
           new CustomEvent('open-product', {
             detail: {
-              id: link.getAttribute('data-product-id'),
-              name: link.getAttribute('data-product-name'),
+              id: id,
+              name: name,
               slug: link.getAttribute('data-product-slug'),
             },
           }),
