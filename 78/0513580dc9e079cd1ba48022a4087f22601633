@@ -1,0 +1,23 @@
+package.json
+  36ab779692f4dab3 67-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "780513580dc9e079cd1ba48022a4087f22601633",
+  "prompts": {
+    "36ab779692f4dab3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "900667be-600a-43ff-9b3b-f4d8863f9209",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 1,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
