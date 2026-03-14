@@ -1,24 +1,18 @@
 import { useStore } from '@nanostores/preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { $selectedProduct } from '@/stores/ui';
-import {
-  $cart,
-  $cartLoading,
-  ensureCart,
-  setStoredCartId,
-  addSuggestionToCart,
-  type Suggestion,
-} from '@/stores/cart';
-import { normalizeCart } from '@/lib/normalize';
+import { $cartLoading, ensureCart, cartCoordsQuery, type Suggestion } from '@/stores/cart';
+import { commitCartResponse, addSuggestionToCart } from '@/stores/cart-actions';
 import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { t } from '@/i18n';
 import { getClient } from '@/lib/api';
-import type { ModifierGroup as RawModifierGroup } from '@/lib/normalize';
-import { optimizedImageUrl } from '@/lib/image';
+import { normalizeProduct, type ModifierGroup as RawModifierGroup } from '@/lib/normalize';
+import { optimizedImageUrl, responsiveImage } from '@/lib/image';
 import { showToast } from '@/stores/toast';
+import * as log from '@/lib/logger';
 import QuantitySelector from './QuantitySelector';
 
 /** Mapped modifier option ready for UI rendering. */
@@ -81,18 +75,96 @@ function mapModifierGroup(raw: RawModifierGroup): MappedModifierGroup {
 
 /** Normalize raw API product detail to ProductData shape. */
 function toProductData(raw: Record<string, unknown>): ProductData {
-  const images = raw.images as Array<{ image_url: string }> | undefined;
+  const normalized = normalizeProduct(raw);
   const rawGroups = (raw.modifier_groups ?? []) as RawModifierGroup[];
 
   return {
-    id: raw.id as string | number,
-    name: ((raw.title ?? raw.name) as string | undefined) ?? '',
-    description: raw.description as string | undefined,
-    price: (raw.price as string | undefined) ?? '0',
-    image: images?.[0]?.image_url ?? (raw.image as string | null) ?? null,
+    id: normalized.id,
+    name: normalized.name,
+    description: normalized.description ?? undefined,
+    price: normalized.price,
+    image: normalized.image,
     modifier_groups: rawGroups.map(mapModifierGroup),
     attribute_values: raw.attribute_values as ProductData['attribute_values'],
   };
+}
+
+/** Shared suggestion list item used in both detail and upsell steps. */
+function SuggestionItem({
+  suggestion: s,
+  added,
+  currency,
+  locale,
+  lang,
+  onAdd,
+}: {
+  suggestion: Suggestion;
+  added: boolean;
+  currency: string;
+  locale: string;
+  lang: string;
+  onAdd: () => void;
+}) {
+  return (
+    <div class="flex items-center gap-3 rounded-lg border border-border p-2">
+      {s.image_url && (
+        <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
+          <img
+            src={optimizedImageUrl(s.image_url, { width: 80 })}
+            alt=""
+            class="h-full w-full object-cover"
+            width="40"
+            height="40"
+            loading="lazy"
+          />
+        </div>
+      )}
+      <div class="min-w-0 flex-1">
+        <span class="text-sm text-card-foreground">{s.title}</span>
+        <span class="ml-1 text-xs text-muted-foreground">
+          {formatPrice(s.price, currency, locale)}
+        </span>
+      </div>
+      <button
+        type="button"
+        disabled={added}
+        onClick={onAdd}
+        class="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground before:absolute before:inset-[-4px]"
+        aria-label={`${t('addToCart', lang)} ${s.title}`}
+      >
+        {added ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
 }
 
 interface Props {
@@ -103,6 +175,7 @@ export default function ProductDetail({ lang }: Props) {
   const selectedProduct = useStore($selectedProduct);
   const merchant = useStore($merchant);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const didPushState = useRef(false);
   const [product, setProduct] = useState<ProductData | null>(null);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [quantities, setQuantities] = useState<Record<string, Record<string, number>>>({});
@@ -119,11 +192,18 @@ export default function ProductDetail({ lang }: Props) {
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
 
-  const close = () => $selectedProduct.set(null);
+  const close = () => {
+    if (didPushState.current) {
+      history.back();
+      // popstate handler will clear didPushState and set $selectedProduct to null
+    } else {
+      $selectedProduct.set(null);
+    }
+  };
 
   useFocusTrap(dialogRef, !!selectedProduct, close);
 
-  const fetchProductById = async (productId: string) => {
+  const fetchProductById = async (productId: string, signal?: AbortSignal) => {
     setLoadingProduct(true);
     setFetchError(false);
     try {
@@ -131,28 +211,33 @@ export default function ProductDetail({ lang }: Props) {
       const [productRes, suggestionsRes] = await Promise.all([
         client.GET(`/api/v1/products/{id}/`, {
           params: { path: { id: productId } },
+          signal,
         }),
         client.GET(`/api/v1/products/{id}/suggestions/`, {
           params: { path: { id: productId } },
+          signal,
         }),
       ]);
+      if (signal?.aborted) return;
       if (!productRes.data) {
         if (productRes.error)
-          console.error('[ProductDetail] SDK error loading product:', productRes.error);
+          log.error('ProductDetail', 'SDK error loading product:', productRes.error);
         setFetchError(true);
         return;
       }
       setProduct(toProductData(productRes.data as Record<string, unknown>));
       if (suggestionsRes.data) setSuggestions(suggestionsRes.data as Suggestion[]);
     } catch (err) {
-      console.error('[ProductDetail] failed to load product:', err);
+      if (signal?.aborted) return;
+      log.error('ProductDetail', 'Failed to load product:', err);
       setFetchError(true);
     } finally {
-      setLoadingProduct(false);
+      if (!signal?.aborted) setLoadingProduct(false);
     }
   };
 
   // Fetch product detail + suggestions when selected
+  const selectedProductId = selectedProduct?.id;
   useEffect(() => {
     // Always reset state (handles both null and product-to-product transitions)
     setProduct(null);
@@ -168,6 +253,9 @@ export default function ProductDetail({ lang }: Props) {
 
     if (!selectedProduct) return;
 
+    const controller = new AbortController();
+    const { signal } = controller;
+
     if (selectedProduct.skipToUpsell) {
       // Product already added — only fetch suggestions for the upsell step
       const fetchSuggestionsOnly = async () => {
@@ -176,7 +264,9 @@ export default function ProductDetail({ lang }: Props) {
           const client = getClient();
           const { data } = await client.GET(`/api/v1/products/{id}/suggestions/`, {
             params: { path: { id: String(selectedProduct.id) } },
+            signal,
           });
+          if (signal.aborted) return;
           const items = (data as Suggestion[] | null) ?? [];
           if (items.length > 0) {
             setProduct({
@@ -190,19 +280,86 @@ export default function ProductDetail({ lang }: Props) {
             showToast(t('toastAddedToCart', lang), 'success');
             close();
           }
-        } catch {
+        } catch (err) {
+          if (signal.aborted) return;
+          log.error('ProductDetail', 'Failed to fetch suggestions for upsell:', err);
           showToast(t('toastAddedToCart', lang), 'success');
           close();
         } finally {
-          setLoadingProduct(false);
+          if (!signal.aborted) setLoadingProduct(false);
         }
       };
       fetchSuggestionsOnly();
-      return;
+      return () => controller.abort();
     }
 
-    fetchProductById(String(selectedProduct.id));
+    fetchProductById(String(selectedProduct.id), signal);
+    return () => controller.abort();
+  }, [selectedProductId]);
+
+  // Listen for product card click events (dispatched from inline script)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { id, name, slug } = (e as CustomEvent).detail;
+      $selectedProduct.set({ id, name, slug });
+    };
+    window.addEventListener('open-product', handler);
+    return () => window.removeEventListener('open-product', handler);
+  }, []);
+
+  // Open modal from ?product= query param (direct product URL → menu redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product');
+    const productName = params.get('name');
+    const productSlug = params.get('slug');
+    if (productId) {
+      $selectedProduct.set({
+        id: productId,
+        name: productName ?? '',
+        slug: productSlug ?? undefined,
+      });
+      // Clean up the query params from the URL
+      const clean = new URL(window.location.href);
+      clean.searchParams.delete('product');
+      clean.searchParams.delete('name');
+      clean.searchParams.delete('slug');
+      history.replaceState(null, '', clean.pathname + clean.search);
+    }
+  }, []);
+
+  // Shallow routing: sync URL with modal state
+  useEffect(() => {
+    if (selectedProduct?.slug && !selectedProduct.skipToUpsell) {
+      const langPrefix = (window as { __LANG__?: string }).__LANG__ || 'en';
+      const productUrl = `/${langPrefix}/product/${selectedProduct.slug}`;
+      try {
+        if (window.location.pathname.includes('/product/')) {
+          // Product-to-product: replace URL to avoid stale entries in history stack
+          history.replaceState({ productModal: true }, '', productUrl);
+        } else {
+          // Menu → product: push so back button returns to menu
+          history.pushState({ productModal: true }, '', productUrl);
+          didPushState.current = true;
+        }
+      } catch (err) {
+        // Shallow routing unavailable (e.g. iframe sandbox) — modal still works
+        log.warn('ProductDetail', 'Shallow routing unavailable:', err);
+      }
+    }
   }, [selectedProduct]);
+
+  // Handle browser back button
+  useEffect(() => {
+    const onPopState = () => {
+      if (didPushState.current) {
+        didPushState.current = false;
+        $selectedProduct.set(null);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   const handleRadioSelect = (groupId: string, optionId: string) => {
     setSelections((prev) => ({ ...prev, [groupId]: [optionId] }));
@@ -230,9 +387,9 @@ export default function ProductDetail({ lang }: Props) {
   };
 
   // Calculate total price
-  const calculateTotal = (): number => {
+  const total = useMemo((): number => {
     if (!product) return 0;
-    let total = Number(product.price);
+    let sum = Number(product.price);
 
     for (const group of product.modifier_groups ?? []) {
       const selected = selections[group.id] ?? [];
@@ -240,15 +397,15 @@ export default function ProductDetail({ lang }: Props) {
 
       for (const opt of group.options) {
         if (group.type === 'quantity') {
-          total += Number(opt.price) * (groupQuantities[opt.id] ?? 0);
+          sum += Number(opt.price) * (groupQuantities[opt.id] ?? 0);
         } else if (selected.includes(opt.id)) {
-          total += Number(opt.price);
+          sum += Number(opt.price);
         }
       }
     }
 
-    return Math.round(total * quantity * 100) / 100;
-  };
+    return Math.round(sum * quantity * 100) / 100;
+  }, [product, selections, quantities, quantity]);
 
   /** Check whether a modifier group has at least one selection/quantity chosen. */
   const isGroupFilled = (groupId: string): boolean => {
@@ -318,7 +475,7 @@ export default function ProductDetail({ lang }: Props) {
       const client = getClient();
       const cartId = await ensureCart(client);
       const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
-        params: { path: { cart_id: cartId } },
+        params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
         body: {
           product_id: product.id,
           quantity,
@@ -350,15 +507,13 @@ export default function ProductDetail({ lang }: Props) {
           return;
         }
 
-        console.error('[ProductDetail] SDK error adding to cart:', error);
+        log.error('ProductDetail', 'SDK error adding to cart:', error);
         showToast(apiError?.message ?? t('toastAddToCartFailed', lang));
         return;
       }
 
       if (data) {
-        const cartData = normalizeCart(data as Record<string, unknown>);
-        $cart.set(cartData);
-        if (cartData.id) setStoredCartId(cartData.id);
+        commitCartResponse(data);
         if (suggestions.length > 0) {
           setStep('upsell');
         } else {
@@ -367,16 +522,14 @@ export default function ProductDetail({ lang }: Props) {
         }
       }
     } catch (err) {
-      console.error('[ProductDetail] add to cart error:', err);
+      log.error('ProductDetail', 'Add to cart error:', err);
       showToast(t('toastAddToCartFailed', lang));
     } finally {
       $cartLoading.set(false);
     }
   };
 
-  if (!selectedProduct) return null;
-
-  const total = calculateTotal();
+  if (!selectedProduct) return <div />;
 
   return (
     <div class="fixed inset-0 z-50">
@@ -393,7 +546,7 @@ export default function ProductDetail({ lang }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={product?.name ?? ''}
-        class="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg"
+        class="absolute bottom-0 left-0 right-0 flex max-h-[90vh] flex-col overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg"
       >
         {loadingProduct ? (
           <div
@@ -473,20 +626,31 @@ export default function ProductDetail({ lang }: Props) {
 
             {/* Product image (hidden during upsell step) */}
             {step === 'detail' && product.image && (
-              <div class="aspect-video w-full overflow-hidden bg-card-image">
-                <img
-                  src={optimizedImageUrl(product.image, { width: 900 })}
-                  alt={product.name}
-                  class="h-full w-full object-cover"
-                  width="512"
-                  height="288"
-                />
+              <div class="aspect-video w-full shrink-0 overflow-hidden bg-card-image">
+                {(() => {
+                  const img = responsiveImage(
+                    product.image,
+                    [300, 450, 600],
+                    '(min-width: 768px) 512px, 100vw',
+                  );
+                  return (
+                    <img
+                      src={img.src}
+                      srcset={img.srcset || undefined}
+                      sizes={img.sizes || undefined}
+                      alt={product.name}
+                      class="h-full w-full object-cover"
+                      width="512"
+                      height="288"
+                    />
+                  );
+                })()}
               </div>
             )}
 
             {/* Scrollable content */}
             <div
-              class="overflow-y-auto px-4 py-4"
+              class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-8"
               style={{ maxHeight: product.image ? 'calc(90vh - 340px)' : 'calc(90vh - 160px)' }}
             >
               {step === 'upsell' ? (
@@ -513,7 +677,7 @@ export default function ProductDetail({ lang }: Props) {
 
                   {/* Attributes */}
                   {product.attribute_values && product.attribute_values.length > 0 && (
-                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                    <div class="mt-3 grid grid-cols-2 gap-2">
                       {product.attribute_values.map((attr) => {
                         let display: string | null = null;
                         if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
@@ -530,9 +694,12 @@ export default function ProductDetail({ lang }: Props) {
                         }
                         if (!display) return null;
                         return (
-                          <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
-                            <span class="font-medium">{attr.attribute_name}:</span> {display}
-                          </span>
+                          <div key={attr.attribute_slug} class="rounded-md bg-muted px-2.5 py-1.5">
+                            <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              {attr.attribute_name}
+                            </p>
+                            <p class="text-xs text-card-foreground">{display}</p>
+                          </div>
                         );
                       })}
                     </div>
@@ -546,57 +713,24 @@ export default function ProductDetail({ lang }: Props) {
                         {suggestions
                           .filter((s) => !addedSuggestions.has(s.id))
                           .map((s) => (
-                            <div
+                            <SuggestionItem
                               key={s.id}
-                              class="flex items-center gap-3 rounded-lg border border-border p-2"
-                            >
-                              {s.image_url && (
-                                <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
-                                  <img
-                                    src={s.image_url}
-                                    alt=""
-                                    class="h-full w-full object-cover"
-                                    width="40"
-                                    height="40"
-                                    loading="lazy"
-                                  />
-                                </div>
-                              )}
-                              <div class="min-w-0 flex-1">
-                                <span class="text-sm text-card-foreground">{s.title}</span>
-                                <span class="ml-1 text-xs text-muted-foreground">
-                                  {formatPrice(s.price, currency, locale)}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const result = await addSuggestionToCart(s.id);
-                                  if (result === 'added') {
-                                    setAddedSuggestions((prev) => new Set([...prev, s.id]));
-                                  } else if (result === 'requires_options') {
-                                    $selectedProduct.set({ id: String(s.id), name: s.title });
-                                  }
-                                }}
-                                class="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 before:absolute before:inset-[-4px]"
-                                aria-label={`${t('addToCart', lang)} ${s.title}`}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2.5"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path d="M12 5v14" />
-                                  <path d="M5 12h14" />
-                                </svg>
-                              </button>
-                            </div>
+                              suggestion={s}
+                              added={false}
+                              currency={currency}
+                              locale={locale}
+                              lang={lang}
+                              onAdd={async () => {
+                                const result = await addSuggestionToCart(s.id);
+                                if (result === 'added') {
+                                  setAddedSuggestions((prev) => new Set([...prev, s.id]));
+                                } else if (result === 'requires_options') {
+                                  $selectedProduct.set({ id: String(s.id), name: s.title });
+                                } else {
+                                  showToast(t('toastAddToCartFailed', lang));
+                                }
+                              }}
+                            />
                           ))}
                       </div>
                     </div>
@@ -617,7 +751,7 @@ export default function ProductDetail({ lang }: Props) {
 
                   {/* Attributes */}
                   {product.attribute_values && product.attribute_values.length > 0 && (
-                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                    <div class="mt-3 grid grid-cols-2 gap-2">
                       {product.attribute_values.map((attr) => {
                         let display: string | null = null;
                         if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
@@ -631,9 +765,12 @@ export default function ProductDetail({ lang }: Props) {
                         }
                         if (!display) return null;
                         return (
-                          <span key={attr.attribute_slug} class="text-xs text-muted-foreground">
-                            <span class="font-medium">{attr.attribute_name}:</span> {display}
-                          </span>
+                          <div key={attr.attribute_slug} class="rounded-md bg-muted px-2.5 py-1.5">
+                            <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              {attr.attribute_name}
+                            </p>
+                            <p class="text-xs text-card-foreground">{display}</p>
+                          </div>
                         );
                       })}
                     </div>
@@ -747,74 +884,24 @@ export default function ProductDetail({ lang }: Props) {
                       </h3>
                       <div class="mt-2 space-y-2">
                         {suggestions.map((s) => (
-                          <div
+                          <SuggestionItem
                             key={s.id}
-                            class="flex items-center gap-3 rounded-lg border border-border p-2"
-                          >
-                            {s.image_url && (
-                              <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
-                                <img
-                                  src={s.image_url}
-                                  alt=""
-                                  class="h-full w-full object-cover"
-                                  width="40"
-                                  height="40"
-                                  loading="lazy"
-                                />
-                              </div>
-                            )}
-                            <div class="min-w-0 flex-1">
-                              <span class="text-sm text-card-foreground">{s.title}</span>
-                              <span class="ml-1 text-xs text-muted-foreground">
-                                {formatPrice(s.price, currency, locale)}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              disabled={addedSuggestions.has(s.id)}
-                              onClick={async () => {
-                                const result = await addSuggestionToCart(s.id);
-                                if (result === 'added') {
-                                  setAddedSuggestions((prev) => new Set([...prev, s.id]));
-                                } else if (result === 'requires_options') {
-                                  $selectedProduct.set({ id: String(s.id), name: s.title });
-                                }
-                              }}
-                              class="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground before:absolute before:inset-[-4px]"
-                              aria-label={`${t('addToCart', lang)} ${s.title}`}
-                            >
-                              {addedSuggestions.has(s.id) ? (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2.5"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path d="M20 6 9 17l-5-5" />
-                                </svg>
-                              ) : (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2.5"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path d="M12 5v14" />
-                                  <path d="M5 12h14" />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
+                            suggestion={s}
+                            added={addedSuggestions.has(s.id)}
+                            currency={currency}
+                            locale={locale}
+                            lang={lang}
+                            onAdd={async () => {
+                              const result = await addSuggestionToCart(s.id);
+                              if (result === 'added') {
+                                setAddedSuggestions((prev) => new Set([...prev, s.id]));
+                              } else if (result === 'requires_options') {
+                                $selectedProduct.set({ id: String(s.id), name: s.title });
+                              } else {
+                                showToast(t('toastAddToCartFailed', lang));
+                              }
+                            }}
+                          />
                         ))}
                       </div>
                     </div>
@@ -846,8 +933,8 @@ export default function ProductDetail({ lang }: Props) {
 
             {/* Sticky bottom CTA */}
             <div
-              class="border-t border-border px-4 py-3"
-              style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+              class="shrink-0 border-t border-border px-4 pt-3 pb-6"
+              style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
             >
               {step === 'upsell' ? (
                 <div class="space-y-2">
@@ -861,7 +948,13 @@ export default function ProductDetail({ lang }: Props) {
                   <button
                     type="button"
                     onClick={() => {
-                      close();
+                      if (didPushState.current) {
+                        didPushState.current = false;
+                        $selectedProduct.set(null);
+                        history.back();
+                      } else {
+                        $selectedProduct.set(null);
+                      }
                       $isCartOpen.set(true);
                     }}
                     class="flex h-10 w-full items-center justify-center text-sm font-medium text-primary hover:underline"

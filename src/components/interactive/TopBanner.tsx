@@ -17,6 +17,11 @@ export default function TopBanner({ lang, onImpression, onClick, onDismiss }: Pr
   const entries = useStore($topBannerMessages);
   const entry = entries[0];
 
+  // Remove SSR placeholder on hydration to avoid duplicate banners
+  useEffect(() => {
+    document.querySelector('[data-ssr-top-banner]')?.remove();
+  }, []);
+
   useEffect(() => {
     if (entry && onImpression) {
       onImpression(entry.message.id, entry.content.id);
@@ -37,7 +42,7 @@ export default function TopBanner({ lang, onImpression, onClick, onDismiss }: Pr
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
         <div class="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1">
           {content.headline && <span class="font-medium">{content.headline}</span>}
-          {content.body && <span class="opacity-80">{content.body}</span>}
+          {content.body && <span class="opacity-90">{content.body}</span>}
           {content.cta_label && content.cta_url && (
             <a
               href={safeUrl(content.cta_url)}

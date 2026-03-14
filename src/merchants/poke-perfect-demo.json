@@ -1,0 +1,53 @@
+{
+  "slug": "poke-perfect-demo",
+  "merchantId": "POKE_PERFECT_DEMO_01",
+  "name": "Poké Perfect",
+  "description": "Fresh poké bowls made with premium ingredients. Build your own or try our signature creations.",
+  "logo": "https://pokeperfect-demo.poweredbysous.com/_next/image?url=%2Fimages%2Fpoke-perfect-logo.jpg&w=96&q=75",
+  "heroImage": "https://pokeperfect-demo.poweredbysous.com/_next/image?url=%2Fimages%2Fcover.jpeg&w=1920&q=75",
+  "favicon": "/merchants/poke-perfect-demo/favicon.ico",
+  "languages": ["nl", "en"],
+  "defaultLanguage": "nl",
+  "currency": "EUR",
+  "theme": {
+    "background": "120 7% 97%",
+    "foreground": "40 4% 14%",
+    "card": "0 0% 100%",
+    "cardForeground": "40 4% 14%",
+    "cardImage": "160 10% 94%",
+    "primary": "160 43% 52%",
+    "primaryForeground": "0 0% 100%",
+    "secondary": "160 20% 96%",
+    "secondaryForeground": "160 30% 25%",
+    "muted": "0 0% 96%",
+    "mutedForeground": "47 4% 41%",
+    "accent": "160 30% 94%",
+    "accentForeground": "160 40% 30%",
+    "destructive": "0 72% 51%",
+    "destructiveForeground": "0 0% 100%",
+    "border": "0 0% 90%",
+    "input": "0 0% 90%",
+    "ring": "160 43% 52%",
+    "radius": "0.75rem",
+    "fontHeading": "Inter",
+    "fontBody": "Inter"
+  },
+  "layout": "grid",
+  "contact": {
+    "phone": "+31 20 555 0100",
+    "email": "info@pokeperfect.nl",
+    "address": "Haarlemmerstraat 52, 1013 ES Amsterdam"
+  },
+  "hours": [
+    { "days": "Mon-Fri", "open": "11:00", "close": "22:00" },
+    { "days": "Sat-Sun", "open": "12:00", "close": "22:00" }
+  ],
+  "social": {
+    "instagram": "https://instagram.com/pokeperfect"
+  },
+  "hmacSecret": "0000000000000000000000000000000000000000000000000000000000000000",
+  "seo": {
+    "titleTemplate": "%s | Poké Perfect",
+    "defaultDescription": "Bestel online bij Poké Perfect — Verse poké bowls in Amsterdam"
+  }
+}

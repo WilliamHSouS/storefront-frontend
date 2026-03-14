@@ -6,11 +6,32 @@ import {
   errorDetail,
   mergeShippingEstimate,
   backgroundRefreshShipping,
+  cartCoordsQuery,
+  ensureCart,
+  setStoredCartId,
 } from '@/stores/cart';
-import type { Cart, EligiblePromotion } from '@/stores/cart';
+import type { Cart, EligiblePromotion, AddSuggestionResult } from '@/stores/cart';
 import { normalizeCart } from '@/lib/normalize';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 import type { MessageKey } from '@/i18n';
+import * as log from '@/lib/logger';
+
+/**
+ * Normalize a raw cart API response, update the cart store (preserving
+ * shipping estimates from the previous state), persist the cart ID, and
+ * trigger a background shipping refresh.
+ *
+ * Centralizes the 3-step commit pipeline so every cart mutation goes
+ * through one path — no risk of forgetting mergeShippingEstimate or
+ * backgroundRefreshShipping at a new call site.
+ */
+export function commitCartResponse(data: unknown): Cart {
+  const cart = normalizeCart(data as Record<string, unknown>);
+  $cart.set(mergeShippingEstimate(cart, $cart.get()));
+  setStoredCartId(cart.id);
+  backgroundRefreshShipping(cart.id);
+  return cart;
+}
 
 /**
  * Update the quantity of a line item in the cart.
@@ -27,16 +48,13 @@ export async function updateCartItemQuantity(
   try {
     const sdk = client ?? getClient();
     const { data, error } = await sdk.PATCH(`/api/v1/cart/{cart_id}/items/{id}/`, {
-      params: { path: { cart_id: cartId, id: lineItemId } },
+      params: { path: { cart_id: cartId, id: lineItemId }, query: cartCoordsQuery() },
       body: { quantity },
     });
     if (error || !data) {
       throw new Error(`Failed to update cart item: ${errorDetail(error)}`);
     }
-    const cart = normalizeCart(data as Record<string, unknown>);
-    $cart.set(mergeShippingEstimate(cart, $cart.get()));
-    backgroundRefreshShipping(cart.id);
-    return cart;
+    return commitCartResponse(data);
   } finally {
     $cartLoading.set(false);
   }
@@ -112,16 +130,13 @@ export async function applyDiscountCode(
   try {
     const sdk = client ?? getClient();
     const { data, error } = await sdk.POST(`/api/v1/cart/{cart_id}/apply-discount/`, {
-      params: { path: { cart_id: cartId } },
+      params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
       body: { code },
     });
     if (error || !data) {
       throw new DiscountError(errorDetail(error));
     }
-    const cart = normalizeCart(data as Record<string, unknown>);
-    $cart.set(mergeShippingEstimate(cart, $cart.get()));
-    backgroundRefreshShipping(cart.id);
-    return cart;
+    return commitCartResponse(data);
   } finally {
     $cartLoading.set(false);
   }
@@ -132,15 +147,12 @@ export async function removeDiscountCode(cartId: string, client?: StorefrontClie
   try {
     const sdk = client ?? getClient();
     const { data, error } = await sdk.DELETE(`/api/v1/cart/{cart_id}/remove-discount/`, {
-      params: { path: { cart_id: cartId } },
+      params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
     });
     if (error || !data) {
       throw new Error(`Failed to remove discount: ${errorDetail(error)}`);
     }
-    const cart = normalizeCart(data as Record<string, unknown>);
-    $cart.set(mergeShippingEstimate(cart, $cart.get()));
-    backgroundRefreshShipping(cart.id);
-    return cart;
+    return commitCartResponse(data);
   } finally {
     $cartLoading.set(false);
   }
@@ -155,16 +167,34 @@ export async function removeCartItem(
   try {
     const sdk = client ?? getClient();
     const { data, error } = await sdk.DELETE(`/api/v1/cart/{cart_id}/items/{id}/`, {
-      params: { path: { cart_id: cartId, id: lineItemId } },
+      params: { path: { cart_id: cartId, id: lineItemId }, query: cartCoordsQuery() },
     });
     if (error || !data) {
       throw new Error(`Failed to remove cart item: ${errorDetail(error)}`);
     }
-    const cart = normalizeCart(data as Record<string, unknown>);
-    $cart.set(mergeShippingEstimate(cart, $cart.get()));
-    backgroundRefreshShipping(cart.id);
-    return cart;
+    return commitCartResponse(data);
   } finally {
     $cartLoading.set(false);
   }
+}
+
+/** Add a suggested item to cart (quantity 1, no modifiers). Shared by both upsell surfaces. */
+export async function addSuggestionToCart(
+  productId: string | number,
+): Promise<AddSuggestionResult> {
+  const client = getClient();
+  const cartId = await ensureCart(client);
+  const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
+    params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
+    body: { product_id: productId, quantity: 1 },
+  });
+  if (data) {
+    commitCartResponse(data);
+    return 'added';
+  }
+  if (error && 'status' in error && error.status === 400) {
+    return 'requires_options';
+  }
+  log.error('cart', 'addSuggestionToCart failed:', error);
+  return 'error';
 }

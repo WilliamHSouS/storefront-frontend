@@ -1,3 +1,5 @@
+import * as log from '@/lib/logger';
+
 const PLATFORM_SUFFIXES = ['.poweredbysous.com', '.poweredbysous.localhost'];
 
 /**
@@ -24,7 +26,7 @@ export function resolveMerchantSlug(
   try {
     customDomains = JSON.parse(customDomainsJson || '{}');
   } catch (error) {
-    console.warn('Failed to resolve merchant:', error);
+    log.warn('merchant', 'Failed to resolve merchant:', error);
   }
   if (customDomains[host]) return customDomains[host];
 

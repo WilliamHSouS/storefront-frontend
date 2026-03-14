@@ -1,17 +1,18 @@
 import { useStore } from '@nanostores/preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { $cart, $cartLoading, setStoredCartId, ensureCart } from '@/stores/cart';
+import { $cart, $cartLoading, ensureCart, cartCoordsQuery } from '@/stores/cart';
 import { $selectedProduct } from '@/stores/ui';
 import { getClient } from '@/lib/api';
 import { showToast } from '@/stores/toast';
-import { setCartItemQuantity } from '@/stores/cart-actions';
-import { normalizeCart } from '@/lib/normalize';
+import { setCartItemQuantity, commitCartResponse } from '@/stores/cart-actions';
 import { t } from '@/i18n';
+import * as log from '@/lib/logger';
 import QuantitySelector from './QuantitySelector';
 
 interface Props {
   productId: string;
   productName: string;
+  productSlug?: string;
   hasModifiers: boolean;
   soldOut: boolean;
   lang: string;
@@ -20,6 +21,7 @@ interface Props {
 export default function AddToCartButton({
   productId,
   productName,
+  productSlug,
   hasModifiers,
   soldOut,
   lang,
@@ -55,7 +57,7 @@ export default function AddToCartButton({
     try {
       await setCartItemQuantity(cartId, itemId, newQuantity);
     } catch (err) {
-      console.error('[AddToCart] update error:', err);
+      log.error('AddToCart', 'Update error:', err);
       showToast(t('toastCartUpdateFailed', lang));
     }
   };
@@ -64,7 +66,7 @@ export default function AddToCartButton({
     if (soldOut) return;
 
     if (hasModifiers) {
-      $selectedProduct.set({ id: productId, name: productName });
+      $selectedProduct.set({ id: productId, name: productName, slug: productSlug });
       return;
     }
 
@@ -74,7 +76,7 @@ export default function AddToCartButton({
       const client = getClient();
       const cartId = await ensureCart(client);
       const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
-        params: { path: { cart_id: cartId } },
+        params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
         body: { product_id: productId, quantity: 1 },
       });
 
@@ -82,20 +84,23 @@ export default function AddToCartButton({
         $cart.set(prevCart);
         if ('status' in error && error.status === 400) {
           // Product likely requires modifiers — open the detail modal
-          $selectedProduct.set({ id: productId, name: productName });
+          $selectedProduct.set({ id: productId, name: productName, slug: productSlug });
         } else {
-          console.error('Failed to add to cart:', error);
+          log.error('AddToCart', 'Failed to add to cart:', error);
           showToast(t('toastAddToCartFailed', lang));
         }
       } else if (data) {
-        const cartData = normalizeCart(data as Record<string, unknown>);
-        $cart.set(cartData);
-        if (cartData?.id) setStoredCartId(cartData.id);
+        commitCartResponse(data);
         // Open modal in upsell mode so suggestions are shown if available
-        $selectedProduct.set({ id: productId, name: productName, skipToUpsell: true });
+        $selectedProduct.set({
+          id: productId,
+          name: productName,
+          slug: productSlug,
+          skipToUpsell: true,
+        });
       }
     } catch (err) {
-      console.error('[AddToCart] error:', err);
+      log.error('AddToCart', 'Error:', err);
       showToast(t('toastAddToCartFailed', lang));
       $cart.set(prevCart);
     } finally {

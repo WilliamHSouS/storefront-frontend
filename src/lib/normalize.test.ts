@@ -217,6 +217,43 @@ describe('normalizeProduct', () => {
     expect(product.compare_at_price).toBe('12.00');
   });
 
+  it('derives percentage discount from compare_at_price when no explicit discount', () => {
+    const product = normalizeProduct(makeRawProduct({ price: '1.07', compare_at_price: '2.13' }));
+    expect(product.discount).toEqual({ type: 'percentage', value: 50 });
+    // price is set to compare_at_price so pricing functions compute correctly
+    expect(product.price).toBe('2.13');
+  });
+
+  it('does not derive discount when compare_at_price equals price', () => {
+    const product = normalizeProduct(makeRawProduct({ price: '5.00', compare_at_price: '5.00' }));
+    expect(product.discount).toBeNull();
+    expect(product.price).toBe('5.00');
+  });
+
+  it('does not derive discount when compare_at_price is less than price', () => {
+    const product = normalizeProduct(makeRawProduct({ price: '5.00', compare_at_price: '3.00' }));
+    expect(product.discount).toBeNull();
+    expect(product.price).toBe('5.00');
+  });
+
+  it('preserves explicit API discount over compare_at_price derivation', () => {
+    const product = normalizeProduct(
+      makeRawProduct({
+        price: '10.00',
+        compare_at_price: '12.00',
+        discount: { type: 'percentage', value: 20 },
+      }),
+    );
+    expect(product.discount).toEqual({ type: 'percentage', value: 20 });
+    // price stays as-is when explicit discount exists
+    expect(product.price).toBe('10.00');
+  });
+
+  it('defaults discount to null when neither discount nor compare_at_price present', () => {
+    const product = normalizeProduct(makeRawProduct({ price: '5.00' }));
+    expect(product.discount).toBeNull();
+  });
+
   it('defaults description and intro to null when absent', () => {
     const product = normalizeProduct(makeRawProduct({ description: undefined, intro: undefined }));
     expect(product.description).toBeNull();
@@ -550,6 +587,60 @@ describe('normalizeCart shipping_estimate', () => {
     expect(cart.shipping_estimate).toBeDefined();
     expect(cart.shipping_estimate!.groups).toHaveLength(1);
     expect(cart.shipping_estimate!.total_shipping).toBe('3.50');
+  });
+
+  it('derives status from cost_known when no explicit status field', () => {
+    const raw = {
+      id: 'cart-ck',
+      line_items: [],
+      cart_total: '20.06',
+      item_count: 2,
+      shipping_estimate: {
+        groups: [
+          {
+            provider_name: 'Uber Direct',
+            fulfillment_type: 'local_delivery',
+            cost_known: true,
+            estimated_cost: '2.99',
+            estimated_minutes: null,
+            free_delivery_remaining: '4.94',
+            product_ids: [87, 58],
+          },
+        ],
+        total_shipping: '2.99',
+        ships_in_parts: false,
+      },
+    };
+
+    const cart = normalizeCart(raw);
+    expect(cart.shipping_estimate).toBeDefined();
+    expect(cart.shipping_estimate!.groups[0].status).toBe('quoted');
+    expect(cart.shipping_estimate!.groups[0].estimated_cost).toBe('2.99');
+    expect(cart.shipping_estimate!.total_shipping).toBe('2.99');
+  });
+
+  it('defaults to pending when cost_known is false and no status', () => {
+    const raw = {
+      id: 'cart-ck2',
+      line_items: [],
+      cart_total: '10.00',
+      item_count: 1,
+      shipping_estimate: {
+        groups: [
+          {
+            provider_name: 'PostNL',
+            fulfillment_type: 'shipping',
+            cost_known: false,
+            estimated_cost: null,
+          },
+        ],
+        total_shipping: null,
+        ships_in_parts: false,
+      },
+    };
+
+    const cart = normalizeCart(raw);
+    expect(cart.shipping_estimate!.groups[0].status).toBe('pending');
   });
 
   it('handles missing shipping_estimate gracefully', () => {

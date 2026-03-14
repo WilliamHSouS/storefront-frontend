@@ -5,6 +5,7 @@ import { $merchant } from '@/stores/merchant';
 import { $selectedProduct } from '@/stores/ui';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
+import { optimizedImageUrl } from '@/lib/image';
 import { t } from '@/i18n';
 
 interface Props {
@@ -59,7 +60,7 @@ export default function ProductSuggestions({ productId, lang }: Props) {
             {s.image_url ? (
               <div class="mb-1.5 h-16 w-16 overflow-hidden rounded bg-card-image">
                 <img
-                  src={s.image_url}
+                  src={optimizedImageUrl(s.image_url, { width: 128 })}
                   alt=""
                   class="h-full w-full object-cover"
                   width="64"

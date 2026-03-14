@@ -84,7 +84,7 @@ describe('getDiscountLabel', () => {
         'nl-NL',
         'en',
       ),
-    ).toBe('-15%');
+    ).toBe('15% off');
   });
 
   it('returns fixed label with currency', () => {

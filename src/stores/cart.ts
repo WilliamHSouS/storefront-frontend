@@ -3,6 +3,7 @@ import type { StorefrontClient } from '@/lib/sdk-stub';
 import { normalizeCart } from '@/lib/normalize';
 import { getClient } from '@/lib/api';
 import { $addressCoords } from '@/stores/address';
+import * as log from '@/lib/logger';
 
 export interface Suggestion {
   id: number;
@@ -45,6 +46,7 @@ export interface Cart {
   subtotal?: string;
   tax_total?: string;
   tax_included?: boolean;
+  surcharge_total?: string;
   shipping_cost?: string;
   shipping_estimate?: ShippingEstimate;
   discount_amount?: string;
@@ -134,13 +136,21 @@ export function cartCoordsQuery(): Record<string, string | number> | undefined {
 }
 
 const CART_ID_KEY = 'sous_cart_id';
+/** Cart IDs must be alphanumeric, hyphens, or underscores — prevents path traversal. */
+const CART_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export function getStoredCartId(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return localStorage.getItem(CART_ID_KEY);
+    const id = localStorage.getItem(CART_ID_KEY);
+    if (id && !CART_ID_PATTERN.test(id)) {
+      log.warn('cart', 'Invalid cart ID format in localStorage, clearing');
+      clearStoredCartId();
+      return null;
+    }
+    return id;
   } catch (e) {
-    console.warn('Failed to read cart ID from localStorage:', e);
+    log.warn('cart', 'Failed to read cart ID from localStorage:', e);
     return null;
   }
 }
@@ -150,7 +160,7 @@ export function setStoredCartId(cartId: string): void {
   try {
     localStorage.setItem(CART_ID_KEY, cartId);
   } catch (e) {
-    console.warn('Failed to save cart ID to localStorage:', e);
+    log.warn('cart', 'Failed to save cart ID to localStorage:', e);
   }
 }
 
@@ -159,7 +169,7 @@ export function clearStoredCartId(): void {
   try {
     localStorage.removeItem(CART_ID_KEY);
   } catch (e) {
-    console.warn('Failed to clear cart ID from localStorage:', e);
+    log.warn('cart', 'Failed to clear cart ID from localStorage:', e);
   }
 }
 
@@ -194,7 +204,7 @@ async function _doEnsureCart(client: StorefrontClient): Promise<string> {
       return cart.id;
     }
     if (error) {
-      console.warn('Stored cart expired or invalid, creating new cart:', error);
+      log.warn('cart', 'Stored cart expired or invalid, creating new cart:', error);
       clearStoredCartId();
     }
   }
@@ -211,28 +221,9 @@ async function _doEnsureCart(client: StorefrontClient): Promise<string> {
 
 export type AddSuggestionResult = 'added' | 'requires_options' | 'error';
 
-/** Add a suggested item to cart (quantity 1, no modifiers). Shared by both upsell surfaces. */
-export async function addSuggestionToCart(
-  productId: string | number,
-): Promise<AddSuggestionResult> {
-  const client = getClient();
-  const cartId = await ensureCart(client);
-  const { data, error } = await client.POST(`/api/v1/cart/{cart_id}/items/`, {
-    params: { path: { cart_id: cartId } },
-    body: { product_id: productId, quantity: 1 },
-  });
-  if (data) {
-    const cartData = normalizeCart(data as Record<string, unknown>);
-    $cart.set(mergeShippingEstimate(cartData, $cart.get()));
-    if (cartData.id) setStoredCartId(cartData.id);
-    backgroundRefreshShipping(cartData.id);
-    return 'added';
-  }
-  if (error && 'status' in error && error.status === 400) {
-    return 'requires_options';
-  }
-  return 'error';
-}
+// addSuggestionToCart has moved to cart-actions.ts. Re-exported here for
+// backwards compatibility with existing imports.
+export { addSuggestionToCart } from '@/stores/cart-actions';
 
 /** Generation counter — only the latest background refresh writes to $cart. */
 let refreshGeneration = 0;
@@ -251,13 +242,19 @@ export function backgroundRefreshShipping(cartId: string): void {
       if (data && gen === refreshGeneration) {
         const fresh = normalizeCart(data as Record<string, unknown>);
         const current = $cart.get();
-        // Only update shipping_estimate — preserve current item order and totals
+        // Only update if shipping_estimate actually changed — avoids redundant re-renders
         if (current) {
-          $cart.set({ ...current, shipping_estimate: fresh.shipping_estimate });
+          const prev = JSON.stringify(current.shipping_estimate);
+          const next = JSON.stringify(fresh.shipping_estimate);
+          if (prev !== next) {
+            $cart.set({ ...current, shipping_estimate: fresh.shipping_estimate });
+          }
         } else {
           $cart.set(fresh);
         }
       }
     })
-    .catch(() => {}); // non-blocking
+    .catch((err) => {
+      log.warn('cart', 'Background shipping refresh failed (non-blocking):', err);
+    });
 }

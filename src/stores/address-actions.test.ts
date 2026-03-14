@@ -217,6 +217,128 @@ describe('hydrateAddressFromStorage', () => {
     expect($addressCoords.get()).toBeNull();
     expect(mockPOST).not.toHaveBeenCalled();
   });
+
+  it('deduplicates: calling twice only triggers one API call', async () => {
+    const stored = {
+      postalCode: '1015 BS',
+      country: 'NL',
+      latitude: 52.3702,
+      longitude: 4.8952,
+      storedAt: Date.now(),
+    };
+    localStorage.setItem('sous_address', JSON.stringify(stored));
+
+    mockPOST.mockResolvedValue({
+      data: {
+        latitude: 52.3702,
+        longitude: 4.8952,
+        available_fulfillment_types: ['local_delivery'],
+        available_shipping_providers: [],
+        pickup_locations: [],
+        delivery_unavailable: false,
+        near_delivery_zone: false,
+      },
+      error: null,
+    });
+
+    // Call twice without resetting the guard
+    await hydrateAddressFromStorage();
+    await hydrateAddressFromStorage();
+
+    // Only one API call should have been made
+    expect(mockPOST).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('onAddressChange – pickup_locations type guard', () => {
+  beforeEach(() => {
+    $addressCoords.set(null);
+    $addressEligibility.set(null);
+    $cart.set(null);
+    localStorage.clear();
+    mockPOST.mockReset();
+    mockGET.mockReset();
+  });
+
+  it('filters out pickup locations with missing name', async () => {
+    mockPOST.mockResolvedValue({
+      data: {
+        latitude: 52.3702,
+        longitude: 4.8952,
+        available_fulfillment_types: ['pickup'],
+        available_shipping_providers: [],
+        pickup_locations: [
+          { id: 1, name: 'Valid Store', distance_km: 1.5 },
+          { id: 2, distance_km: 2.0 }, // missing name
+        ],
+        delivery_unavailable: false,
+        near_delivery_zone: false,
+      },
+      error: null,
+    });
+
+    await onAddressChange({ postalCode: '1015 BS', country: 'NL' });
+
+    const elig = $addressEligibility.get()!;
+    expect(elig.pickupLocations).toHaveLength(1);
+    expect(elig.pickupLocations[0].name).toBe('Valid Store');
+  });
+
+  it('filters out pickup locations with non-numeric distance_km', async () => {
+    mockPOST.mockResolvedValue({
+      data: {
+        latitude: 52.3702,
+        longitude: 4.8952,
+        available_fulfillment_types: ['pickup'],
+        available_shipping_providers: [],
+        pickup_locations: [
+          { id: 1, name: 'Good Store', distance_km: 0.5 },
+          { id: 2, name: 'Bad Store', distance_km: 'not-a-number' },
+        ],
+        delivery_unavailable: false,
+        near_delivery_zone: false,
+      },
+      error: null,
+    });
+
+    await onAddressChange({ postalCode: '1015 BS', country: 'NL' });
+
+    const elig = $addressEligibility.get()!;
+    expect(elig.pickupLocations).toHaveLength(1);
+    expect(elig.pickupLocations[0].name).toBe('Good Store');
+  });
+});
+
+describe('onAddressChange – availableFulfillmentTypes filters non-string values', () => {
+  beforeEach(() => {
+    $addressCoords.set(null);
+    $addressEligibility.set(null);
+    $cart.set(null);
+    localStorage.clear();
+    mockPOST.mockReset();
+    mockGET.mockReset();
+  });
+
+  it('filters out non-string and invalid fulfillment types', async () => {
+    mockPOST.mockResolvedValue({
+      data: {
+        latitude: 52.3702,
+        longitude: 4.8952,
+        available_fulfillment_types: ['local_delivery', 42, null, 'pickup', 'invalid_type'],
+        available_shipping_providers: [],
+        pickup_locations: [],
+        delivery_unavailable: false,
+        near_delivery_zone: false,
+      },
+      error: null,
+    });
+
+    await onAddressChange({ postalCode: '1015 BS', country: 'NL' });
+
+    const elig = $addressEligibility.get()!;
+    // Only valid string values that match the allowed types should remain
+    expect(elig.availableFulfillmentTypes).toEqual(['local_delivery', 'pickup']);
+  });
 });
 
 describe('clearAddress', () => {

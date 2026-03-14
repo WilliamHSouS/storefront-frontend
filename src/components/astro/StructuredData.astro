@@ -1,47 +1,8 @@
 ---
-import type { MerchantConfig } from '@/types/merchant';
-import {
-  generateRestaurantLD,
-  generateMenuItemLD,
-  generateBreadcrumbLD,
-} from '@/lib/structured-data';
-
 interface Props {
-  type: 'restaurant' | 'product' | 'breadcrumb';
-  merchant: MerchantConfig;
-  lang?: string;
-  product?: {
-    name: string;
-    price: string;
-    description?: string;
-    image?: string | null;
-    slug?: string;
-  };
-  breadcrumbs?: Array<{ name: string; url: string }>;
-  sections?: Array<{ category: Record<string, unknown>; products: Array<Record<string, unknown>> }>;
+  data: Record<string, unknown>;
 }
-
-const { type, merchant, lang, product, breadcrumbs } = Astro.props;
-const siteUrl = Astro.url.origin;
-
-let jsonLd: Record<string, unknown> | null = null;
-
-switch (type) {
-  case 'restaurant':
-    jsonLd = generateRestaurantLD(merchant, siteUrl, lang);
-    break;
-  case 'product':
-    if (product) {
-      const productUrl = `${siteUrl}${Astro.url.pathname}`;
-      jsonLd = generateMenuItemLD(product, merchant.currency, productUrl);
-    }
-    break;
-  case 'breadcrumb':
-    if (breadcrumbs) {
-      jsonLd = generateBreadcrumbLD(breadcrumbs);
-    }
-    break;
-}
+const { data } = Astro.props;
 ---
 
-{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+{data && <script type="application/ld+json" set:html={JSON.stringify(data).replace(/</g, '\\u003c')} />}
