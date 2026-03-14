@@ -15,10 +15,22 @@ interface ConnectionInfo {
   saveData: boolean;
 }
 
+/** Cached connection info — read once per page load, not per image. */
+let cachedConnection: ConnectionInfo | null | undefined;
+
 function getConnection(): ConnectionInfo | null {
-  if (typeof navigator === 'undefined') return null;
-  const conn = (navigator as { connection?: ConnectionInfo }).connection;
-  return conn ?? null;
+  if (cachedConnection !== undefined) return cachedConnection;
+  if (typeof navigator === 'undefined') {
+    cachedConnection = null;
+    return null;
+  }
+  cachedConnection = (navigator as { connection?: ConnectionInfo }).connection ?? null;
+  return cachedConnection;
+}
+
+/** @internal Reset cached connection — only for tests. */
+export function _resetConnectionCache(): void {
+  cachedConnection = undefined;
 }
 
 /** True when the user is on a slow connection or has data saver enabled. */

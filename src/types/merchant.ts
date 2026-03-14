@@ -62,6 +62,8 @@ export interface MerchantConfig {
   hours: MerchantHours[];
   social: Record<string, string>;
   website?: string;
+  cuisine?: string;
+  priceRange?: string;
   features?: {
     upsells?: boolean;
   };

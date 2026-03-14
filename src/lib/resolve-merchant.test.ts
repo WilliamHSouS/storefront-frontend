@@ -33,7 +33,7 @@ describe('resolveMerchantSlug', () => {
   it('logs a warning when CUSTOM_DOMAINS JSON is malformed', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     resolveMerchantSlug('barsumac.nl', 'not-json');
-    expect(warnSpy).toHaveBeenCalledWith('Failed to resolve merchant:', expect.any(SyntaxError));
+    expect(warnSpy).toHaveBeenCalledWith('[merchant]', 'Failed to resolve merchant:', expect.any(SyntaxError));
     warnSpy.mockRestore();
   });
 

@@ -12,7 +12,9 @@ import Toast from '@/components/interactive/Toast';
 import MerchantComms from '@/components/interactive/MerchantComms';
 import { FulfillmentOverlay } from '@/components/interactive/FulfillmentOverlay';
 import { DeliveryBanner } from '@/components/interactive/DeliveryBanner';
-import type { CommsMessage } from '@/stores/comms';
+import type { CommsMessage, CommsTheme } from '@/stores/comms';
+import { BANNER_THEME_CLASSES } from '@/lib/comms-theme';
+import { safeUrl } from '@/lib/safe-url';
 
 interface Props {
   title: string;
@@ -24,7 +26,10 @@ const { title, description, hideSharedIslands = false } = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
-const merchantJSON = merchant ? JSON.stringify(merchant) : '';
+// Strip secrets before serializing to client — hmacSecret must stay server-side only
+const merchantJSON = merchant
+  ? (() => { const { hmacSecret: _, ...safe } = merchant; return JSON.stringify(safe); })()
+  : '';
 
 // Build Google Fonts URL from merchant theme fonts
 const fontFamilies = new Set<string>();
@@ -35,6 +40,9 @@ const googleFontsUrl =
     ? `https://fonts.googleapis.com/css2?${[...fontFamilies].map((f) => `family=${f.replace(/ /g, '+')}:wght@400;500;600;700`).join('&')}&display=swap`
     : null;
 const langValue = lang ?? 'en';
+
+// Extract first top_banner content for SSR to prevent CLS
+let ssrTopBanner: { headline: string; body: string; cta_label: string; cta_url: string; theme: CommsTheme; custom_colors: Record<string, string> } | null = null;
 
 let commsMessages: CommsMessage[] = [];
 {
@@ -51,6 +59,17 @@ let commsMessages: CommsMessage[] = [];
       // Silent degradation — no banners is better than a broken page
     }
   }
+}
+
+// Find the first top_banner content for SSR rendering
+for (const msg of commsMessages) {
+  for (const content of msg.contents) {
+    if (content.surface === 'top_banner') {
+      ssrTopBanner = content;
+      break;
+    }
+  }
+  if (ssrTopBanner) break;
 }
 ---
 
@@ -97,6 +116,38 @@ let commsMessages: CommsMessage[] = [];
         </script>
       )
     }
+    {/* SSR top banner — prevents CLS by reserving space before island hydration.
+         Inline script checks localStorage for dismissals to prevent flash-then-hide. */}
+    {ssrTopBanner && (
+      <>
+        <div
+          data-ssr-top-banner
+          role="status"
+          class={`sticky top-0 z-30 w-full px-4 py-3 ${BANNER_THEME_CLASSES[ssrTopBanner.theme]}`}
+        >
+          <div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
+            <div class="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+              {ssrTopBanner.headline && <span class="font-medium">{ssrTopBanner.headline}</span>}
+              {ssrTopBanner.body && <span class="opacity-90">{ssrTopBanner.body}</span>}
+              {ssrTopBanner.cta_label && ssrTopBanner.cta_url && (
+                <a href={safeUrl(ssrTopBanner.cta_url)} class="underline underline-offset-2 font-medium">
+                  {ssrTopBanner.cta_label}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+        <script is:inline>
+          try {
+            var d = JSON.parse(localStorage.getItem('sous:comms:dismissed') || '{}');
+            if (Object.keys(d).length > 0) {
+              var b = document.querySelector('[data-ssr-top-banner]');
+              if (b) b.style.display = 'none';
+            }
+          } catch (e) {}
+        </script>
+      </>
+    )}
     <MerchantComms client:idle lang={langValue} messages={commsMessages} />
     <DeliveryBanner client:idle lang={langValue} />
 
@@ -132,10 +183,18 @@ let commsMessages: CommsMessage[] = [];
     </script>
 
     <script>
-      import { initAnalytics } from '@/analytics';
-      initAnalytics().catch((err) => {
-        console.error('[analytics] initialization failed:', err);
-      });
+      function boot() {
+        import('@/analytics').then(({ initAnalytics }) =>
+          initAnalytics().catch((err) => {
+            console.error('[analytics] initialization failed:', err);
+          }),
+        );
+      }
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(boot);
+      } else {
+        setTimeout(boot, 3000);
+      }
     </script>
   </body>
 </html>

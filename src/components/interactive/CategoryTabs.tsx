@@ -107,12 +107,12 @@ export default function CategoryTabs({ categories }: Props) {
       ref={scrollRef}
       role="tablist"
       aria-label="Menu"
-      class="relative flex flex-1 gap-2 overflow-x-auto scrollbar-none"
+      class="relative hidden flex-1 gap-2 overflow-x-auto scrollbar-none md:flex"
     >
       {/* Sliding indicator */}
       <div
         ref={indicatorRef}
-        class="absolute top-0 h-10 rounded-[14px] bg-primary z-0 transition-all duration-200"
+        class="absolute top-0 h-10 rounded-[14px] bg-foreground z-0 transition-all duration-200"
         aria-hidden="true"
       />
 
@@ -130,7 +130,7 @@ export default function CategoryTabs({ categories }: Props) {
           onKeyDown={(e) => handleKeyDown(e, i)}
           class={`relative z-10 shrink-0 whitespace-nowrap rounded-[14px] px-4 h-10 text-sm font-medium transition-colors duration-300 ${
             activeCategory === String(cat.id)
-              ? 'text-primary-foreground'
+              ? 'text-background'
               : 'text-foreground hover:bg-foreground/5'
           }`}
         >

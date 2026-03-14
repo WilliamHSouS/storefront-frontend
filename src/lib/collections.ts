@@ -1,6 +1,7 @@
 import type { StorefrontClient } from './sdk-stub';
 import type { NormalizedCategory } from './normalize';
 import { normalizeCollection, flattenCategories } from './normalize';
+import * as log from '@/lib/logger';
 
 export interface SectionsResult {
   sections: NormalizedCategory[];
@@ -15,7 +16,7 @@ export async function fetchCollectionsOrCategories(sdk: StorefrontClient): Promi
   const collectionsResult = await sdk.GET('/api/v1/collections/');
 
   if (collectionsResult.error) {
-    console.error('[collections] API error, falling back to categories', collectionsResult.error);
+    log.error('collections', 'API error, falling back to categories', collectionsResult.error);
   }
 
   const rawCollections =
@@ -28,7 +29,7 @@ export async function fetchCollectionsOrCategories(sdk: StorefrontClient): Promi
   // Fallback: use categories
   const categoriesResult = await sdk.GET('/api/v1/categories/');
   if (categoriesResult.error) {
-    console.error('[collections] categories fallback also failed', categoriesResult.error);
+    log.error('collections', 'Categories fallback also failed', categoriesResult.error);
   }
   const rawCategories =
     (categoriesResult.data as { results: Array<Record<string, unknown>> } | null)?.results ?? [];

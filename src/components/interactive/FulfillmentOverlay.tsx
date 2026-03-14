@@ -3,6 +3,7 @@ import { useStore } from '@nanostores/preact';
 import { $addressCoords } from '@/stores/address';
 import { getClient } from '@/lib/api';
 import { t } from '@/i18n';
+import * as log from '@/lib/logger';
 import type { AddressCoords, ProductFulfillment } from '@/types/address';
 
 interface Props {
@@ -148,7 +149,12 @@ async function fetchAndApplyFulfillment(
     const client = getClient();
     const { data } = await client.GET('/api/v1/products/', {
       params: {
-        query: { latitude: coords.latitude, longitude: coords.longitude, page_size: 200 },
+        query: {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          page_size: 200,
+          fields: 'id,available_fulfillment_types,pickup_only',
+        },
       },
     });
 
@@ -158,8 +164,9 @@ async function fetchAndApplyFulfillment(
     if (!r || !Array.isArray(r.results)) return;
 
     if (r.next != null) {
-      console.warn(
-        'FulfillmentOverlay: product response is paginated — some products may lack badges.',
+      log.warn(
+        'fulfillment',
+        'Product response is paginated — some products may lack badges.',
       );
     }
 

@@ -151,6 +151,7 @@ describe('ensureCart', () => {
 
     expect(cartId).toBe('recovery-cart');
     expect(warnSpy).toHaveBeenCalledWith(
+      '[cart]',
       'Stored cart expired or invalid, creating new cart:',
       expect.objectContaining({ status: 404 }),
     );

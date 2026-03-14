@@ -58,7 +58,8 @@ describe('getUTMProperties', () => {
     // Should not throw, returns empty (no URL params in test env)
     expect(utm).toEqual({});
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('corrupt UTM data'),
+      '[analytics]',
+      expect.stringContaining('Corrupt UTM data'),
       expect.anything(),
     );
     // Should have cleaned up the corrupt entry

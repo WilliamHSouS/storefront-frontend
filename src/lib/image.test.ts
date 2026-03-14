@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { optimizedImageUrl, responsiveImage, isSlowConnection, adaptForConnection } from './image';
+import { optimizedImageUrl, responsiveImage, isSlowConnection, adaptForConnection, _resetConnectionCache } from './image';
 
 /** Helper to set navigator.connection for a test. */
 function setConnection(value: { effectiveType: string; saveData: boolean } | undefined) {
@@ -8,6 +8,7 @@ function setConnection(value: { effectiveType: string; saveData: boolean } | und
     writable: true,
     configurable: true,
   });
+  _resetConnectionCache();
 }
 
 afterEach(() => setConnection(undefined));

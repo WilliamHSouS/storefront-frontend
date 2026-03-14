@@ -300,8 +300,13 @@ export function normalizeCart(raw: Record<string, unknown>): Cart {
   const r = raw as Record<string, unknown>;
   const lineItems = (r.line_items ?? []) as Array<Record<string, unknown>>;
 
+  // Runtime validation for critical fields (same pattern as normalizeShippingEstimate)
+  const id = typeof r.id === 'string' ? r.id : String(r.id ?? '');
+  const cartTotal = typeof r.cart_total === 'string' ? r.cart_total : String(r.cart_total ?? '0.00');
+  const itemCount = typeof r.item_count === 'number' ? r.item_count : Number(r.item_count ?? 0);
+
   return {
-    id: r.id as string,
+    id,
     line_items: lineItems.map((item): CartLineItem => {
       const rawOptions = (item.options ?? []) as Array<Record<string, unknown>>;
       const fallbackOptions = (item.selected_options ?? []) as Array<{
@@ -335,9 +340,9 @@ export function normalizeCart(raw: Record<string, unknown>): Cart {
         notes: item.notes as string | undefined,
       };
     }),
-    cart_total: r.cart_total as string,
+    cart_total: cartTotal,
     cart_savings: r.cart_savings as string | undefined,
-    item_count: r.item_count as number,
+    item_count: itemCount,
     subtotal: (r.subtotal ??
       (lineItems.length > 0
         ? lineItems
@@ -346,6 +351,7 @@ export function normalizeCart(raw: Record<string, unknown>): Cart {
         : undefined)) as string | undefined,
     tax_total: r.tax_total as string | undefined,
     tax_included: (r.tax_included ?? r.tax_estimated) as boolean | undefined,
+    surcharge_total: r.surcharge_total as string | undefined,
     shipping_cost: r.shipping_cost as string | undefined,
     discount_amount: (r.discount_amount ??
       (r.discount as Record<string, unknown> | undefined)?.discount_amount) as string | undefined,

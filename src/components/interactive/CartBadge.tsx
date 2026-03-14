@@ -55,7 +55,7 @@ export default function CartBadge({ lang }: Props) {
       type="button"
       data-cart-trigger
       onClick={() => $isCartOpen.set(true)}
-      class="inline-flex items-center gap-1.5 rounded-full bg-[#1C1C1E] px-4 py-2 text-white transition-all duration-300 hover:bg-[#2C2C2E]"
+      class="hidden items-center gap-1.5 rounded-full bg-[#1C1C1E] px-4 py-2 text-white transition-all duration-300 hover:bg-[#2C2C2E] md:inline-flex"
       aria-label={`${t('cart', lang)}: ${itemLabel}, ${formatPrice(cartTotal, currency, locale)}`}
     >
       <span class="text-sm font-medium">{t('cart', lang)}</span>

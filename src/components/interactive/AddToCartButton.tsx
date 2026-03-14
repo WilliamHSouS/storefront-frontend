@@ -6,6 +6,7 @@ import { getClient } from '@/lib/api';
 import { showToast } from '@/stores/toast';
 import { setCartItemQuantity, commitCartResponse } from '@/stores/cart-actions';
 import { t } from '@/i18n';
+import * as log from '@/lib/logger';
 import QuantitySelector from './QuantitySelector';
 
 interface Props {
@@ -56,7 +57,7 @@ export default function AddToCartButton({
     try {
       await setCartItemQuantity(cartId, itemId, newQuantity);
     } catch (err) {
-      console.error('[AddToCart] update error:', err);
+      log.error('AddToCart', 'Update error:', err);
       showToast(t('toastCartUpdateFailed', lang));
     }
   };
@@ -85,7 +86,7 @@ export default function AddToCartButton({
           // Product likely requires modifiers — open the detail modal
           $selectedProduct.set({ id: productId, name: productName, slug: productSlug });
         } else {
-          console.error('Failed to add to cart:', error);
+          log.error('AddToCart', 'Failed to add to cart:', error);
           showToast(t('toastAddToCartFailed', lang));
         }
       } else if (data) {
@@ -99,7 +100,7 @@ export default function AddToCartButton({
         });
       }
     } catch (err) {
-      console.error('[AddToCart] error:', err);
+      log.error('AddToCart', 'Error:', err);
       showToast(t('toastAddToCartFailed', lang));
       $cart.set(prevCart);
     } finally {

@@ -8,6 +8,7 @@ import {
 } from '@/stores/cart-actions';
 import { showToast } from '@/stores/toast';
 import type { Cart } from '@/stores/cart';
+import * as log from '@/lib/logger';
 
 interface Props {
   cart: Cart;
@@ -49,7 +50,7 @@ export default function DiscountCodeInput({ cart, lang }: Props) {
       await removeDiscountCode(cart.id);
       setLastAppliedCode(null);
     } catch (err) {
-      console.error('[cart] failed to remove discount:', err);
+      log.error('cart', 'Failed to remove discount:', err);
       showToast(t('toastCartUpdateFailed', lang));
     } finally {
       setLoading(false);

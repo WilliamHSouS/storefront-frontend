@@ -8,6 +8,7 @@ import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { t } from '@/i18n';
 import { optimizedImageUrl } from '@/lib/image';
+import * as log from '@/lib/logger';
 import QuantitySelector from './QuantitySelector';
 import CartSuggestions from './CartSuggestions';
 import { setCartItemQuantity, checkPromotionEligibility } from '@/stores/cart-actions';
@@ -17,6 +18,7 @@ import { showToast } from '@/stores/toast';
 import PromoBanner from './PromoBanner';
 import DiscountCodeInput from './DiscountCodeInput';
 import { ShippingEstimate } from './ShippingEstimate';
+import { CloseIcon } from './icons';
 
 /* ------------------------------------------------------------------ */
 /*  Shared sub-components (used by both inline and drawer modes)      */
@@ -131,6 +133,16 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
         <div class="mb-1 flex items-center justify-between text-sm">
           <span class="text-muted-foreground">{t('subtotal', lang)}</span>
           <span class="text-card-foreground">{formatPrice(subtotal, currency, locale)}</span>
+        </div>
+      )}
+
+      {/* Surcharges */}
+      {cart.surcharge_total && parseFloat(cart.surcharge_total) > 0 && (
+        <div class="mb-1 flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">{t('surcharges', lang)}</span>
+          <span class="text-card-foreground">
+            {formatPrice(cart.surcharge_total, currency, locale)}
+          </span>
         </div>
       )}
 
@@ -275,7 +287,7 @@ export default function CartDrawer({ lang, inline = false }: Props) {
     try {
       await setCartItemQuantity(cartId, itemId, newQuantity);
     } catch (err) {
-      console.error('[cart] failed to update quantity:', err);
+      log.error('cart', 'Failed to update quantity:', err);
       showToast(t('toastCartUpdateFailed', lang));
     }
   };
@@ -289,7 +301,7 @@ export default function CartDrawer({ lang, inline = false }: Props) {
     try {
       await setCartItemQuantity(cartId, itemId, 0);
     } catch (err) {
-      console.error('[cart] failed to remove item:', err);
+      log.error('cart', 'Failed to remove item:', err);
       showToast(t('toastCartUpdateFailed', lang));
     }
   };
@@ -380,20 +392,7 @@ export default function CartDrawer({ lang, inline = false }: Props) {
             class="relative inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent before:absolute before:inset-[-6px]"
             aria-label={t('close', lang)}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
+            <CloseIcon />
           </button>
         </div>
 

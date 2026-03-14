@@ -1,4 +1,5 @@
 import { $dismissedMessages } from '@/stores/comms';
+import * as log from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
 // Duration parser
@@ -60,7 +61,7 @@ export function loadDismissedState(): Record<string, number> {
 
     return pruned;
   } catch (e) {
-    console.warn('Failed to read dismissed state from localStorage:', e);
+    log.warn('comms', 'Failed to read dismissed state from localStorage:', e);
     return {};
   }
 }
@@ -101,7 +102,7 @@ function _saveDismissedState(state: Record<string, number>): void {
     }
     localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify(serialisable));
   } catch (e) {
-    console.warn('Failed to save dismissed state to localStorage:', e);
+    log.warn('comms', 'Failed to save dismissed state to localStorage:', e);
   }
 }
 

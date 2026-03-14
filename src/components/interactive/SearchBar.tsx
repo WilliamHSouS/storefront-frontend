@@ -5,26 +5,9 @@ import { $selectedProduct } from '@/stores/ui';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { t } from '@/i18n';
 import { getClient } from '@/lib/api';
-import { slugify } from '@/lib/normalize';
+import { normalizeProduct, type NormalizedProduct } from '@/lib/normalize';
 import { optimizedImageUrl } from '@/lib/image';
-
-interface SearchResult {
-  id: string | number;
-  name: string;
-  price: string;
-  image?: string | null;
-}
-
-/** Normalize a raw API product to SearchResult shape. */
-function toSearchResult(raw: Record<string, unknown>): SearchResult {
-  const images = raw.images as Array<{ image_url: string }> | undefined;
-  return {
-    id: raw.id as string | number,
-    name: (raw.title ?? raw.name ?? '') as string,
-    price: (raw.price ?? '0') as string,
-    image: images?.[0]?.image_url ?? (raw.image as string | null) ?? null,
-  };
-}
+import { CloseIcon, SearchIcon } from './icons';
 
 interface Props {
   lang: string;
@@ -33,12 +16,13 @@ interface Props {
 export default function SearchBar({ lang }: Props) {
   const merchant = useStore($merchant);
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<NormalizedProduct[]>([]);
   const [isFallback, setIsFallback] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const abortRef = useRef<AbortController>();
 
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
@@ -50,24 +34,38 @@ export default function SearchBar({ lang }: Props) {
     setIsFallback(false);
   };
 
+  // Clean up debounce timer and abort in-flight request on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const search = useCallback(async (q: string) => {
     if (q.length < 2) {
       setResults([]);
       setIsFallback(false);
       return;
     }
+    // Cancel previous in-flight search to prevent stale results
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     try {
       const client = getClient();
       // Try dedicated search endpoint first, fall back to filtered product list
       const { data } = await client.GET('/api/v1/products/search/', {
         params: { query: { q } },
+        signal: controller.signal,
       });
       if (data) {
         const page = data as { results: Array<Record<string, unknown>> };
         const items = page.results ?? [];
         if (items.length > 0) {
-          setResults(items.map(toSearchResult));
+          setResults(items.map(normalizeProduct));
           setIsFallback(false);
           return;
         }
@@ -75,12 +73,16 @@ export default function SearchBar({ lang }: Props) {
       // Fallback: show popular products when search has no matches
       const { data: fallbackData } = await client.GET('/api/v1/products/', {
         params: { query: { search: q } },
+        signal: controller.signal,
       });
       if (fallbackData) {
         const page = fallbackData as { results: Array<Record<string, unknown>> };
-        setResults((page.results ?? []).map(toSearchResult));
+        setResults((page.results ?? []).map(normalizeProduct));
         setIsFallback(true);
       }
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -92,10 +94,9 @@ export default function SearchBar({ lang }: Props) {
     debounceRef.current = setTimeout(() => search(value), 300);
   };
 
-  const handleSelect = (result: SearchResult) => {
+  const handleSelect = (result: NormalizedProduct) => {
     closeSearch();
-    const slug = `${slugify(result.name)}--${result.id}`;
-    $selectedProduct.set({ id: String(result.id), name: result.name, slug });
+    $selectedProduct.set({ id: String(result.id), name: result.name, slug: result.slug });
   };
 
   // Close on escape
@@ -134,21 +135,7 @@ export default function SearchBar({ lang }: Props) {
       <div class="relative mx-auto mt-16 w-full max-w-lg px-4">
         <div class="overflow-hidden rounded-lg bg-card shadow-xl">
           <div class="flex items-center border-b border-border px-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="shrink-0 text-muted-foreground"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
+            <SearchIcon class="shrink-0 text-muted-foreground" />
             <input
               ref={inputRef}
               type="search"
@@ -171,20 +158,7 @@ export default function SearchBar({ lang }: Props) {
               class="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label={t('close', lang)}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
+              <CloseIcon />
             </button>
           </div>
 

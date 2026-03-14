@@ -83,3 +83,33 @@ test.describe('Navigation and language routing', () => {
     await expect(section).toBeVisible();
   });
 });
+
+test.describe('Multi-locale routing', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockApi(page);
+    await blockAnalytics(page);
+  });
+
+  test('English menu page renders', async ({ page }) => {
+    await page.goto(menuPage('en'));
+    await waitForHydration(page);
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('[data-product-id]').first()).toBeVisible();
+  });
+
+  test('German menu page renders', async ({ page }) => {
+    await page.goto(menuPage('de'));
+    await waitForHydration(page);
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+    await expect(page.locator('[data-product-id]').first()).toBeVisible();
+  });
+
+  test('Accept-Language header negotiation', async ({ page }) => {
+    await page.setExtraHTTPHeaders({ 'Accept-Language': 'de,en;q=0.9' });
+    await page.goto('/');
+    await page.waitForURL(/\/de\//);
+    expect(page.url()).toContain('/de/');
+  });
+});
