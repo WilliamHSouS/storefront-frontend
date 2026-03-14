@@ -138,6 +138,7 @@ describe('ensureCart', () => {
   it('clears stored cart ID and creates new cart when stored cart returns an error', async () => {
     const newCart = makeCart({ id: 'recovery-cart' });
     localStorageMock.setItem('sous_cart_id', 'expired-id');
+    (globalThis as Record<string, unknown>).__TESTING__ = false;
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const client = makeClient({
@@ -157,6 +158,7 @@ describe('ensureCart', () => {
     );
     expect(getStoredCartId()).toBe('recovery-cart');
     warnSpy.mockRestore();
+    (globalThis as Record<string, unknown>).__TESTING__ = true;
   });
 
   it('deduplicates concurrent calls and only makes one API request', async () => {

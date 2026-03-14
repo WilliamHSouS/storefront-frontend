@@ -254,5 +254,7 @@ export function backgroundRefreshShipping(cartId: string): void {
         }
       }
     })
-    .catch(() => {}); // non-blocking
+    .catch((err) => {
+      log.warn('cart', 'Background shipping refresh failed (non-blocking):', err);
+    });
 }

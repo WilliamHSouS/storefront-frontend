@@ -161,13 +161,15 @@ async function fetchAndApplyFulfillment(
     if (isStale()) return;
 
     const r = data as Record<string, unknown>;
-    if (!r || !Array.isArray(r.results)) return;
+    if (!r || !Array.isArray(r.results)) {
+      log.warn('fulfillment', 'Unexpected API response shape, clearing badges');
+      clearAllBadges();
+      showAllProducts();
+      return;
+    }
 
     if (r.next != null) {
-      log.warn(
-        'fulfillment',
-        'Product response is paginated — some products may lack badges.',
-      );
+      log.warn('fulfillment', 'Product response is paginated — some products may lack badges.');
     }
 
     const fulfillmentMap = new Map<string, ProductFulfillment>();
@@ -183,8 +185,9 @@ async function fetchAndApplyFulfillment(
     }
 
     applyFulfillmentToDOM(fulfillmentMap, coords, lang);
-  } catch {
+  } catch (err) {
     if (isStale()) return;
+    log.error('fulfillment', 'Failed to fetch fulfillment data:', err);
     clearAllBadges();
     showAllProducts();
   }

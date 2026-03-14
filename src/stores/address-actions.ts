@@ -145,7 +145,7 @@ async function refreshCartWithCoords(cartId: string, coords: AddressCoords): Pro
     }
   } catch (err) {
     // Cart refresh failure is non-blocking — estimate just won't show
-    log.warn('address', 'refreshCartWithCoords failed (non-blocking):', err);
+    log.error('address', 'refreshCartWithCoords failed (non-blocking):', err);
   }
 }
 

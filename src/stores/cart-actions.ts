@@ -14,6 +14,7 @@ import type { Cart, EligiblePromotion, AddSuggestionResult } from '@/stores/cart
 import { normalizeCart } from '@/lib/normalize';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 import type { MessageKey } from '@/i18n';
+import * as log from '@/lib/logger';
 
 /**
  * Normalize a raw cart API response, update the cart store (preserving
@@ -194,5 +195,6 @@ export async function addSuggestionToCart(
   if (error && 'status' in error && error.status === 400) {
     return 'requires_options';
   }
+  log.error('cart', 'addSuggestionToCart failed:', error);
   return 'error';
 }

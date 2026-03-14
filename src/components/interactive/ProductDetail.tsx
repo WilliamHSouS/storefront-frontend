@@ -342,8 +342,9 @@ export default function ProductDetail({ lang }: Props) {
           history.pushState({ productModal: true }, '', productUrl);
           didPushState.current = true;
         }
-      } catch {
+      } catch (err) {
         // Shallow routing unavailable (e.g. iframe sandbox) — modal still works
+        log.warn('ProductDetail', 'Shallow routing unavailable:', err);
       }
     }
   }, [selectedProduct]);

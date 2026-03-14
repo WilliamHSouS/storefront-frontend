@@ -7,6 +7,7 @@ import { t } from '@/i18n';
 import { getClient } from '@/lib/api';
 import { normalizeProduct, type NormalizedProduct } from '@/lib/normalize';
 import { optimizedImageUrl } from '@/lib/image';
+import * as log from '@/lib/logger';
 import { CloseIcon, SearchIcon } from './icons';
 
 interface Props {
@@ -82,7 +83,8 @@ export default function SearchBar({ lang }: Props) {
       }
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
-      throw err;
+      log.error('search', 'Search failed:', err);
+      setResults([]);
     } finally {
       setLoading(false);
     }
