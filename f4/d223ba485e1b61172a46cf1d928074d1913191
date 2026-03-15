@@ -1,0 +1,23 @@
+src/lib/theme.ts
+  8742028523990a91 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "f4d223ba485e1b61172a46cf1d928074d1913191",
+  "prompts": {
+    "8742028523990a91": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ab86a87-bdcc-4243-aa53-27a48d3d0283",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
