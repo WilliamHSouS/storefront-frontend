@@ -63,7 +63,7 @@ test.describe('Merchant Communications — banners', () => {
 
   test('modal renders with promotional content', async ({ page }) => {
     await page.goto(menuPage());
-    await waitForHydration(page);
+    await waitForHydration(page, { dismissModal: false });
 
     const modal = page.locator('[data-comms-modal]');
     await modal.waitFor({ state: 'visible', timeout: 5_000 });
