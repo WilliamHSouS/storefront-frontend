@@ -55,7 +55,7 @@ jobs:
           DEFAULT_MERCHANT: bar-sumac
           CUSTOM_DOMAINS: '{}'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with: { name: e2e-report, path: e2e/.report/, retention-days: 7 }
 
   bundle-size:

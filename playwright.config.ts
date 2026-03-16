@@ -8,7 +8,11 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 4 : undefined,
   reporter: process.env.CI
-    ? [['github'], ['html', { open: 'never', outputFolder: 'e2e/.report' }]]
+    ? [
+        ['list'],
+        ['html', { open: 'never', outputFolder: 'e2e/.report' }],
+        ['json', { outputFile: 'e2e/.report/results.json' }],
+      ]
     : [['list'], ['html', { open: 'on-failure', outputFolder: 'e2e/.report' }]],
 
   globalSetup: './e2e/global-setup.ts',
