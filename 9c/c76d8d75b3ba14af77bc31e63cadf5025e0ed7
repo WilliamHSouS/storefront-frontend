@@ -1,0 +1,33 @@
+e2e/smoke.spec.ts
+  8742028523990a91 36-38
+e2e/mobile.spec.ts
+  8742028523990a91 91-93,97,99-109,111-114
+e2e/product-detail.spec.ts
+  8742028523990a91 76-77,85,199-201,220-224
+e2e/seo.spec.ts
+  8742028523990a91 65-67,71
+e2e/menu.spec.ts
+  8742028523990a91 20-23,65-68
+e2e/navigation.spec.ts
+  8742028523990a91 10,12-21,24,26-31,54-56,58-71,74,89-98,102,108,145-146,152-153,158-160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "9cc76d8d75b3ba14af77bc31e63cadf5025e0ed7",
+  "prompts": {
+    "8742028523990a91": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ab86a87-bdcc-4243-aa53-27a48d3d0283",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 136,
+      "total_deletions": 71,
+      "accepted_lines": 116,
+      "overriden_lines": 0
+    }
+  }
+}
