@@ -3,9 +3,15 @@ import preact from '@astrojs/preact';
 import tailwind from '@astrojs/tailwind';
 import vercel from '@astrojs/vercel';
 
+// E2E CI builds use @astrojs/node so `astro preview` works (Vercel adapter
+// doesn't support preview). The Node adapter is a devDependency.
+const adapter = process.env.E2E_BUILD
+  ? (await import('@astrojs/node')).default({ mode: 'standalone' })
+  : vercel();
+
 export default defineConfig({
   output: 'server',
-  adapter: vercel(),
+  adapter,
   integrations: [preact(), tailwind()],
   image: {
     remotePatterns: [

@@ -5,8 +5,8 @@ export default defineConfig({
   outputDir: './e2e/.results',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 4 : undefined,
   reporter: process.env.CI
     ? [['github'], ['html', { open: 'never', outputFolder: 'e2e/.report' }]]
     : [['list'], ['html', { open: 'on-failure', outputFolder: 'e2e/.report' }]],
@@ -31,11 +31,13 @@ export default defineConfig({
           reuseExistingServer: !process.env.CI,
         },
         {
-          command: 'astro dev --port 4321',
-          // Use url instead of port so Playwright waits for Astro to actually
-          // serve a page (not just bind the port). On CI, Astro's on-demand
-          // compilation can take a while on first request.
-          url: 'http://localhost:4321/nl/',
+          // CI: pre-build with Node adapter then serve via `astro preview`.
+          // Eliminates 15+ min on-demand compilation bottleneck from `astro dev`.
+          // Local: use `astro dev` for HMR and fast iteration.
+          command: process.env.CI
+            ? 'E2E_BUILD=1 astro build && E2E_BUILD=1 astro preview --port 4321 --host 0.0.0.0'
+            : 'astro dev --port 4321',
+          port: 4321,
           timeout: process.env.CI ? 120_000 : 30_000,
           reuseExistingServer: !process.env.CI,
         },
