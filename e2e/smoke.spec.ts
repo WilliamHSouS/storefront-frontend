@@ -33,7 +33,9 @@ test.describe('Smoke tests', () => {
   test('product detail page loads', async ({ page }) => {
     const errors = collectPageErrors(page);
     await page.goto(productPage('falafel-wrap'));
-    await expect(page.getByRole('heading', { name: 'Falafel Wrap' })).toBeVisible();
+    // Non-bot requests redirect to the menu page with product modal open,
+    // so the product name may appear both as a menu heading and in the modal.
+    await expect(page.getByRole('heading', { name: 'Falafel Wrap' }).first()).toBeVisible();
     expect(errors).toHaveLength(0);
   });
 

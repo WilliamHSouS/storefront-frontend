@@ -73,7 +73,8 @@ test.describe('Product detail modal — open and close', () => {
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
-    // URL should contain the product slug
+    // URL should contain the product slug — use waitForURL to handle async pushState
+    await page.waitForURL(`**/product/${slug}`, { timeout: 5_000 });
     expect(page.url()).toContain(`/product/${slug}`);
 
     // Close modal via Escape
@@ -81,6 +82,7 @@ test.describe('Product detail modal — open and close', () => {
 
     // Modal should close and URL should revert
     await expect(modal).toBeHidden();
+    await page.waitForURL(/.*\/(?:nl|en)\/$/, { timeout: 5_000 }).catch(() => {});
     expect(page.url()).not.toContain('/product/');
   });
 
@@ -194,8 +196,9 @@ test.describe('Product detail modal — modifier groups', () => {
     const modal = await openProductDetailModal(page, shawarma.id);
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
-    // Select the required "Regular" option
-    await modal.getByRole('radio', { name: 'Regular' }).check();
+    // Select the required "Regular" option — use .first() because radio labels
+    // may match multiple elements in preview mode
+    await modal.getByRole('radio', { name: 'Regular' }).first().check();
 
     // The "Verplicht" badge should change to a checkmark
     const sizeSection = modal.locator(`#modifier-group-${sizeGroup.id}`);
@@ -214,9 +217,11 @@ test.describe('Product detail modal — modifier groups', () => {
     // Modal should close after dismissing upsell step
     await expect(modal).toBeHidden();
 
-    // Cart state should be updated — the header cart trigger is always visible,
-    // confirming the modal closed and the item was added
-    await expect(page.locator('[data-cart-trigger]')).toBeVisible();
+    // Cart state should be updated — a cart trigger should be visible.
+    // CartBadge (desktop, hidden on mobile) and CartBar (mobile-only) both
+    // have data-cart-trigger. Use `locator('visible=true')` to pick whichever
+    // is visible in the current viewport.
+    await expect(page.locator('[data-cart-trigger]').locator('visible=true').first()).toBeVisible();
   });
 
   test('optional checkbox toggles price correctly', async ({ page }) => {

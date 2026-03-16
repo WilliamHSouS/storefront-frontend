@@ -17,6 +17,10 @@ test.describe('Menu page', () => {
   });
 
   test('renders all category tabs', async ({ page }) => {
+    // CategoryTabs component is hidden on mobile (md:flex only)
+    // eslint-disable-next-line playwright/no-skipped-test -- desktop-only component
+    test.skip(test.info().project.name === 'mobile', 'CategoryTabs hidden on mobile');
+
     const tablist = page.getByRole('tablist', { name: 'Menu' });
     for (const cat of categories) {
       await expect(tablist.getByRole('tab', { name: cat.name })).toBeVisible();
@@ -58,6 +62,10 @@ test.describe('Menu page', () => {
   });
 
   test('category tab click scrolls section into viewport', async ({ page }) => {
+    // CategoryTabs component is hidden on mobile (md:flex only)
+    // eslint-disable-next-line playwright/no-skipped-test -- desktop-only component
+    test.skip(test.info().project.name === 'mobile', 'CategoryTabs hidden on mobile');
+
     const tablist = page.getByRole('tablist', { name: 'Menu' });
 
     // Click "Drinks" tab
