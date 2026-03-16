@@ -84,11 +84,12 @@ export async function waitForHydration(page: Page) {
 
 /** Dismiss the comms modal if it appears. Safe to call even if no modal shows. */
 async function dismissCommsModal(page: Page) {
-  const dismiss = page.getByText('Melding sluiten');
+  const modal = page.locator('[data-comms-modal]');
   try {
-    await dismiss.waitFor({ state: 'visible', timeout: 1_000 });
-    await dismiss.click();
-    await dismiss.waitFor({ state: 'hidden', timeout: 1_000 });
+    await modal.waitFor({ state: 'visible', timeout: 1_500 });
+    // Press Escape — works reliably across all viewports
+    await page.keyboard.press('Escape');
+    await modal.waitFor({ state: 'hidden', timeout: 1_500 });
   } catch {
     // Modal didn't appear — that's fine
   }
