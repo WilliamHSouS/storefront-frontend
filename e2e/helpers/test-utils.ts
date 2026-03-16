@@ -75,6 +75,23 @@ export async function waitForHydration(page: Page) {
     // eslint-disable-next-line playwright/no-networkidle -- intentional fallback for pages without __MERCHANT__
     await page.waitForLoadState('networkidle');
   }
+
+  // Dismiss the merchant comms modal if it appears (e.g. "Welcome!" promo).
+  // In preview/build mode, pre-bundled JS hydrates faster so the modal may
+  // appear before test interactions begin, blocking clicks on the menu page.
+  await dismissCommsModal(page);
+}
+
+/** Dismiss the comms modal if it appears. Safe to call even if no modal shows. */
+async function dismissCommsModal(page: Page) {
+  const dismiss = page.getByText('Melding sluiten');
+  try {
+    await dismiss.waitFor({ state: 'visible', timeout: 1_000 });
+    await dismiss.click();
+    await dismiss.waitFor({ state: 'hidden', timeout: 1_000 });
+  } catch {
+    // Modal didn't appear — that's fine
+  }
 }
 
 /**
