@@ -136,12 +136,15 @@ Middleware applies cache headers after page execution:
 
 ## E2E Testing Conventions
 
-- Mock API server runs on port 4322, Astro dev on 4321
+- **CI uses `astro build` + `astro preview`** with `@astrojs/node` adapter (via `E2E_BUILD=1`). Local dev uses `astro dev`. Preview mode serves pre-built pages instantly but behaves differently from dev mode (no Vite proxy, no HMR, middleware redirects are internal rewrites).
+- Mock API server runs on port 4322, Astro preview/dev on 4321
 - Per-test cart isolation via `x-test-cart-id` header (set by `resetMockApi()`)
 - Use `.first()` on `[data-product-id]` locators — products appear in multiple category sections
-- Cart trigger button uses `data-cart-trigger` attribute (on CartBadge)
-- Hydration wait: `waitForHydration()` checks `window.__MERCHANT__` or falls back to `networkidle`
+- Cart trigger button uses `data-cart-trigger` attribute (on both `CartBadge` and `CartBar`)
+- Hydration wait: `waitForHydration()` checks `window.__MERCHANT__`, falls back to `networkidle`, then auto-dismisses the comms modal
 - Block analytics in tests via `blockAnalytics()`
+- **Island hydration timing.** When waiting for `client:idle` islands, allow at least 2.5s on CI. Hydration is faster in dev mode (HMR) than preview mode (pre-bundled JS cold load).
+- **Viewport-specific elements.** `CartBadge` is desktop-only (`hidden md:inline-flex`), `CartBar` is mobile-only (`md:hidden`). Use `locator('visible=true').first()` when targeting elements that exist in both viewports.
 
 ## Environment Variables
 
