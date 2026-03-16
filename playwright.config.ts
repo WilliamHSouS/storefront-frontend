@@ -32,8 +32,11 @@ export default defineConfig({
         },
         {
           command: 'astro dev --port 4321',
-          port: 4321,
-          timeout: 30_000,
+          // Use url instead of port so Playwright waits for Astro to actually
+          // serve a page (not just bind the port). On CI, Astro's on-demand
+          // compilation can take a while on first request.
+          url: 'http://localhost:4321/nl/',
+          timeout: process.env.CI ? 120_000 : 30_000,
           reuseExistingServer: !process.env.CI,
         },
       ],
