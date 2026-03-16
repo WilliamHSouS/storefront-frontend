@@ -4,9 +4,16 @@ import { $addressCoords } from '@/stores/address';
 import { onAddressChange, clearAddress, hydrateAddressFromStorage } from '@/stores/address-actions';
 import { t } from '@/i18n';
 
-// Run once at module load — decoupled from component lifecycle to avoid
-// remount loops where store updates trigger Astro island re-hydration.
-hydrateAddressFromStorage();
+// Decoupled from component lifecycle to avoid remount loops where store
+// updates trigger Astro island re-hydration. Deferred to avoid competing
+// with island hydration for CPU time.
+if (typeof window !== 'undefined') {
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => hydrateAddressFromStorage());
+  } else {
+    setTimeout(() => hydrateAddressFromStorage(), 1000);
+  }
+}
 
 interface Props {
   lang: string;

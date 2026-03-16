@@ -12,7 +12,9 @@ import Toast from '@/components/interactive/Toast';
 import MerchantComms from '@/components/interactive/MerchantComms';
 import { FulfillmentOverlay } from '@/components/interactive/FulfillmentOverlay';
 import { DeliveryBanner } from '@/components/interactive/DeliveryBanner';
-import type { CommsMessage } from '@/stores/comms';
+import type { CommsMessage, CommsTheme } from '@/stores/comms';
+import { BANNER_THEME_CLASSES } from '@/lib/comms-theme';
+import { safeUrl } from '@/lib/safe-url';
 
 interface Props {
   title: string;
@@ -24,8 +26,33 @@ const { title, description, hideSharedIslands = false } = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
-const merchantJSON = merchant ? JSON.stringify(merchant) : '';
+// Strip secrets before serializing to client — hmacSecret must stay server-side only
+const merchantJSON = merchant
+  ? (() => {
+      const { hmacSecret: _, ...safe } = merchant;
+      return JSON.stringify(safe);
+    })()
+  : '';
+
+// Build Google Fonts URL from merchant theme fonts
+const fontFamilies = new Set<string>();
+if (merchant?.theme.fontHeading) fontFamilies.add(merchant.theme.fontHeading);
+if (merchant?.theme.fontBody) fontFamilies.add(merchant.theme.fontBody);
+const googleFontsUrl =
+  fontFamilies.size > 0
+    ? `https://fonts.googleapis.com/css2?${[...fontFamilies].map((f) => `family=${f.replace(/ /g, '+')}:wght@400;500;600;700`).join('&')}&display=swap`
+    : null;
 const langValue = lang ?? 'en';
+
+// Extract first top_banner content for SSR to prevent CLS
+let ssrTopBanner: {
+  headline: string;
+  body: string;
+  cta_label: string;
+  cta_url: string;
+  theme: CommsTheme;
+  custom_colors: Record<string, string>;
+} | null = null;
 
 let commsMessages: CommsMessage[] = [];
 {
@@ -43,6 +70,17 @@ let commsMessages: CommsMessage[] = [];
     }
   }
 }
+
+// Find the first top_banner content for SSR rendering
+for (const msg of commsMessages) {
+  for (const content of msg.contents) {
+    if (content.surface === 'top_banner') {
+      ssrTopBanner = content;
+      break;
+    }
+  }
+  if (ssrTopBanner) break;
+}
 ---
 
 <!doctype html>
@@ -54,6 +92,9 @@ let commsMessages: CommsMessage[] = [];
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     <link rel="preconnect" href={import.meta.env.PUBLIC_API_BASE_URL} />
+    {googleFontsUrl && <link rel="preconnect" href="https://fonts.googleapis.com" />}
+    {googleFontsUrl && <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />}
+    {googleFontsUrl && <link rel="stylesheet" href={googleFontsUrl} />}
     {themeCSS && <style set:html={`:root { ${themeCSS} }`} />}
     {/* PostHog queue stub — events pushed before SDK loads are replayed on init */}
     <script is:inline>
@@ -85,6 +126,52 @@ let commsMessages: CommsMessage[] = [];
         </script>
       )
     }
+    {
+      /* SSR top banner — prevents CLS by reserving space before island hydration.
+         Inline script checks localStorage for dismissals to prevent flash-then-hide. */
+    }
+    {
+      ssrTopBanner && (
+        <>
+          <div
+            data-ssr-top-banner
+            role="status"
+            class={`sticky top-0 z-30 w-full px-4 py-3 ${BANNER_THEME_CLASSES[ssrTopBanner.theme]}`}
+          >
+            <div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
+              <div class="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+                {ssrTopBanner.headline && <span class="font-medium">{ssrTopBanner.headline}</span>}
+                {ssrTopBanner.body && <span class="opacity-90">{ssrTopBanner.body}</span>}
+                {ssrTopBanner.cta_label && ssrTopBanner.cta_url && (
+                  <a
+                    href={safeUrl(ssrTopBanner.cta_url)}
+                    class="underline underline-offset-2 font-medium"
+                  >
+                    {ssrTopBanner.cta_label}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )
+    }
+    {
+      /* Hide SSR banner if user previously dismissed comms — runs outside the conditional
+         so the Astro prettier plugin can parse it (script-in-fragment is unsupported). */
+    }
+    <script is:inline>
+      try {
+        if (
+          Object.keys(JSON.parse(localStorage.getItem('sous:comms:dismissed') || '{}')).length > 0
+        ) {
+          const el = document.querySelector('[data-ssr-top-banner]');
+          if (el) el.style.display = 'none';
+        }
+      } catch {
+        /* best-effort */
+      }
+    </script>
     <MerchantComms client:idle lang={langValue} messages={commsMessages} />
     <DeliveryBanner client:idle lang={langValue} />
 
@@ -98,11 +185,40 @@ let commsMessages: CommsMessage[] = [];
     <Toast client:idle lang={langValue} />
     <FulfillmentOverlay client:idle lang={langValue} />
 
-    <script>
-      import { initAnalytics } from '@/analytics';
-      initAnalytics().catch((err) => {
-        console.error('[analytics] initialization failed:', err);
+    <script is:inline>
+      document.addEventListener('click', function (e) {
+        if (!e.target || typeof e.target.closest !== 'function') return;
+        const link = e.target.closest('[data-product-modal]');
+        if (!link) return;
+        const id = link.getAttribute('data-product-id');
+        const name = link.getAttribute('data-product-name');
+        if (!id || !name) return;
+        e.preventDefault();
+        window.dispatchEvent(
+          new CustomEvent('open-product', {
+            detail: {
+              id: id,
+              name: name,
+              slug: link.getAttribute('data-product-slug'),
+            },
+          }),
+        );
       });
+    </script>
+
+    <script>
+      function boot() {
+        import('@/analytics').then(({ initAnalytics }) =>
+          initAnalytics().catch((err) => {
+            console.error('[analytics] initialization failed:', err);
+          }),
+        );
+      }
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(boot);
+      } else {
+        setTimeout(boot, 3000);
+      }
     </script>
   </body>
 </html>

@@ -6,3 +6,4 @@ pnpm-lock.yaml
 coverage/
 e2e/.results/
 e2e/.report/
+docs/plans/

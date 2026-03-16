@@ -7,6 +7,13 @@ export default defineConfig({
   output: 'server',
   adapter: vercel(),
   integrations: [preact(), tailwind()],
+  image: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+      },
+    ],
+  },
   prefetch: {
     prefetchAll: false,
     defaultStrategy: 'hover',

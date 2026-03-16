@@ -7,6 +7,7 @@
  */
 
 import type { CoreProperties, UTMProperties } from './types';
+import * as log from '@/lib/logger';
 
 let sessionId: string | null = null;
 
@@ -23,13 +24,13 @@ function getSessionId(): string {
   try {
     sessionId = crypto.randomUUID();
   } catch (err) {
-    console.warn('[analytics] crypto.randomUUID() unavailable, using fallback:', err);
+    log.warn('analytics', 'crypto.randomUUID() unavailable, using fallback:', err);
     try {
       sessionId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
     } catch (fallbackErr) {
-      console.error('[analytics] crypto fallback also failed:', fallbackErr);
+      log.error('analytics', 'crypto fallback also failed:', fallbackErr);
       sessionId = `fallback-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     }
   }
@@ -61,7 +62,7 @@ export function getUTMProperties(): UTMProperties {
     try {
       return JSON.parse(stored);
     } catch (err) {
-      console.warn('[analytics] corrupt UTM data in sessionStorage, re-reading from URL:', err);
+      log.warn('analytics', 'Corrupt UTM data in sessionStorage, re-reading from URL:', err);
       sessionStorage.removeItem('analytics_utm');
     }
   }

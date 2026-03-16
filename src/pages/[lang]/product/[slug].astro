@@ -4,6 +4,7 @@ import Header from '@/components/astro/Header.astro';
 import Footer from '@/components/astro/Footer.astro';
 import SEOHead from '@/components/astro/SEOHead.astro';
 import StructuredData from '@/components/astro/StructuredData.astro';
+import { generateProductLD, generateBreadcrumbLD } from '@/lib/structured-data';
 import AddToCartButton from '@/components/interactive/AddToCartButton';
 import ProductSuggestions from '@/components/interactive/ProductSuggestions';
 import { formatPrice, langToLocale } from '@/lib/currency';
@@ -15,6 +16,7 @@ import {
 } from '@/lib/pricing';
 import { normalizeProduct, extractIdFromSlug, parseMetadataMap, slugify } from '@/lib/normalize';
 import { responsiveImage } from '@/lib/image';
+import { isBot } from '@/lib/bot-detect';
 import PromoBadge from '@/components/astro/PromoBadge.astro';
 import { t } from '@/i18n';
 
@@ -55,6 +57,21 @@ if (!rawDetail && !rawSlug.includes('--')) {
 
 if (!rawDetail) {
   return Astro.redirect(`/${lang}/`);
+}
+
+// For non-crawler requests, redirect to the menu page and let the client
+// open the product modal. This gives bookmarkable URLs that still show
+// the menu context. Crawlers/bots get the full standalone page for SEO.
+const userAgent = Astro.request.headers.get('user-agent') ?? '';
+if (!isBot(userAgent)) {
+  const productId = (rawDetail as Record<string, unknown>).id;
+  const productName =
+    (rawDetail as Record<string, unknown>).title ??
+    (rawDetail as Record<string, unknown>).name ??
+    '';
+  return Astro.redirect(
+    `/${lang}/?product=${encodeURIComponent(String(productId))}&name=${encodeURIComponent(String(productName))}&slug=${encodeURIComponent(rawSlug)}`,
+  );
 }
 
 const product = normalizeProduct(rawDetail as Record<string, unknown>);
@@ -144,17 +161,21 @@ const breadcrumbs = [
   />
   <StructuredData
     slot="head"
-    type="product"
-    merchant={merchant}
-    product={{
-      name: product.name,
-      price: product.price,
-      description: product.description ?? undefined,
-      image: product.image,
-      slug: product.slug,
-    }}
+    data={generateProductLD(
+      {
+        name: product.name,
+        price: product.price,
+        description: product.description ?? undefined,
+        image: product.image,
+        images: product.images,
+        is_available: product.is_available,
+        sold_out: product.sold_out,
+      },
+      merchant.currency,
+      `${Astro.url.origin}/${lang}/product/${product.slug}`,
+    )}
   />
-  <StructuredData slot="head" type="breadcrumb" merchant={merchant} breadcrumbs={breadcrumbs} />
+  <StructuredData slot="head" data={generateBreadcrumbLD(breadcrumbs)} />
 
   <Header merchant={merchant} lang={lang} />
 

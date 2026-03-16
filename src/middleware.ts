@@ -25,6 +25,10 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 
   // Skip middleware for static assets in public/ (images, fonts, etc.)
   // SEO endpoints (.xml, .txt) are excluded — they need merchant context from below.
+  // Also skip Astro's built-in image optimization endpoint.
+  if (url.pathname.startsWith('/_image')) {
+    return next();
+  }
   if (
     !LANG_EXEMPT_PATHS.has(url.pathname) &&
     url.pathname.match(/\.(svg|png|jpg|jpeg|webp|gif|ico|woff2?|ttf|eot|css|js|json|xml|txt)$/i)
@@ -36,7 +40,12 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   // Use process.env for server-only vars — import.meta.env only includes
   // PUBLIC_* vars at runtime on Vercel's serverless functions.
   // Vercel's internal proxy sets hostname to "localhost" — use x-forwarded-host.
-  const hostname = request.headers.get('x-forwarded-host') ?? url.hostname;
+  const rawHost = request.headers.get('x-forwarded-host') ?? url.hostname;
+  // Sanitize: strip port/comma (multi-host), lowercase, reject non-hostname chars
+  const hostname = rawHost.split(':')[0].split(',')[0].trim().toLowerCase();
+  if (!/^[a-z0-9.-]+$/.test(hostname)) {
+    return context.rewrite('/404');
+  }
   const customDomains = process.env.CUSTOM_DOMAINS ?? import.meta.env.CUSTOM_DOMAINS;
   const defaultMerchant = process.env.DEFAULT_MERCHANT ?? import.meta.env.DEFAULT_MERCHANT;
   const slug = resolveMerchantSlug(hostname, customDomains, defaultMerchant);

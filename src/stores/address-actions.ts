@@ -9,6 +9,61 @@ import { $cart, getStoredCartId, errorDetail } from './cart';
 import { getClient } from '@/lib/api';
 import { normalizeCart } from '@/lib/normalize';
 import type { AddressCoords, AddressEligibility } from '@/types/address';
+import * as log from '@/lib/logger';
+
+/**
+ * Parse a raw address-check API response into typed coords + eligibility.
+ * Pure function — no side effects, fully unit-testable.
+ */
+export function parseAddressResponse(
+  data: Record<string, unknown>,
+  input: { postalCode: string; country: string },
+): { coords: AddressCoords; eligibility: AddressEligibility } | { error: string } {
+  const lat = Number(data.latitude);
+  const lng = Number(data.longitude);
+  if (isNaN(lat) || isNaN(lng)) {
+    return { error: 'invalid_response' };
+  }
+
+  const coords: AddressCoords = {
+    postalCode: input.postalCode,
+    country: input.country,
+    latitude: lat,
+    longitude: lng,
+  };
+
+  const pickupLocations = Array.isArray(data.pickup_locations)
+    ? data.pickup_locations.filter(
+        (l: unknown): l is { id: number; name: string; distance_km: number } =>
+          !!l &&
+          typeof l === 'object' &&
+          'name' in l &&
+          typeof (l as Record<string, unknown>).distance_km === 'number',
+      )
+    : [];
+
+  const eligibility: AddressEligibility = {
+    availableFulfillmentTypes: Array.isArray(data.available_fulfillment_types)
+      ? (data.available_fulfillment_types as string[]).filter(
+          (t): t is 'local_delivery' | 'pickup' | 'nationwide_delivery' =>
+            typeof t === 'string' &&
+            ['local_delivery', 'pickup', 'nationwide_delivery'].includes(t),
+        )
+      : [],
+    availableShippingProviders: Array.isArray(data.available_shipping_providers)
+      ? data.available_shipping_providers
+      : [],
+    pickupLocations,
+    deliveryUnavailable: data.delivery_unavailable === true,
+    nearDeliveryZone: data.near_delivery_zone === true,
+    nearestPickupLocation:
+      pickupLocations.length > 0
+        ? { name: pickupLocations[0].name, distance_km: pickupLocations[0].distance_km }
+        : undefined,
+  };
+
+  return { coords, eligibility };
+}
 
 export async function onAddressChange(
   input: { postalCode: string; country: string },
@@ -24,45 +79,11 @@ export async function onAddressChange(
       return { success: false, error: errorDetail(error) };
     }
 
-    const r = data as Record<string, unknown>;
-    const lat = Number(r.latitude);
-    const lng = Number(r.longitude);
-    if (isNaN(lat) || isNaN(lng)) {
-      return { success: false, error: 'invalid_response' };
+    const parsed = parseAddressResponse(data as Record<string, unknown>, input);
+    if ('error' in parsed) {
+      return { success: false, error: parsed.error };
     }
-
-    const coords: AddressCoords = {
-      postalCode: input.postalCode,
-      country: input.country,
-      latitude: lat,
-      longitude: lng,
-    };
-
-    const pickupLocations = Array.isArray(r.pickup_locations)
-      ? r.pickup_locations.filter(
-          (l: unknown): l is { id: number; name: string; distance_km: number } =>
-            !!l &&
-            typeof l === 'object' &&
-            'name' in l &&
-            typeof (l as Record<string, unknown>).distance_km === 'number',
-        )
-      : [];
-
-    const eligibility: AddressEligibility = {
-      availableFulfillmentTypes: Array.isArray(r.available_fulfillment_types)
-        ? r.available_fulfillment_types
-        : [],
-      availableShippingProviders: Array.isArray(r.available_shipping_providers)
-        ? r.available_shipping_providers
-        : [],
-      pickupLocations,
-      deliveryUnavailable: r.delivery_unavailable === true,
-      nearDeliveryZone: r.near_delivery_zone === true,
-      nearestPickupLocation:
-        pickupLocations.length > 0
-          ? { name: pickupLocations[0].name, distance_km: pickupLocations[0].distance_km }
-          : undefined,
-    };
+    const { coords, eligibility } = parsed;
 
     // 1. Set stores (skip coords if already set by caller, e.g. hydration from cache)
     if (!options.skipCoordsSet) {
@@ -89,7 +110,7 @@ export async function onAddressChange(
 
     return { success: true };
   } catch (err) {
-    console.error('onAddressChange failed:', err);
+    log.error('address', 'onAddressChange failed:', err);
     return { success: false, error: 'network' };
   }
 }
@@ -124,23 +145,18 @@ async function refreshCartWithCoords(cartId: string, coords: AddressCoords): Pro
     }
   } catch (err) {
     // Cart refresh failure is non-blocking — estimate just won't show
-    console.warn('refreshCartWithCoords failed (non-blocking):', err);
+    log.error('address', 'refreshCartWithCoords failed (non-blocking):', err);
   }
 }
 
-// Guard against multiple hydration calls. Uses a window flag so the guard
+// Guard against multiple hydration calls. Uses a window property so the guard
 // survives Vite HMR (module-level variables reset on hot reload).
-const HYDRATE_KEY = '__sous_address_hydrated__';
-
 export function hydrateAddressFromStorage(): Promise<void> {
-  if (
-    typeof window !== 'undefined' &&
-    (window as unknown as Record<string, unknown>)[HYDRATE_KEY]
-  ) {
+  if (typeof window !== 'undefined' && window.__sous_address_hydrated__) {
     return Promise.resolve();
   }
   if (typeof window !== 'undefined') {
-    (window as unknown as Record<string, unknown>)[HYDRATE_KEY] = true;
+    window.__sous_address_hydrated__ = true;
   }
   return _doHydrate();
 }
@@ -148,7 +164,7 @@ export function hydrateAddressFromStorage(): Promise<void> {
 /** @internal Reset hydration guard — only for tests */
 export function _resetHydrateGuard(): void {
   if (typeof window !== 'undefined') {
-    delete (window as unknown as Record<string, unknown>)[HYDRATE_KEY];
+    delete window.__sous_address_hydrated__;
   }
 }
 
@@ -177,16 +193,12 @@ async function _doHydrate(): Promise<void> {
 // Inlined here instead of a separate module — only 2 events at launch.
 
 function truncatePostcode(postalCode: string): string {
-  return postalCode.replace(/\s/g, '').slice(0, 4);
+  return postalCode.replace(/\s/g, '').slice(0, 3);
 }
 
 function capture(event: string, properties: Record<string, unknown>): void {
-  if (typeof window !== 'undefined' && 'posthog' in window) {
-    (
-      window as unknown as {
-        posthog?: { capture: (e: string, p: Record<string, unknown>) => void };
-      }
-    ).posthog?.capture(event, properties);
+  if (typeof window !== 'undefined') {
+    window.posthog?.capture(event, properties);
   }
 }
 

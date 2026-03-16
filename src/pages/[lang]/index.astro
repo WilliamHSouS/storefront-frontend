@@ -6,6 +6,7 @@ import MenuSection from '@/components/astro/MenuSection.astro';
 import Footer from '@/components/astro/Footer.astro';
 import SEOHead from '@/components/astro/SEOHead.astro';
 import StructuredData from '@/components/astro/StructuredData.astro';
+import { generateRestaurantLD, generateItemListLD } from '@/lib/structured-data';
 import { normalizeProduct } from '@/lib/normalize';
 import { fetchCollectionsOrCategories } from '@/lib/collections';
 
@@ -40,6 +41,11 @@ const sections = sectionProducts.filter((s) => s.products.length > 0);
 const categories = sections.map((s) => s.category);
 const allProducts = sections.flatMap((s) => s.products);
 const productIds = allProducts.map((p) => String(p.id));
+const MAX_HOMEPAGE_ITEMS = 20;
+const homepageProductUrls = allProducts.slice(0, MAX_HOMEPAGE_ITEMS).map((p) => ({
+  name: p.name,
+  url: `${Astro.url.origin}/${lang}/product/${p.slug}`,
+}));
 ---
 
 <BaseLayout title={merchant.name} description={merchant.seo.defaultDescription}>
@@ -50,7 +56,8 @@ const productIds = allProducts.map((p) => String(p.id));
     lang={lang}
     canonicalUrl={`${Astro.url.origin}/${lang}/`}
   />
-  <StructuredData slot="head" type="restaurant" merchant={merchant} lang={lang} />
+  <StructuredData slot="head" data={generateRestaurantLD(merchant, Astro.url.origin, lang)} />
+  <StructuredData slot="head" data={generateItemListLD(merchant.name, homepageProductUrls)} />
 
   <HeroSection merchant={merchant} lang={lang} />
   <StickyNav categories={categories} merchant={merchant} lang={lang} />

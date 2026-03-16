@@ -37,7 +37,7 @@ export default function BottomBanner({ lang, onImpression, onClick, onDismiss }:
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
         <div class="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1">
           {content.headline && <span class="font-medium">{content.headline}</span>}
-          {content.body && <span class="opacity-80">{content.body}</span>}
+          {content.body && <span class="opacity-90">{content.body}</span>}
           {content.cta_label && content.cta_url && (
             <a
               href={safeUrl(content.cta_url)}

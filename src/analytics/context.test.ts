@@ -53,15 +53,19 @@ describe('getUTMProperties', () => {
 
   it('handles corrupt sessionStorage data gracefully', () => {
     sessionStorage.setItem('analytics_utm', 'not-json');
+    (globalThis as Record<string, unknown>).__TESTING__ = false;
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const utm = getUTMProperties();
     // Should not throw, returns empty (no URL params in test env)
     expect(utm).toEqual({});
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('corrupt UTM data'),
+      '[analytics]',
+      expect.stringContaining('Corrupt UTM data'),
       expect.anything(),
     );
     // Should have cleaned up the corrupt entry
     expect(sessionStorage.getItem('analytics_utm')).toBeNull();
+    consoleSpy.mockRestore();
+    (globalThis as Record<string, unknown>).__TESTING__ = true;
   });
 });
