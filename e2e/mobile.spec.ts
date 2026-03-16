@@ -88,30 +88,29 @@ test.describe('Mobile', () => {
     expect(dialogBox!.width).toBeGreaterThanOrEqual(viewport!.width - 10);
   });
 
-  test('category tabs scroll horizontally', async ({ page }) => {
+  test('category drawer opens on mobile', async ({ page }) => {
+    // CategoryTabs is hidden on mobile (md:flex). On mobile, categories are
+    // accessed via the CategoryDrawer trigger button instead.
     await page.goto(menuPage());
     await waitForHydration(page);
 
-    // The category tabs nav should be visible
-    const tablist = page.getByRole('tablist', { name: 'Menu' });
-    await expect(tablist).toBeVisible();
+    const drawerNav = page.locator('[data-category-drawer]');
 
-    // Get all tabs
-    const tabs = tablist.getByRole('tab');
-    const tabCount = await tabs.count();
-    expect(tabCount).toBeGreaterThanOrEqual(2);
+    // Retry clicking — CategoryDrawer island (client:idle) may not have hydrated yet
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await page.click('[data-category-drawer-trigger]');
+      try {
+        await drawerNav.first().waitFor({ state: 'visible', timeout: 2_000 });
+        break;
+      } catch {
+        // Island not hydrated yet — retry
+      }
+    }
+    await expect(drawerNav.first()).toBeVisible();
 
-    // The tablist container has overflow-x-auto for horizontal scrolling.
-    // Verify the container allows horizontal overflow.
-    const overflowX = await tablist.evaluate((el) => getComputedStyle(el).overflowX);
-    expect(overflowX).toBe('auto');
-
-    // Click the last tab and verify it scrolls into view and becomes selected
-    const lastTab = tabs.nth(tabCount - 1);
-    await lastTab.click();
-    await expect(lastTab).toHaveAttribute('aria-selected', 'true');
-
-    // The last tab should be visible (scrolled into the viewport)
-    await expect(lastTab).toBeInViewport();
+    // Drawer should contain category buttons
+    const buttons = drawerNav.first().locator('button');
+    const buttonCount = await buttons.count();
+    expect(buttonCount).toBeGreaterThanOrEqual(2);
   });
 });

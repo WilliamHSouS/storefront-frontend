@@ -64,6 +64,7 @@ export default function CartBar({ lang }: Props) {
         type="button"
         onClick={() => $isCartOpen.set(true)}
         class="flex w-full items-center justify-between bg-[#1C1C1E] px-4 py-3 text-white"
+        data-cart-trigger
         aria-label={`${t('cart', lang)}: ${itemLabel}, ${formatPrice(cartTotal, currency, locale)}`}
       >
         <div class="flex items-center gap-2">

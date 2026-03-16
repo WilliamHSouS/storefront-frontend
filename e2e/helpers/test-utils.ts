@@ -59,7 +59,7 @@ export function cmsPage(slug: string, lang = DEFAULT_LANG) {
  * Also hides the Astro dev toolbar which can intercept pointer events
  * in preview builds and cause click failures.
  */
-export async function waitForHydration(page: Page) {
+export async function waitForHydration(page: Page, { dismissModal = true } = {}) {
   // Hide the Astro dev toolbar to prevent it from intercepting pointer events
   await page.addStyleTag({
     content: 'astro-dev-toolbar { display: none !important; pointer-events: none !important; }',
@@ -74,6 +74,26 @@ export async function waitForHydration(page: Page) {
     // Not all pages inject __MERCHANT__ — wait for load state instead
     // eslint-disable-next-line playwright/no-networkidle -- intentional fallback for pages without __MERCHANT__
     await page.waitForLoadState('networkidle');
+  }
+
+  // Dismiss the merchant comms modal if it appears (e.g. "Welcome!" promo).
+  // In preview/build mode, pre-bundled JS hydrates faster so the modal may
+  // appear before test interactions begin, blocking clicks on the menu page.
+  if (dismissModal) {
+    await dismissCommsModal(page);
+  }
+}
+
+/** Dismiss the comms modal if it appears. Safe to call even if no modal shows. */
+async function dismissCommsModal(page: Page) {
+  const modal = page.locator('[data-comms-modal]');
+  try {
+    await modal.waitFor({ state: 'visible', timeout: 2_500 });
+    // Press Escape — works reliably across all viewports
+    await page.keyboard.press('Escape');
+    await modal.waitFor({ state: 'hidden', timeout: 2_500 });
+  } catch {
+    // Modal didn't appear — that's fine
   }
 }
 
@@ -172,7 +192,10 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
  * Works on all viewports (unlike CartBar which is mobile-only).
  */
 export async function openCartDrawer(page: Page) {
-  await page.locator('[data-cart-trigger]').click();
+  // CartBadge (desktop header) and CartBar (mobile bottom bar) both have
+  // data-cart-trigger. Click whichever is visible in the current viewport.
+  const trigger = page.locator('[data-cart-trigger]').locator('visible=true').first();
+  await trigger.click();
   const drawer = page.getByRole('dialog', { name: 'Winkelwagen' });
   return drawer;
 }

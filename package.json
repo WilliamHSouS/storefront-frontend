@@ -65,10 +65,12 @@
       "dompurify": ">=3.3.2",
       "lodash": ">=4.17.23",
       "path-to-regexp": ">=6.3.0",
-      "devalue": ">=5.6.4"
+      "devalue": ">=5.6.4",
+      "undici": ">=7.24.0"
     }
   },
   "devDependencies": {
+    "@astrojs/node": "^9.5.5",
     "@axe-core/playwright": "^4.11.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",

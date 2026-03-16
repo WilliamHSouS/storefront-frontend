@@ -53,7 +53,7 @@ function cors(res: ServerResponse) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'Content-Type, X-Vendor-ID, Accept-Language, Accept, Authorization, X-Vendor-Signature',
+    'Content-Type, X-Vendor-ID, Accept-Language, Accept, Authorization, X-Vendor-Signature, x-test-cart-id',
   );
 }
 
