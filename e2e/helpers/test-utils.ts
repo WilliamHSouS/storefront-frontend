@@ -88,10 +88,10 @@ export async function waitForHydration(page: Page, { dismissModal = true } = {})
 async function dismissCommsModal(page: Page) {
   const modal = page.locator('[data-comms-modal]');
   try {
-    await modal.waitFor({ state: 'visible', timeout: 1_500 });
+    await modal.waitFor({ state: 'visible', timeout: 2_500 });
     // Press Escape — works reliably across all viewports
     await page.keyboard.press('Escape');
-    await modal.waitFor({ state: 'hidden', timeout: 1_500 });
+    await modal.waitFor({ state: 'hidden', timeout: 2_500 });
   } catch {
     // Modal didn't appear — that's fine
   }
