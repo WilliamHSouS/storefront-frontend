@@ -152,22 +152,45 @@ export default function CheckoutPage({ lang }: Props) {
     }
   }, [cart?.line_items.length, lang]);
 
+  // ── Field-level validation (on blur) ─────────────────────────────
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const validateFieldsForPatch = useCallback((): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Only validate fields that have been touched (non-empty)
+    if (form.email && !EMAIL_RE.test(form.email)) {
+      errors.email = t('email', typedLang) + ' is not valid';
+    }
+
+    setFormErrors((prev) => ({ ...prev, ...errors }));
+    return Object.keys(errors).length === 0;
+  }, [form.email, typedLang]);
+
   // ── Persist form on blur + trigger delivery PATCH ────────────────
   const handleBlur = useCallback(() => {
     persistFormState(form);
 
-    // Trigger delivery PATCH if checkout exists and contact info is filled
+    // Run field validation — don't PATCH if invalid
+    if (!validateFieldsForPatch()) return;
+
+    // Only PATCH if checkout exists and we have valid contact + address data
     const checkoutId = checkout?.id;
     if (!checkoutId) return;
-    if (!form.email || !form.firstName || !form.lastName || !form.phone) return;
+
+    // Require valid email + contact info before PATCHing
+    if (!form.email || !EMAIL_RE.test(form.email)) return;
+    if (!form.firstName || !form.lastName || !form.phone) return;
+
+    // For delivery, also require address
+    if (form.fulfillmentMethod === 'delivery') {
+      if (!form.street || !form.city || !form.postalCode) return;
+    }
 
     const deliveryData: Record<string, unknown> = {
       email: form.email,
       shipping_method_id: form.fulfillmentMethod === 'pickup' ? 'pickup' : 'local_delivery',
-    };
-
-    if (form.fulfillmentMethod === 'delivery' && form.street && form.city && form.postalCode) {
-      deliveryData.shipping_address = {
+      shipping_address: {
         first_name: form.firstName,
         last_name: form.lastName,
         street_address_1: form.street,
@@ -175,15 +198,15 @@ export default function CheckoutPage({ lang }: Props) {
         postal_code: form.postalCode,
         country_code: form.countryCode,
         phone_number: form.phone,
-      };
-    }
+      },
+    };
 
     if (form.selectedSlotId) {
       deliveryData.fulfillment_slot_id = form.selectedSlotId;
     }
 
     patchDelivery(checkoutId, deliveryData);
-  }, [form, checkout?.id]);
+  }, [form, checkout?.id, validateFieldsForPatch]);
 
   // ── Cross-tab cart change detection ──────────────────────────────
   useEffect(() => {
