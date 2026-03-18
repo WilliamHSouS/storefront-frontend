@@ -51,7 +51,14 @@ export function PricingBreakdown({
       {/* Subtotal */}
       {subtotal && (
         <div class="mb-1 flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">{t('subtotal', lang)}</span>
+          <div>
+            <span class="text-muted-foreground">{t('subtotal', lang)}</span>
+            {taxIncluded && tax && (
+              <span class="block text-xs text-muted-foreground/70">
+                {t('taxIncluded', lang)} {formatPrice(tax, currency, locale)}
+              </span>
+            )}
+          </div>
           <span class="text-card-foreground">{formatPrice(subtotal, currency, locale)}</span>
         </div>
       )}
@@ -107,10 +114,10 @@ export function PricingBreakdown({
         </div>
       )}
 
-      {/* Tax */}
-      {tax && (
-        <div class="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-          <span>{taxIncluded ? t('taxIncluded', lang) : t('tax', lang)}</span>
+      {/* Tax — when included, show as a note under subtotal; when excluded, show as a separate line */}
+      {tax && !taxIncluded && (
+        <div class="mb-2 flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">{t('tax', lang)}</span>
           <span>{formatPrice(tax, currency, locale)}</span>
         </div>
       )}
