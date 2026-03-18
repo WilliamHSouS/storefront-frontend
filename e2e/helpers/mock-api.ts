@@ -29,6 +29,61 @@ interface CartState {
 
 const carts = new Map<string, CartState>();
 
+interface CheckoutState {
+  id: string;
+  cart_id: string;
+  status: string;
+  email: string | null;
+  shipping_address: Record<string, string> | null;
+  shipping_method_id: string | null;
+  fulfillment_slot_id: string | null;
+  line_items: Array<{
+    product_id: string;
+    title: string;
+    quantity: number;
+    unit_price: string;
+    total_price: string;
+  }>;
+  subtotal: string;
+  tax_total: string;
+  shipping_cost: string;
+  discount_amount: string;
+  total: string;
+  order_number: string | null;
+}
+
+const checkoutStates = new Map<string, CheckoutState>();
+
+function checkoutToResponse(checkout: CheckoutState) {
+  return {
+    ...checkout,
+    merchant_id: 1,
+    channel_id: null,
+    currency: 'EUR',
+    display_currency: 'EUR',
+    fx_rate_to_display: '1.00',
+    billing_address: checkout.shipping_address,
+    shipping_method: checkout.shipping_method_id ? { id: checkout.shipping_method_id } : null,
+    payment_method: checkout.status === 'paid' || checkout.status === 'completed' ? 'stripe' : null,
+    payment_status: checkout.status === 'paid' || checkout.status === 'completed' ? 'paid' : null,
+    surcharge_total: '0.00',
+    display_surcharge_total: '0.00',
+    discount_code: null,
+    applied_promotion_id: null,
+    promotion_discount_amount: '0.00',
+    display_subtotal: checkout.subtotal,
+    display_tax_total: checkout.tax_total,
+    display_shipping_cost: checkout.shipping_cost,
+    display_discount_amount: checkout.discount_amount,
+    display_promotion_discount_amount: '0.00',
+    display_total: checkout.total,
+    gift_card_details: null,
+    purpose: 'default',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
 function getCartId(req: IncomingMessage): string {
   return (req.headers['x-test-cart-id'] as string) ?? 'default';
 }
@@ -43,6 +98,7 @@ function getCartState(req: IncomingMessage): CartState {
 
 function resetState() {
   carts.clear();
+  checkoutStates.clear();
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -539,6 +595,227 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   if (method === 'POST' && path === '/api/v1/merchant-comms/storefront/events/') {
     await readBody(req); // consume body
     json(res, { status: 'ok' }, 202);
+    return;
+  }
+
+  // ── Checkout: create ──
+  if (method === 'POST' && path === '/api/v1/checkout/') {
+    const state = getCartState(req);
+    const body = JSON.parse(await readBody(req));
+    const cartId = body.cart_id ?? state.cart.id;
+
+    const lineItems = state.cart.line_items.map((li) => ({
+      product_id: li.product_id,
+      title: li.product_title,
+      quantity: li.quantity,
+      unit_price: li.unit_price,
+      total_price: li.line_total,
+    }));
+
+    const subtotal = parseFloat(state.cart.subtotal ?? state.cart.cart_total);
+    const taxRate = 0.09;
+    const taxTotal = (subtotal * taxRate) / (1 + taxRate);
+    const discount = parseFloat(state.cart.discount_amount ?? '0');
+
+    const checkout: CheckoutState = {
+      id: `chk-${Date.now()}`,
+      cart_id: cartId,
+      status: 'created',
+      email: null,
+      shipping_address: null,
+      shipping_method_id: null,
+      fulfillment_slot_id: null,
+      line_items: lineItems,
+      subtotal: subtotal.toFixed(2),
+      tax_total: taxTotal.toFixed(2),
+      shipping_cost: '0.00',
+      discount_amount: discount.toFixed(2),
+      total: (subtotal - discount).toFixed(2),
+      order_number: null,
+    };
+
+    checkoutStates.set(checkout.id, checkout);
+    json(res, checkoutToResponse(checkout), 201);
+    return;
+  }
+
+  // ── Checkout: delivery update ──
+  const checkoutDeliveryMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/delivery\/$/);
+  if (method === 'PATCH' && checkoutDeliveryMatch) {
+    const id = checkoutDeliveryMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    const body = JSON.parse(await readBody(req));
+    if (body.email != null) checkout.email = body.email;
+    if (body.shipping_address != null) checkout.shipping_address = body.shipping_address;
+    if (body.shipping_method_id != null) checkout.shipping_method_id = body.shipping_method_id;
+    if (body.fulfillment_slot_id != null) checkout.fulfillment_slot_id = body.fulfillment_slot_id;
+
+    checkout.status = 'delivery_set';
+
+    // Recalculate shipping cost based on fulfillment method
+    const isPickup =
+      checkout.shipping_method_id === 'pickup' || checkout.shipping_method_id === 'store_pickup';
+    checkout.shipping_cost = isPickup ? '0.00' : '5.00';
+    const subtotal = parseFloat(checkout.subtotal);
+    const discount = parseFloat(checkout.discount_amount);
+    checkout.total = (subtotal + parseFloat(checkout.shipping_cost) - discount).toFixed(2);
+
+    json(res, checkoutToResponse(checkout));
+    return;
+  }
+
+  // ── Checkout: shipping groups ──
+  const checkoutShippingMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/shipping\/$/);
+  if (method === 'GET' && checkoutShippingMatch) {
+    const id = checkoutShippingMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    json(res, [
+      {
+        id: 'grp-1',
+        shipping_cost: '5.00',
+        selected_rate_id: 'local_delivery',
+        is_digital: false,
+        available_rates: [
+          {
+            id: 'local_delivery',
+            name: 'Local Delivery',
+            cost: '5.00',
+            original_cost: '5.00',
+            rate_id: 'local_delivery',
+            expires_at: null,
+          },
+        ],
+        line_items: [],
+      },
+    ]);
+    return;
+  }
+
+  // ── Checkout: payment gateways ──
+  const checkoutGatewaysMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/payment-gateways\/$/);
+  if (method === 'GET' && checkoutGatewaysMatch) {
+    const id = checkoutGatewaysMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    json(res, [
+      {
+        id: 'stripe',
+        name: 'Stripe',
+        config: [
+          { key: 'publishable_key', value: 'pk_test_mock' },
+          { key: 'stripe_account', value: 'acct_mock' },
+        ],
+      },
+    ]);
+    return;
+  }
+
+  // ── Checkout: initiate payment ──
+  const checkoutPaymentMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/payment\/$/);
+  if (method === 'POST' && checkoutPaymentMatch) {
+    const id = checkoutPaymentMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    checkout.status = 'paid';
+    json(res, {
+      ...checkoutToResponse(checkout),
+      client_secret: 'pi_mock_secret',
+      payment_intent_id: 'pi_mock_123',
+    });
+    return;
+  }
+
+  // ── Checkout: complete ──
+  const checkoutCompleteMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/complete\/$/);
+  if (method === 'POST' && checkoutCompleteMatch) {
+    const id = checkoutCompleteMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    if (checkout.status !== 'completed') {
+      checkout.status = 'completed';
+      checkout.order_number = `ORD-${Date.now()}`;
+    }
+    json(res, checkoutToResponse(checkout));
+    return;
+  }
+
+  // ── Checkout: get by ID (must come after sub-routes) ──
+  const checkoutGetMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/$/);
+  if (method === 'GET' && checkoutGetMatch) {
+    const id = checkoutGetMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    json(res, checkoutToResponse(checkout));
+    return;
+  }
+
+  // ── Fulfillment: time slots ──
+  const fulfillmentSlotsMatch = path.match(/^\/api\/v1\/fulfillment\/locations\/([^/]+)\/slots\/$/);
+  if (method === 'GET' && fulfillmentSlotsMatch) {
+    const locationId = fulfillmentSlotsMatch[1];
+    const date = url.searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
+    json(res, {
+      location_id: parseInt(locationId, 10) || 1,
+      date,
+      time_slots: [
+        {
+          id: 'slot-1',
+          start_time: '12:00',
+          end_time: '12:30',
+          capacity: 10,
+          reserved_count: 3,
+          available: true,
+          remaining_capacity: 7,
+        },
+        {
+          id: 'slot-2',
+          start_time: '12:30',
+          end_time: '13:00',
+          capacity: 10,
+          reserved_count: 5,
+          available: true,
+          remaining_capacity: 5,
+        },
+        {
+          id: 'slot-3',
+          start_time: '13:00',
+          end_time: '13:30',
+          capacity: 10,
+          reserved_count: 10,
+          available: false,
+          remaining_capacity: 0,
+        },
+        {
+          id: 'slot-4',
+          start_time: '13:30',
+          end_time: '14:00',
+          capacity: 10,
+          reserved_count: 2,
+          available: true,
+          remaining_capacity: 8,
+        },
+      ],
+    });
     return;
   }
 
