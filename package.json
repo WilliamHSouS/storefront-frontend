@@ -46,6 +46,7 @@
     "@astrojs/vercel": "^9.0.4",
     "@nanostores/preact": "^1.0.0",
     "@poweredbysous/storefront-sdk": "^0.1.0",
+    "@stripe/stripe-js": "^8.10.0",
     "astro": "^5.18.0",
     "astro-seo": "^1.1.0",
     "isomorphic-dompurify": "^3.3.0",

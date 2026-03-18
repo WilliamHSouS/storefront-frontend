@@ -32,6 +32,9 @@ importers:
       '@poweredbysous/storefront-sdk':
         specifier: ^0.1.0
         version: 0.1.0
+      '@stripe/stripe-js':
+        specifier: ^8.10.0
+        version: 8.10.0
       astro:
         specifier: ^5.18.0
         version: 5.18.0(@types/node@25.3.3)(@vercel/functions@2.2.13)(rollup@4.59.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -1265,6 +1268,10 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@stripe/stripe-js@8.10.0':
+    resolution: {integrity: sha512-E1FtmN4/AMpdV0zDUyEnTVMpQTMDi7iy2njG22DpFcSxeCujK22bQ/hmF3bGtNUclqGJhOZMkf7rjUyOAcj4CQ==}
+    engines: {node: '>=12.16'}
 
   '@testing-library/dom@8.20.1':
     resolution: {integrity: sha512-/DiOQ5xBxgdYRC8LNk7U+RWat0S3qRLeIw3ZIkMQ9kkVlRmwD/Eg8k8CqIpD6GW7u20JIUOfMKbxtiLutpjQ4g==}
@@ -5325,6 +5332,8 @@ snapshots:
       size-limit: 12.0.1
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@stripe/stripe-js@8.10.0': {}
 
   '@testing-library/dom@8.20.1':
     dependencies:
