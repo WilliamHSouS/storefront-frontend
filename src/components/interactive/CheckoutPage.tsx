@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- checkout/location endpoints not in OpenAPI spec */
 import { useReducer, useEffect, useCallback, useRef, useState } from 'preact/hooks';
 import { lazy, Suspense } from 'preact/compat';
 import { useStore } from '@nanostores/preact';
@@ -154,6 +155,34 @@ export default function CheckoutPage({ lang }: Props) {
     });
   }, []);
 
+  // ── Fetch pickup locations (merchant-level, not checkout-specific) ──
+  useEffect(() => {
+    if (!merchant) return;
+    const client = getClient();
+    const locationsUrl = '/api/v1/pickup-locations/';
+
+    client
+      .GET(locationsUrl as any)
+      .then(({ data }) => {
+        if (!data || !Array.isArray(data)) return;
+        const locs = (
+          data as Array<{ id: number; name: string; address?: { street?: string; city?: string } }>
+        ).map((loc) => ({
+          id: loc.id,
+          name: loc.name,
+          distance_km: undefined as number | undefined,
+        }));
+        setPickupLocations(locs);
+        // Auto-select if only one location
+        if (locs.length === 1) {
+          dispatch({ type: 'SET_FIELD', field: 'pickupLocationId', value: locs[0].id });
+        }
+      })
+      .catch((err) => {
+        log.error('checkout', 'Failed to fetch pickup locations:', err);
+      });
+  }, [merchant?.slug]);
+
   // ── Create checkout from cart when cart is ready ──────────────────
   useEffect(() => {
     if (!cart?.id || cart.line_items.length === 0) return;
@@ -170,35 +199,22 @@ export default function CheckoutPage({ lang }: Props) {
 
     const client = getClient();
     client
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
+
       .GET(`/api/v1/checkout/${checkout.id}/shipping/` as any)
       .then(({ data }) => {
         if (!data) return;
         const groups = data as Array<{
           id: string;
-          vendor_shipping_provider_id?: number;
           available_rates: Array<{ rate_id: string; name: string }>;
-          line_items: Array<{ product_id: number | string; title: string }>;
         }>;
         // Determine available fulfillment types from shipping rates
         const methods = new Set<'delivery' | 'pickup'>();
-        const locations: Array<{ id: number; name: string }> = [];
         for (const group of groups) {
           for (const rate of group.available_rates ?? []) {
             const id = rate.rate_id?.toLowerCase() ?? rate.name?.toLowerCase() ?? '';
-            if (id.includes('pickup')) {
-              methods.add('pickup');
-              // Use vendor_shipping_provider_id or group index as location ID
-              if (group.vendor_shipping_provider_id) {
-                locations.push({ id: group.vendor_shipping_provider_id, name: rate.name });
-              }
-            } else {
-              methods.add('delivery');
-            }
+            if (id.includes('pickup')) methods.add('pickup');
+            else methods.add('delivery');
           }
-        }
-        if (locations.length > 0) {
-          setPickupLocations(locations);
         }
         const available = methods.size > 0 ? Array.from(methods) : ['pickup' as const];
         setAvailableFulfillment(available);
@@ -226,8 +242,8 @@ export default function CheckoutPage({ lang }: Props) {
       const locationId = form.pickupLocationId ?? pickupLocations[0]?.id ?? 1;
       setTimeSlotsLoading(true);
       const client = getClient();
-      const slotsUrl = `/api/v1/fulfillment/locations/${locationId}/slots/?date=${date}`;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
+      const slotsUrl = `/api/v1/pickup-locations/${locationId}/time-slots/?date=${date}`;
+
       client
         .GET(slotsUrl as any)
         .then(({ data }) => {
@@ -356,7 +372,7 @@ export default function CheckoutPage({ lang }: Props) {
     }
 
     const gatewayUrl = `/api/v1/checkout/${checkout.id}/payment-gateways/`;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
+
     client
       .GET(gatewayUrl as any)
       .then(({ data }) => {
