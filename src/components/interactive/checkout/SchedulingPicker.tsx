@@ -153,7 +153,7 @@ export default function SchedulingPicker({
               ref={listboxRef}
               role="listbox"
               aria-label={t('scheduling', lang)}
-              class="flex gap-2 flex-1 min-w-0 overflow-x-auto justify-start"
+              class="flex gap-2 flex-1 min-w-0 overflow-hidden"
               onKeyDown={handleKeyDown}
               tabIndex={0}
             >
