@@ -1,0 +1,25 @@
+src/stores/checkout-actions.test.ts
+  b78cc47572987dc1 1-354
+src/stores/checkout-actions.ts
+  b78cc47572987dc1 1-290
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "9ee1703cae3d87062dcf68cf8e5922090e36d36f",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 656,
+      "total_deletions": 6,
+      "accepted_lines": 5825,
+      "overriden_lines": 0
+    }
+  }
+}
