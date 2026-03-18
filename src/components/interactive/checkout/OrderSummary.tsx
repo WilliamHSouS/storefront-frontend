@@ -121,7 +121,7 @@ export function OrderSummary({ lang, currency }: Props) {
           discount={discountNum > 0 ? discount! : null}
           total={total ?? '0.00'}
           taxIncluded={true}
-          showShippingFree={true}
+          showShippingFree={checkout?.status !== 'created'}
         />
       </div>
     </div>
