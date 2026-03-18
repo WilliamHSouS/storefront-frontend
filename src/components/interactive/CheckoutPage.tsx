@@ -108,12 +108,6 @@ export default function CheckoutPage({ lang }: Props) {
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
 
-  // ── Hydration guard ──────────────────────────────────────────────
-  // Wait for merchant bridge before rendering anything
-  if (!merchant) {
-    return <div class="min-h-screen" />;
-  }
-
   // ── Restore form state from sessionStorage on mount ──────────────
   useEffect(() => {
     if (initializedRef.current) return;
@@ -215,11 +209,6 @@ export default function CheckoutPage({ lang }: Props) {
       });
   }, [checkout?.status, checkout?.id, stripeConfig]);
 
-  // If cart is empty (redirect pending), show stable wrapper
-  if (cart && cart.line_items.length === 0) {
-    return <div class="min-h-screen" />;
-  }
-
   // ── Form validation ─────────────────────────────────────────────
   function validateForm(): boolean {
     const errors: Record<string, string> = {};
@@ -297,6 +286,16 @@ export default function CheckoutPage({ lang }: Props) {
       setIsSubmitting(false);
     }
   }, [isSubmitting, form, checkout, stripeConfig, lang]);
+
+  // ── Hydration guard (after all hooks to satisfy Rules of Hooks) ──
+  if (!merchant) {
+    return <div class="min-h-screen" />;
+  }
+
+  // ── Empty cart guard (redirect pending) ──
+  if (cart && cart.line_items.length === 0) {
+    return <div class="min-h-screen" />;
+  }
 
   return (
     <div class="min-h-screen bg-background">
@@ -472,7 +471,12 @@ export default function CheckoutPage({ lang }: Props) {
       </div>
 
       {/* ── Mobile sticky CTA ────────────────────────────────── */}
-      <PlaceOrderButton lang={typedLang} currency={currency} onPlace={handlePlaceOrder} />
+      <PlaceOrderButton
+        lang={typedLang}
+        currency={currency}
+        onPlace={handlePlaceOrder}
+        disabled={isSubmitting || !paymentReady}
+      />
     </div>
   );
 }

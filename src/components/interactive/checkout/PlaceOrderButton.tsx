@@ -8,10 +8,12 @@ interface Props {
   lang: 'nl' | 'en' | 'de';
   currency: string;
   onPlace: () => void;
+  disabled?: boolean;
 }
 
-export function PlaceOrderButton({ lang, currency, onPlace }: Props) {
+export function PlaceOrderButton({ lang, currency, onPlace, disabled: externalDisabled }: Props) {
   const loading = useStore($checkoutLoading);
+  const isDisabled = loading || externalDisabled;
   const totals = useStore($checkoutTotals);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
@@ -50,10 +52,10 @@ export function PlaceOrderButton({ lang, currency, onPlace }: Props) {
       <button
         type="button"
         onClick={onPlace}
-        disabled={loading}
-        class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+        disabled={isDisabled}
+        class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${isDisabled ? 'pointer-events-none opacity-50' : ''}`}
       >
-        {loading ? (
+        {isDisabled ? (
           <>
             <svg class="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
               <circle
