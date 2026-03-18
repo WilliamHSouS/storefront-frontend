@@ -1,0 +1,27 @@
+src/components/interactive/checkout/ContactForm.test.tsx
+  b78cc47572987dc1 1-118
+src/components/interactive/checkout/FulfillmentToggle.tsx
+  b78cc47572987dc1 1-60
+src/components/interactive/checkout/ContactForm.tsx
+  b78cc47572987dc1 1-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "3c2c98fb54417d977e51aa6a9dec8272b1d0e516",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 118,
+      "total_deletions": 0,
+      "accepted_lines": 5552,
+      "overriden_lines": 0
+    }
+  }
+}
