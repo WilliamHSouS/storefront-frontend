@@ -127,7 +127,13 @@ export default function CheckoutPage({ lang }: Props) {
   >([]);
   const [timeSlotsLoading, setTimeSlotsLoading] = useState(false);
   const [pickupLocations, setPickupLocations] = useState<
-    Array<{ id: number; name: string; distance_km?: number }>
+    Array<{
+      id: number;
+      name: string;
+      distance_km?: number;
+      address?: { street?: string; city?: string; postal_code?: string };
+      pickup_instructions?: string;
+    }>
   >([]);
 
   const typedLang = lang as 'nl' | 'en' | 'de';
@@ -170,11 +176,18 @@ export default function CheckoutPage({ lang }: Props) {
       .then(({ data }) => {
         if (!data || !Array.isArray(data)) return;
         const locs = (
-          data as Array<{ id: number; name: string; address?: { street?: string; city?: string } }>
+          data as Array<{
+            id: number;
+            name: string;
+            address?: { street?: string; city?: string; postal_code?: string };
+            pickup_instructions?: string;
+          }>
         ).map((loc) => ({
           id: loc.id,
           name: loc.name,
           distance_km: undefined as number | undefined,
+          address: loc.address,
+          pickup_instructions: loc.pickup_instructions,
         }));
         setPickupLocations(locs);
         // Auto-select if only one location
