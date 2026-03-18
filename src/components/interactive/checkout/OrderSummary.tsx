@@ -6,6 +6,7 @@ import { $checkout, $checkoutTotals } from '@/stores/checkout';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { optimizedImageUrl } from '@/lib/image';
 import { t } from '@/i18n';
+import { PricingBreakdown } from '../cart/PricingBreakdown';
 
 interface Props {
   lang: 'nl' | 'en' | 'de';
@@ -67,12 +68,17 @@ export function OrderSummary({ lang, currency }: Props) {
 
   // Use checkout totals if available, fall back to cart
   const subtotal = checkout ? totals.subtotal : cart?.subtotal;
-  const shipping = checkout ? totals.shipping : cart?.shipping_cost;
+  // Only show shipping when checkout exists (backend calculated it) or cart has a real shipping estimate
+  // Don't show when no address entered — cart.shipping_cost defaults to "0.00" which would show "Free"
+  const hasShippingEstimate =
+    checkout != null ||
+    (cart?.shipping_estimate?.total_shipping != null &&
+      cart.shipping_estimate.total_shipping !== '0.00');
+  const shipping = hasShippingEstimate ? (checkout ? totals.shipping : cart?.shipping_cost) : null;
   const tax = checkout ? totals.tax : cart?.tax_total;
   const discount = checkout ? totals.discount : cart?.discount_amount;
   const total = checkout ? totals.total : cartTotal;
 
-  const shippingNum = shipping ? parseFloat(shipping) : 0;
   const discountNum = discount ? parseFloat(discount) : 0;
 
   const shouldCollapse = itemCount >= COLLAPSE_THRESHOLD && !expanded;
@@ -104,52 +110,19 @@ export function OrderSummary({ lang, currency }: Props) {
       )}
 
       {/* Price breakdown — always visible */}
-      <div class="mt-3 pt-3 border-t border-border space-y-1">
-        {/* Subtotal */}
-        {subtotal && (
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-muted-foreground">{t('subtotal', lang)}</span>
-            <span class="text-card-foreground">{formatPrice(subtotal, currency, locale)}</span>
-          </div>
-        )}
-
-        {/* Shipping */}
-        {shipping != null && (
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-muted-foreground">{t('shipping', lang)}</span>
-            <span class="text-card-foreground">
-              {shippingNum === 0
-                ? t('shippingFree', lang)
-                : formatPrice(shipping, currency, locale)}
-            </span>
-          </div>
-        )}
-
-        {/* Discount */}
-        {discountNum > 0 && (
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-muted-foreground">{t('discount', lang)}</span>
-            <span class="font-medium text-destructive">
-              -{formatPrice(discount!, currency, locale)}
-            </span>
-          </div>
-        )}
-
-        {/* Tax */}
-        {tax && (
-          <div class="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{t('taxIncluded', lang)}</span>
-            <span>{formatPrice(tax, currency, locale)}</span>
-          </div>
-        )}
-
-        {/* Total */}
-        <div class="flex items-center justify-between border-t border-border pt-2 mt-2">
-          <span class="text-sm font-medium text-card-foreground">{t('orderTotal', lang)}</span>
-          <span class="text-lg font-bold text-card-foreground">
-            {formatPrice(total, currency, locale)}
-          </span>
-        </div>
+      <div class="mt-3 pt-3 border-t border-border">
+        <PricingBreakdown
+          lang={lang}
+          currency={currency}
+          locale={locale}
+          subtotal={subtotal ?? '0.00'}
+          shipping={shipping ?? null}
+          tax={tax ?? '0.00'}
+          discount={discountNum > 0 ? discount! : null}
+          total={total ?? '0.00'}
+          taxIncluded={true}
+          showShippingFree={true}
+        />
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import { showToast } from '@/stores/toast';
 import PromoBanner from './PromoBanner';
 import DiscountCodeInput from './DiscountCodeInput';
 import { ShippingEstimate } from './ShippingEstimate';
+import { PricingBreakdown } from './cart/PricingBreakdown';
 import { CloseIcon } from './icons';
 
 /* ------------------------------------------------------------------ */
@@ -106,13 +107,9 @@ interface CartFooterProps {
 }
 
 function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }: CartFooterProps) {
-  const subtotal = cart.subtotal;
-  const shipping = cart.shipping_cost;
-  const taxTotal = cart.tax_total;
   const taxIncluded = cart.tax_included ?? true;
   const discountNum = cart.discount_amount ? parseFloat(cart.discount_amount) : 0;
   const promoNum = cart.promotion_discount_amount ? parseFloat(cart.promotion_discount_amount) : 0;
-  const shippingNum = shipping ? parseFloat(shipping) : 0;
 
   // "You save" only for product-level savings (not code/promo discounts)
   const hasDiscounts = discountNum > 0 || promoNum > 0;
@@ -121,6 +118,9 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
       ? cart.cart_savings
       : null;
 
+  // Shipping: only use legacy fallback when no rich shipping_estimate exists
+  const legacyShipping = !cart.shipping_estimate && cart.shipping_cost ? cart.shipping_cost : null;
+
   return (
     <div
       class="max-h-[50vh] shrink-0 overflow-y-auto border-t border-border px-4 py-3"
@@ -128,80 +128,29 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
     >
       <DiscountCodeInput cart={cart} lang={lang} />
 
-      {/* Subtotal */}
-      {subtotal && (
-        <div class="mb-1 flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">{t('subtotal', lang)}</span>
-          <span class="text-card-foreground">{formatPrice(subtotal, currency, locale)}</span>
-        </div>
-      )}
+      <PricingBreakdown
+        lang={lang as 'nl' | 'en' | 'de'}
+        currency={currency}
+        locale={locale}
+        subtotal={cart.subtotal ?? '0.00'}
+        shipping={legacyShipping}
+        tax={cart.tax_total ?? '0.00'}
+        discount={discountNum > 0 ? cart.discount_amount! : null}
+        total={cartTotal}
+        surchargeTotal={cart.surcharge_total}
+        promotionDiscount={cart.promotion_discount_amount}
+        productSavings={savings ?? undefined}
+        taxIncluded={taxIncluded}
+        showShippingFree={true}
+        shippingSlot={
+          <ShippingEstimate
+            lang={lang}
+            currency={currency}
+            shippingEstimate={cart.shipping_estimate}
+          />
+        }
+      />
 
-      {/* Surcharges */}
-      {cart.surcharge_total && parseFloat(cart.surcharge_total) > 0 && (
-        <div class="mb-1 flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">{t('surcharges', lang)}</span>
-          <span class="text-card-foreground">
-            {formatPrice(cart.surcharge_total, currency, locale)}
-          </span>
-        </div>
-      )}
-
-      {/* Shipping estimate (rich breakdown) */}
-      <ShippingEstimate lang={lang} currency={currency} shippingEstimate={cart.shipping_estimate} />
-
-      {/* Shipping (legacy fallback when no shipping_estimate) */}
-      {!cart.shipping_estimate && shipping && (
-        <div class="mb-1 flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">{t('shipping', lang)}</span>
-          <span class="text-card-foreground">
-            {shippingNum === 0 ? t('shippingFree', lang) : formatPrice(shipping, currency, locale)}
-          </span>
-        </div>
-      )}
-
-      {/* Discount code savings */}
-      {discountNum > 0 && (
-        <div class="mb-1 flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">{t('discount', lang)}</span>
-          <span class="font-medium text-destructive">
-            -{formatPrice(cart.discount_amount!, currency, locale)}
-          </span>
-        </div>
-      )}
-
-      {/* Promotion savings */}
-      {promoNum > 0 && (
-        <div class="mb-1 flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">{t('promotion', lang)}</span>
-          <span class="font-medium text-destructive">
-            -{formatPrice(cart.promotion_discount_amount!, currency, locale)}
-          </span>
-        </div>
-      )}
-
-      {/* You save (product-level only -- hidden when code/promo discounts are active) */}
-      {savings && (
-        <div class="mb-1 flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">{t('youSave', lang)}</span>
-          <span class="font-medium text-destructive">{formatPrice(savings, currency, locale)}</span>
-        </div>
-      )}
-
-      {/* Tax */}
-      {taxTotal && (
-        <div class="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-          <span>{taxIncluded ? t('taxIncluded', lang) : t('tax', lang)}</span>
-          <span>{formatPrice(taxTotal, currency, locale)}</span>
-        </div>
-      )}
-
-      {/* Total */}
-      <div class="mb-3 flex items-center justify-between border-t border-border pt-2">
-        <span class="text-sm font-medium text-card-foreground">{t('orderTotal', lang)}</span>
-        <span class="text-lg font-bold text-card-foreground">
-          {formatPrice(cartTotal, currency, locale)}
-        </span>
-      </div>
       <CartSuggestions lang={lang} />
       <a
         href={`/${lang}/checkout`}
