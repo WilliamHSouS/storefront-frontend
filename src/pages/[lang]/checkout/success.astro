@@ -1,0 +1,12 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CheckoutSuccess from '@/components/interactive/CheckoutSuccess';
+import { t } from '@/i18n';
+
+const { lang } = Astro.locals;
+const langValue = lang as 'nl' | 'en' | 'de';
+---
+
+<BaseLayout title={t('orderConfirmed', langValue)} hideSharedIslands={true}>
+  <CheckoutSuccess client:load lang={langValue} />
+</BaseLayout>
