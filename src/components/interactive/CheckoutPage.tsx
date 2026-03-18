@@ -498,9 +498,9 @@ export default function CheckoutPage({ lang }: Props) {
     <div class="min-h-screen bg-background">
       <CheckoutHeader lang={typedLang} merchantName={merchant.name} />
 
-      <div class="mx-auto max-w-5xl md:flex md:gap-8 md:px-4 md:py-6">
+      <div class="md:mx-auto md:max-w-5xl md:flex md:gap-8 md:px-4 md:py-6">
         {/* ── Left column: form ──────────────────────────────── */}
-        <div class="flex-1 md:max-w-xl" onBlur={handleBlur}>
+        <div class="flex-1 md:max-w-xl w-full" onBlur={handleBlur}>
           {/* Mobile order summary (above form) */}
           <div class="px-4 py-4 md:hidden">
             <OrderSummary lang={typedLang} currency={currency} />
