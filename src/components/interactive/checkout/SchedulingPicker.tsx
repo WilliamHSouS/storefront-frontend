@@ -117,7 +117,17 @@ export default function SchedulingPicker({
                   value={mode}
                   checked={selected}
                   class="sr-only"
-                  onChange={() => dispatch({ type: 'SET_SCHEDULING', mode })}
+                  onChange={() => {
+                    dispatch({ type: 'SET_SCHEDULING', mode });
+                    // Auto-fetch time slots when switching to scheduled
+                    if (mode === 'scheduled') {
+                      const defaultDate = form.scheduledDate ?? dates[0];
+                      if (defaultDate) {
+                        dispatch({ type: 'SET_FIELD', field: 'scheduledDate', value: defaultDate });
+                        onDateChange(defaultDate);
+                      }
+                    }
+                  }}
                 />
                 {mode === 'asap' ? t('asap', lang) : t('schedule', lang)}
               </label>
