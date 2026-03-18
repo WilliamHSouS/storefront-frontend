@@ -4,7 +4,13 @@ import { lazy, Suspense } from 'preact/compat';
 import { useStore } from '@nanostores/preact';
 import { $cart, $cartTotal, ensureCart } from '@/stores/cart';
 import { $merchant } from '@/stores/merchant';
-import { $checkout, $checkoutLoading, persistFormState, restoreFormState } from '@/stores/checkout';
+import {
+  $checkout,
+  $checkoutLoading,
+  $checkoutError,
+  persistFormState,
+  restoreFormState,
+} from '@/stores/checkout';
 import {
   createCheckout,
   patchDelivery,
@@ -91,6 +97,7 @@ export default function CheckoutPage({ lang }: Props) {
   const cartTotal = useStore($cartTotal);
   const checkout = useStore($checkout);
   const loading = useStore($checkoutLoading);
+  const checkoutError = useStore($checkoutError);
 
   const [form, dispatch] = useReducer(formReducer, INITIAL_FORM_STATE);
   const initializedRef = useRef(false);
@@ -506,6 +513,16 @@ export default function CheckoutPage({ lang }: Props) {
             <OrderSummary lang={typedLang} currency={currency} />
           </div>
 
+          {/* Error banner */}
+          {checkoutError && (
+            <div
+              class="mx-4 my-2 rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive"
+              role="alert"
+            >
+              {checkoutError}
+            </div>
+          )}
+
           {/* Express checkout (Apple Pay / Google Pay) — only when Stripe is configured */}
           {stripeConfig?.publishableKey && (
             <ExpressCheckout
@@ -549,27 +566,31 @@ export default function CheckoutPage({ lang }: Props) {
           </div>
 
           {/* Delivery address (visible only for delivery) */}
-          <div class="px-4 py-3">
-            <DeliveryAddressForm
-              lang={typedLang}
-              form={form}
-              dispatch={dispatch}
-              onBlur={handleBlur}
-              errors={formErrors}
-              visible={form.fulfillmentMethod === 'delivery'}
-            />
-          </div>
+          {form.fulfillmentMethod === 'delivery' && (
+            <div class="px-4 py-3">
+              <DeliveryAddressForm
+                lang={typedLang}
+                form={form}
+                dispatch={dispatch}
+                onBlur={handleBlur}
+                errors={formErrors}
+                visible
+              />
+            </div>
+          )}
 
           {/* Pickup location (visible only for pickup) */}
-          <div class="px-4 py-3">
-            <PickupLocationPicker
-              lang={typedLang}
-              form={form}
-              dispatch={dispatch}
-              locations={pickupLocations}
-              visible={form.fulfillmentMethod === 'pickup'}
-            />
-          </div>
+          {form.fulfillmentMethod === 'pickup' && (
+            <div class="px-4 py-3">
+              <PickupLocationPicker
+                lang={typedLang}
+                form={form}
+                dispatch={dispatch}
+                locations={pickupLocations}
+                visible
+              />
+            </div>
+          )}
 
           {/* Scheduling */}
           <div class="px-4 py-3">

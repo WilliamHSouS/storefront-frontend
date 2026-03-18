@@ -130,7 +130,7 @@ export default function SchedulingPicker({
       {form.schedulingMode === 'scheduled' && (
         <>
           {/* Date strip */}
-          <div class="flex items-center gap-1 mb-4">
+          <div class="flex items-center gap-1 mb-4 overflow-hidden">
             <button
               type="button"
               class="p-2 rounded-full hover:bg-muted flex-shrink-0"
@@ -153,7 +153,7 @@ export default function SchedulingPicker({
               ref={listboxRef}
               role="listbox"
               aria-label={t('scheduling', lang)}
-              class="flex gap-2 flex-1 justify-center"
+              class="flex gap-2 flex-1 min-w-0 overflow-x-auto justify-start"
               onKeyDown={handleKeyDown}
               tabIndex={0}
             >
@@ -166,7 +166,7 @@ export default function SchedulingPicker({
                     role="option"
                     aria-selected={selected}
                     tabIndex={selected ? 0 : -1}
-                    class={`px-3 py-2 rounded-lg text-sm text-center cursor-pointer transition-colors select-none whitespace-nowrap ${
+                    class={`px-3 py-2 rounded-lg text-sm text-center cursor-pointer transition-colors select-none whitespace-nowrap flex-shrink-0 ${
                       selected
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card border border-input'
