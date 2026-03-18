@@ -8,6 +8,7 @@ import {
   $checkout,
   $checkoutLoading,
   $checkoutError,
+  clearStoredCheckoutId,
   persistFormState,
   restoreFormState,
 } from '@/stores/checkout';
@@ -203,12 +204,22 @@ export default function CheckoutPage({ lang }: Props) {
   // ── Create checkout from cart when cart is ready ──────────────────
   useEffect(() => {
     if (!cart?.id || cart.line_items.length === 0) return;
-    if (checkout?.cart_id === cart.id) return; // already created for this cart
+
+    // If existing checkout is for this cart and in a usable status, keep it
+    if (checkout?.cart_id === cart.id) {
+      const usableStatuses = ['created', 'delivery_set', 'shipping_pending'];
+      if (usableStatuses.includes(checkout.status)) return;
+
+      // Checkout is in a terminal/unusable state (paid, completed) — clear and create fresh
+      log.warn('checkout', `Stale checkout in status '${checkout.status}', creating fresh`);
+      clearStoredCheckoutId();
+      $checkout.set(null);
+    }
 
     createCheckout(cart.id).catch((err) => {
       log.error('checkout', 'Failed to create checkout:', err);
     });
-  }, [cart?.id, cart?.line_items.length, checkout?.cart_id]);
+  }, [cart?.id, cart?.line_items.length, checkout?.cart_id, checkout?.status]);
 
   // ── Fetch available shipping methods after checkout is created ────
   useEffect(() => {
@@ -393,7 +404,13 @@ export default function CheckoutPage({ lang }: Props) {
     client
       .GET(gatewayUrl as any)
       .then(({ data }) => {
-        const gateways = (data as unknown as PaymentGateway[]) ?? [];
+        // Response may be an array or { results: [...] }
+        const raw = data as unknown;
+        const gateways: PaymentGateway[] = Array.isArray(raw)
+          ? raw
+          : Array.isArray((raw as any)?.results)
+            ? (raw as any).results
+            : [];
         const stripeGateway = gateways.find((g) => g.id === 'stripe');
         const configMap = new Map((stripeGateway?.config ?? []).map((c) => [c.key, c.value]));
         const pk = (configMap.get('publishable_key') as string) ?? '';
