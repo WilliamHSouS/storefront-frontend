@@ -1,0 +1,31 @@
+docs/plans/debates/2026-03-18-checkout-design/code-review-round-3.md
+  b78cc47572987dc1 1-66
+docs/plans/2026-03-17-checkout-flow-design.md
+  b78cc47572987dc1 40
+src/layouts/BaseLayout.astro
+  b78cc47572987dc1 29-31
+src/components/interactive/checkout/ExpressCheckout.tsx
+  b78cc47572987dc1 22,65,104,109,116
+src/components/interactive/CheckoutPage.tsx
+  b78cc47572987dc1 100,329,332
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "5b673d5610e2223fd8e16a6c7f8e29f7e2d2b36a",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 1,
+      "accepted_lines": 78,
+      "overriden_lines": 0
+    }
+  }
+}
