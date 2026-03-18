@@ -109,7 +109,6 @@ export function patchDelivery(
  */
 export async function createCheckout(cartId: string, client?: StorefrontClient): Promise<Checkout> {
   $checkoutLoading.set(true);
-  $checkoutError.set(null);
   try {
     const sdk = client ?? getClient();
     const controller = new AbortController();
@@ -144,7 +143,6 @@ export async function fetchCheckout(
   client?: StorefrontClient,
 ): Promise<Checkout> {
   $checkoutLoading.set(true);
-  $checkoutError.set(null);
   try {
     const sdk = client ?? getClient();
     const { data, error } = await sdk.GET(`/api/v1/checkout/${checkoutId}/` as any);
@@ -171,7 +169,6 @@ export async function initiatePayment(
   client?: StorefrontClient,
 ): Promise<PaymentResult> {
   $checkoutLoading.set(true);
-  $checkoutError.set(null);
   try {
     const sdk = client ?? getClient();
     const { data, error } = await sdk.POST(
@@ -199,7 +196,6 @@ export async function completeCheckout(
   client?: StorefrontClient,
 ): Promise<Checkout> {
   $checkoutLoading.set(true);
-  $checkoutError.set(null);
   try {
     const sdk = client ?? getClient();
     const { data, error } = await sdk.POST(`/api/v1/checkout/${checkoutId}/complete/` as any);
