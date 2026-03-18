@@ -1,0 +1,25 @@
+src/components/interactive/CheckoutPage.tsx
+  b78cc47572987dc1 1-4
+src/pages/[lang]/checkout.astro
+  b78cc47572987dc1 1-5,7-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "e6eabedbd115926f941ab72e06f8d3e395f5fcdf",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 576,
+      "total_deletions": 2,
+      "accepted_lines": 5748,
+      "overriden_lines": 1
+    }
+  }
+}
