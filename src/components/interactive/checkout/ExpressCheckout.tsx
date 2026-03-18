@@ -19,6 +19,7 @@ export interface ExpressCheckoutProps {
   cartId: string;
   onSuccess: (orderNumber: string) => void;
   onError: (message: string) => void;
+  onAvailable?: (available: boolean) => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ export default function ExpressCheckout({
   cartId,
   onSuccess,
   onError,
+  onAvailable,
 }: ExpressCheckoutProps) {
   const [available, setAvailable] = useState<boolean | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
@@ -99,17 +101,19 @@ export default function ExpressCheckout({
 
       if (!result) {
         setAvailable(false);
+        onAvailable?.(false);
         return;
       }
 
       setAvailable(true);
+      onAvailable?.(true);
 
       // Mount the Payment Request Button
       const elements = stripe.elements();
       const prButton = elements.create('paymentRequestButton', {
         paymentRequest,
       });
-      buttonElement = prButton as typeof buttonElement;
+      buttonElement = prButton as unknown as typeof buttonElement;
 
       if (buttonRef.current) {
         prButton.mount(buttonRef.current);

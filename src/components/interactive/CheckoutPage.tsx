@@ -97,6 +97,7 @@ export default function CheckoutPage({ lang }: Props) {
   const elementsRef = useRef<StripeElements | null>(null);
   const [paymentReady, setPaymentReady] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expressAvailable, setExpressAvailable] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [stripeConfig, setStripeConfig] = useState<{
     clientSecret: string;
@@ -325,9 +326,10 @@ export default function CheckoutPage({ lang }: Props) {
             onError={(msg) => {
               log.error('checkout', 'Express checkout error:', msg);
             }}
+            onAvailable={setExpressAvailable}
           />
 
-          <FormDivider lang={typedLang} visible={true} />
+          <FormDivider lang={typedLang} visible={expressAvailable} />
 
           {/* Fulfillment method toggle */}
           <div class="px-4 py-3">

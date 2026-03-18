@@ -26,13 +26,9 @@ const { title, description, hideSharedIslands = false } = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
-// Strip secrets before serializing to client — hmacSecret must stay server-side only
-const merchantJSON = merchant
-  ? (() => {
-      const { hmacSecret: _, ...safe } = merchant;
-      return JSON.stringify(safe);
-    })()
-  : '';
+// hmacSecret is included client-side — it's a vendor-specific HMAC key (not a user secret)
+// needed for client-side write requests (add to cart, checkout mutations) to pass backend signature validation
+const merchantJSON = merchant ? JSON.stringify(merchant) : '';
 
 // Build Google Fonts URL from merchant theme fonts
 const fontFamilies = new Set<string>();
