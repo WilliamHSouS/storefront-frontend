@@ -34,7 +34,13 @@ describe('ContactForm', () => {
 
   it('renders all 4 fields with correct labels', () => {
     const { getByText } = render(
-      <ContactForm lang="en" form={defaultForm()} dispatch={dispatch} onBlur={onBlur} errors={{}} />
+      <ContactForm
+        lang="en"
+        form={defaultForm()}
+        dispatch={dispatch}
+        onBlur={onBlur}
+        errors={{}}
+      />,
     );
     expect(getByText('Email')).toBeTruthy();
     expect(getByText('Phone number')).toBeTruthy();
@@ -44,14 +50,26 @@ describe('ContactForm', () => {
 
   it('renders section heading', () => {
     const { getByText } = render(
-      <ContactForm lang="en" form={defaultForm()} dispatch={dispatch} onBlur={onBlur} errors={{}} />
+      <ContactForm
+        lang="en"
+        form={defaultForm()}
+        dispatch={dispatch}
+        onBlur={onBlur}
+        errors={{}}
+      />,
     );
     expect(getByText('Contact information')).toBeTruthy();
   });
 
   it('dispatches SET_FIELD on input change', () => {
     const { container } = render(
-      <ContactForm lang="en" form={defaultForm()} dispatch={dispatch} onBlur={onBlur} errors={{}} />
+      <ContactForm
+        lang="en"
+        form={defaultForm()}
+        dispatch={dispatch}
+        onBlur={onBlur}
+        errors={{}}
+      />,
     );
     const emailInput = container.querySelector('input[name="email"]')!;
     fireEvent.input(emailInput, { target: { value: 'test@example.com' } });
@@ -64,7 +82,13 @@ describe('ContactForm', () => {
 
   it('dispatches SET_FIELD for each field', () => {
     const { container } = render(
-      <ContactForm lang="en" form={defaultForm()} dispatch={dispatch} onBlur={onBlur} errors={{}} />
+      <ContactForm
+        lang="en"
+        form={defaultForm()}
+        dispatch={dispatch}
+        onBlur={onBlur}
+        errors={{}}
+      />,
     );
 
     const fields = ['email', 'phone', 'firstName', 'lastName'] as const;
@@ -91,7 +115,7 @@ describe('ContactForm', () => {
         dispatch={dispatch}
         onBlur={onBlur}
         errors={errors}
-      />
+      />,
     );
     const alerts = getAllByRole('alert');
     expect(alerts).toHaveLength(2);
@@ -101,7 +125,13 @@ describe('ContactForm', () => {
 
   it('calls onBlur on field blur', () => {
     const { container } = render(
-      <ContactForm lang="en" form={defaultForm()} dispatch={dispatch} onBlur={onBlur} errors={{}} />
+      <ContactForm
+        lang="en"
+        form={defaultForm()}
+        dispatch={dispatch}
+        onBlur={onBlur}
+        errors={{}}
+      />,
     );
     const phoneInput = container.querySelector('input[name="phone"]')!;
     fireEvent.blur(phoneInput);
@@ -110,7 +140,13 @@ describe('ContactForm', () => {
 
   it('renders correct input types', () => {
     const { container } = render(
-      <ContactForm lang="en" form={defaultForm()} dispatch={dispatch} onBlur={onBlur} errors={{}} />
+      <ContactForm
+        lang="en"
+        form={defaultForm()}
+        dispatch={dispatch}
+        onBlur={onBlur}
+        errors={{}}
+      />,
     );
     expect(container.querySelector('input[name="email"]')!.getAttribute('type')).toBe('email');
     expect(container.querySelector('input[name="phone"]')!.getAttribute('type')).toBe('tel');
