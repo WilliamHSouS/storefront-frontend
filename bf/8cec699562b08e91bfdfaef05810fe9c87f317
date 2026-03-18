@@ -1,0 +1,25 @@
+src/components/interactive/CheckoutPage.tsx
+  b78cc47572987dc1 133-135,182-183,189-190
+src/components/interactive/checkout/PickupLocationPicker.tsx
+  b78cc47572987dc1 1,6-13,18,29-30,33-36,49-50,63-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "bf8cec699562b08e91bfdfaef05810fe9c87f317",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 99,
+      "total_deletions": 6,
+      "accepted_lines": 91,
+      "overriden_lines": 0
+    }
+  }
+}
