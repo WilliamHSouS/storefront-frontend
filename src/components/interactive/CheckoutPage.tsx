@@ -6,6 +6,7 @@ import { $merchant } from '@/stores/merchant';
 import { $checkout, $checkoutLoading, persistFormState, restoreFormState } from '@/stores/checkout';
 import {
   createCheckout,
+  patchDelivery,
   initiatePayment,
   ensurePaymentAndComplete,
 } from '@/stores/checkout-actions';
@@ -151,10 +152,38 @@ export default function CheckoutPage({ lang }: Props) {
     }
   }, [cart?.line_items.length, lang]);
 
-  // ── Persist form on blur ─────────────────────────────────────────
+  // ── Persist form on blur + trigger delivery PATCH ────────────────
   const handleBlur = useCallback(() => {
     persistFormState(form);
-  }, [form]);
+
+    // Trigger delivery PATCH if checkout exists and contact info is filled
+    const checkoutId = checkout?.id;
+    if (!checkoutId) return;
+    if (!form.email || !form.firstName || !form.lastName || !form.phone) return;
+
+    const deliveryData: Record<string, unknown> = {
+      email: form.email,
+      shipping_method_id: form.fulfillmentMethod === 'pickup' ? 'pickup' : 'local_delivery',
+    };
+
+    if (form.fulfillmentMethod === 'delivery' && form.street && form.city && form.postalCode) {
+      deliveryData.shipping_address = {
+        first_name: form.firstName,
+        last_name: form.lastName,
+        street_address_1: form.street,
+        city: form.city,
+        postal_code: form.postalCode,
+        country_code: form.countryCode,
+        phone_number: form.phone,
+      };
+    }
+
+    if (form.selectedSlotId) {
+      deliveryData.fulfillment_slot_id = form.selectedSlotId;
+    }
+
+    patchDelivery(checkoutId, deliveryData);
+  }, [form, checkout?.id]);
 
   // ── Cross-tab cart change detection ──────────────────────────────
   useEffect(() => {
