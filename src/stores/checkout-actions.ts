@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec; interpolated URLs + body casts needed */
 import { getClient } from '@/lib/api';
 import {
   $checkout,
@@ -63,11 +64,10 @@ export function patchDelivery(
 
     try {
       const sdk = client ?? getClient();
-      const { data: responseData, error } = await sdk.PATCH('/api/v1/checkout/{id}/delivery/', {
-        params: { path: { id: checkoutId } },
-        body: data,
-        signal: controller.signal,
-      });
+      const { data: responseData, error } = await sdk.PATCH(
+        `/api/v1/checkout/${checkoutId}/delivery/` as any,
+        { body: data, signal: controller.signal } as any,
+      );
 
       // Discard stale response
       if (generation !== patchGeneration) return;
@@ -141,9 +141,7 @@ export async function fetchCheckout(
   $checkoutError.set(null);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.GET('/api/v1/checkout/{id}/', {
-      params: { path: { id: checkoutId } },
-    });
+    const { data, error } = await sdk.GET(`/api/v1/checkout/${checkoutId}/` as any);
 
     if (error || !data) {
       throw new Error(`Failed to fetch checkout: ${errorDetail(error)}`);
@@ -170,10 +168,10 @@ export async function initiatePayment(
   $checkoutError.set(null);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.POST('/api/v1/checkout/{id}/payment/', {
-      params: { path: { id: checkoutId } },
-      body: { gateway_id: 'stripe' },
-    });
+    const { data, error } = await sdk.POST(
+      `/api/v1/checkout/${checkoutId}/payment/` as any,
+      { body: { gateway_id: 'stripe' } } as any,
+    );
 
     if (error || !data) {
       throw new Error(`Failed to initiate payment: ${errorDetail(error)}`);
@@ -198,9 +196,7 @@ export async function completeCheckout(
   $checkoutError.set(null);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.POST('/api/v1/checkout/{id}/complete/', {
-      params: { path: { id: checkoutId } },
-    });
+    const { data, error } = await sdk.POST(`/api/v1/checkout/${checkoutId}/complete/` as any);
 
     if (error || !data) {
       throw new Error(`Failed to complete checkout: ${errorDetail(error)}`);

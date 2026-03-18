@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec */
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { loadStripe } from '@stripe/stripe-js';
 import type { Stripe, PaymentRequest, PaymentRequestPaymentMethodEvent } from '@stripe/stripe-js';
@@ -34,10 +35,10 @@ async function patchDeliveryImmediate(
   data: Record<string, unknown>,
 ): Promise<Checkout> {
   const sdk = getClient();
-  const { data: responseData, error } = await sdk.PATCH('/api/v1/checkout/{id}/delivery/', {
-    params: { path: { id: checkoutId } },
-    body: data,
-  });
+  const { data: responseData, error } = await sdk.PATCH(
+    `/api/v1/checkout/${checkoutId}/delivery/` as any,
+    { body: data } as any,
+  );
 
   if (error || !responseData) {
     const detail =

@@ -105,6 +105,10 @@ export default function CheckoutPage({ lang }: Props) {
     publishableKey: string;
     stripeAccount: string;
   } | null>(null);
+  const [availableFulfillment, setAvailableFulfillment] = useState<('delivery' | 'pickup')[]>([
+    'delivery',
+    'pickup',
+  ]);
 
   const typedLang = lang as 'nl' | 'en' | 'de';
   const currency = merchant?.currency ?? 'EUR';
@@ -144,6 +148,45 @@ export default function CheckoutPage({ lang }: Props) {
       log.error('checkout', 'Failed to create checkout:', err);
     });
   }, [cart?.id, cart?.line_items.length, checkout?.cart_id]);
+
+  // ── Fetch available shipping methods after checkout is created ────
+  useEffect(() => {
+    if (!checkout?.id) return;
+
+    const client = getClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
+    client
+      .GET(`/api/v1/checkout/${checkout.id}/shipping/` as any)
+      .then(({ data }) => {
+        if (!data) return;
+        const groups = data as Array<{ available_rates: Array<{ rate_id: string; name: string }> }>;
+        // Determine available fulfillment types from shipping rates
+        const methods = new Set<'delivery' | 'pickup'>();
+        for (const group of groups) {
+          for (const rate of group.available_rates ?? []) {
+            const id = rate.rate_id?.toLowerCase() ?? rate.name?.toLowerCase() ?? '';
+            if (id.includes('pickup')) methods.add('pickup');
+            else methods.add('delivery');
+          }
+        }
+        const available = methods.size > 0 ? Array.from(methods) : ['pickup' as const];
+        setAvailableFulfillment(available);
+
+        // Auto-select the first available method if current selection isn't available
+        if (!available.includes(form.fulfillmentMethod)) {
+          dispatch({ type: 'SET_FULFILLMENT', method: available[0] });
+        }
+
+        // Auto-select shipping rate if only one is available
+        if (groups.length === 1 && groups[0].available_rates?.length === 1) {
+          const rateId = groups[0].available_rates[0].rate_id;
+          dispatch({ type: 'SET_FIELD', field: 'selectedShippingRateId', value: rateId });
+        }
+      })
+      .catch((err) => {
+        log.error('checkout', 'Failed to fetch shipping methods:', err);
+      });
+  }, [checkout?.id]);
 
   // ── Redirect to menu if cart is empty ────────────────────────────
   useEffect(() => {
@@ -189,7 +232,6 @@ export default function CheckoutPage({ lang }: Props) {
 
     const deliveryData: Record<string, unknown> = {
       email: form.email,
-      shipping_method_id: form.fulfillmentMethod === 'pickup' ? 'pickup' : 'local_delivery',
       shipping_address: {
         first_name: form.firstName,
         last_name: form.lastName,
@@ -200,6 +242,10 @@ export default function CheckoutPage({ lang }: Props) {
         phone_number: form.phone,
       },
     };
+
+    if (form.selectedShippingRateId) {
+      deliveryData.shipping_method_id = form.selectedShippingRateId;
+    }
 
     if (form.selectedSlotId) {
       deliveryData.fulfillment_slot_id = form.selectedSlotId;
@@ -393,8 +439,8 @@ export default function CheckoutPage({ lang }: Props) {
               lang={typedLang}
               form={form}
               dispatch={dispatch}
-              availableMethods={['delivery', 'pickup']}
-              deliveryEligible={null}
+              availableMethods={availableFulfillment}
+              deliveryEligible={availableFulfillment.includes('delivery') ? true : false}
             />
           </div>
 
