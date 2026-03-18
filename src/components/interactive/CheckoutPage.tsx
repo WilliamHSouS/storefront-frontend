@@ -8,6 +8,7 @@ import {
   createCheckout,
   patchDelivery,
   initiatePayment,
+  completeCheckout,
   ensurePaymentAndComplete,
 } from '@/stores/checkout-actions';
 import { $addressCoords } from '@/stores/address';
@@ -206,7 +207,8 @@ export default function CheckoutPage({ lang }: Props) {
       errors.email = t('emailInvalid', typedLang);
     }
 
-    setFormErrors((prev) => ({ ...prev, ...errors }));
+    // Replace errors (don't merge) — clears fixed errors
+    setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }, [form.email, typedLang]);
 
@@ -266,12 +268,12 @@ export default function CheckoutPage({ lang }: Props) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // ── Initiate payment when checkout progresses past 'created' ─────
+  // ── Fetch payment gateway config (Stripe keys) after checkout created ──
+  // Payment is NOT initiated here — only when user clicks Place Order
   useEffect(() => {
-    if (!checkout || checkout.status === 'created') return;
-    if (stripeConfig) return; // already initiated
+    if (!checkout?.id) return;
+    if (stripeConfig) return;
 
-    // Fetch payment gateway config and initiate payment in parallel
     const client = getClient();
 
     interface GatewayConfigEntry {
@@ -283,30 +285,23 @@ export default function CheckoutPage({ lang }: Props) {
       config?: GatewayConfigEntry[];
     }
 
-    Promise.all([
-      client.GET(
-        `/api/v1/checkout/${checkout.id}/payment-gateways/` as '/api/v1/checkout/{id}/payment-gateways/',
-      ),
-      initiatePayment(checkout.id),
-    ])
-      .then(([gatewaysResult, paymentResult]) => {
-        if (!paymentResult?.client_secret) return;
-
-        // Extract Stripe config from gateways
-        const gateways = (gatewaysResult.data as unknown as PaymentGateway[]) ?? [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
+    client
+      .GET(`/api/v1/checkout/${checkout.id}/payment-gateways/` as any)
+      .then(({ data }) => {
+        const gateways = (data as unknown as PaymentGateway[]) ?? [];
         const stripeGateway = gateways.find((g) => g.id === 'stripe');
         const configMap = new Map((stripeGateway?.config ?? []).map((c) => [c.key, c.value]));
-
-        setStripeConfig({
-          clientSecret: paymentResult.client_secret,
-          publishableKey: (configMap.get('publishable_key') as string) ?? '',
-          stripeAccount: (configMap.get('stripe_account') as string) ?? '',
-        });
+        const pk = (configMap.get('publishable_key') as string) ?? '';
+        const acct = (configMap.get('stripe_account') as string) ?? '';
+        if (pk) {
+          setStripeConfig({ clientSecret: '', publishableKey: pk, stripeAccount: acct });
+        }
       })
       .catch((err) => {
-        log.error('checkout', 'Failed to initiate payment:', err);
+        log.error('checkout', 'Failed to fetch payment gateways:', err);
       });
-  }, [checkout?.status, checkout?.id, stripeConfig]);
+  }, [checkout?.id, stripeConfig]);
 
   // ── Form validation ─────────────────────────────────────────────
   function validateForm(): boolean {
@@ -346,42 +341,54 @@ export default function CheckoutPage({ lang }: Props) {
   }
 
   // ── Place order handler ─────────────────────────────────────────
+  // Payment is initiated HERE (on user click), not automatically.
+  // Flow: validate → initiate payment (gets client_secret) → confirm with Stripe → complete
   const handlePlaceOrder = useCallback(async () => {
     if (isSubmitting) return;
     if (!validateForm()) return;
-    if (!stripeRef.current || !elementsRef.current || !checkout || !stripeConfig) return;
+    if (!checkout) return;
 
     setIsSubmitting(true);
     persistFormState(form);
 
     try {
-      const { error } = await stripeRef.current.confirmPayment({
-        elements: elementsRef.current,
-        confirmParams: {
-          return_url: `${window.location.origin}/${lang}/checkout/success?checkout_id=${checkout.id}`,
-        },
-        redirect: 'if_required',
-      });
-
-      if (error) {
-        // Stripe shows inline error in Payment Element for most cases
-        log.error('checkout', 'Stripe confirmPayment error:', error.message);
+      // Step 1: Initiate payment on the backend (creates PaymentIntent)
+      const paymentResult = await initiatePayment(checkout.id);
+      if (!paymentResult?.client_secret) {
+        log.error('checkout', 'No client_secret returned from payment initiation');
         return;
       }
 
-      // Card/wallet payment succeeded inline — complete checkout
-      // Cast to StripeInstance — the real Stripe type is a superset of the simplified interface
-      const result = await ensurePaymentAndComplete(
-        checkout.id,
-        stripeConfig.clientSecret,
-        stripeRef.current as unknown as Parameters<typeof ensurePaymentAndComplete>[2],
-        lang,
-      );
+      // Step 2: If Stripe is loaded and Payment Element is mounted, confirm payment
+      if (stripeRef.current && elementsRef.current) {
+        const { error } = await stripeRef.current.confirmPayment({
+          elements: elementsRef.current,
+          confirmParams: {
+            return_url: `${window.location.origin}/${lang}/checkout/success?checkout_id=${checkout.id}`,
+          },
+          redirect: 'if_required',
+        });
 
-      if (result.status === 'succeeded' && result.redirectUrl) {
-        window.location.href = result.redirectUrl;
-      } else if (result.status === 'error') {
-        log.error('checkout', 'Payment completion error:', result.message);
+        if (error) {
+          log.error('checkout', 'Stripe confirmPayment error:', error.message);
+          return;
+        }
+
+        // Card/wallet payment succeeded inline — complete checkout
+        const result = await ensurePaymentAndComplete(
+          checkout.id,
+          paymentResult.client_secret,
+          stripeRef.current as unknown as Parameters<typeof ensurePaymentAndComplete>[2],
+          lang,
+        );
+
+        if (result.status === 'succeeded' && result.redirectUrl) {
+          window.location.href = result.redirectUrl;
+        }
+      } else {
+        // Stripe not loaded — complete via backend (webhook will handle)
+        await completeCheckout(checkout.id);
+        window.location.href = `/${lang}/checkout/success?order=${checkout.order_number ?? ''}`;
       }
     } catch (err) {
       log.error('checkout', 'Place order error:', err instanceof Error ? err.message : String(err));
