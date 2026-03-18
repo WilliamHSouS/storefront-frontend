@@ -159,5 +159,6 @@
   "itemCount_other": "{count} items",
   "fieldRequired": "{field} is required",
   "emailInvalid": "Please enter a valid email address",
-  "phoneInvalid": "Please enter a valid phone number"
+  "phoneInvalid": "Please enter a valid phone number",
+  "viewDetails": "View details"
 }

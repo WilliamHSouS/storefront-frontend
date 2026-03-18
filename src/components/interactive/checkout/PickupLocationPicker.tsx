@@ -65,41 +65,53 @@ export function PickupLocationPicker({
         <div>
           <button
             type="button"
-            class="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+            class="text-sm text-primary underline hover:text-primary/80 transition-colors py-1"
             onClick={() => setShowDetails(!showDetails)}
           >
-            {showDetails ? t('close', lang) : t('deliveryOptions', lang)}
+            {showDetails ? t('close', lang) : t('viewDetails', lang)}
           </button>
 
           {showDetails && (
             <div class="mt-2 rounded-lg border border-border bg-card p-3 text-sm space-y-1">
-              {selectedLocation.address?.street && (
-                <p class="text-muted-foreground">
-                  <svg
-                    class="inline-block w-3.5 h-3.5 mr-1 -mt-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width={2}
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  {selectedLocation.address.street}
-                  {selectedLocation.address.city ? `, ${selectedLocation.address.city}` : ''}
-                  {selectedLocation.address.postal_code
-                    ? ` ${selectedLocation.address.postal_code}`
-                    : ''}
-                </p>
-              )}
+              {selectedLocation.address?.street &&
+                (() => {
+                  const addr = [
+                    selectedLocation.address!.street,
+                    selectedLocation.address!.city,
+                    selectedLocation.address!.postal_code,
+                  ]
+                    .filter(Boolean)
+                    .join(', ');
+                  const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(addr)}`;
+                  return (
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="flex items-start gap-1.5 text-primary hover:text-primary/80 transition-colors"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5 mt-0.5 flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width={2}
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      <span class="underline">{addr}</span>
+                    </a>
+                  );
+                })()}
               {selectedLocation.pickup_instructions && (
                 <p class="text-muted-foreground">
                   <svg

@@ -159,5 +159,6 @@
   "itemCount_other": "{count} items",
   "fieldRequired": "{field} ist erforderlich",
   "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
-  "phoneInvalid": "Bitte geben Sie eine gültige Telefonnummer ein"
+  "phoneInvalid": "Bitte geben Sie eine gültige Telefonnummer ein",
+  "viewDetails": "Details ansehen"
 }
