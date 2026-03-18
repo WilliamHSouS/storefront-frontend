@@ -37,6 +37,7 @@ export default function DeliveryAddressForm({
           id="checkout-street"
           type="text"
           required
+          autocomplete="street-address"
           class={inputClass}
           value={form.street}
           onInput={(e) =>
@@ -64,6 +65,7 @@ export default function DeliveryAddressForm({
           id="checkout-city"
           type="text"
           required
+          autocomplete="address-level2"
           class={inputClass}
           value={form.city}
           onInput={(e) =>
@@ -92,6 +94,7 @@ export default function DeliveryAddressForm({
           type="text"
           inputMode="numeric"
           required
+          autocomplete="postal-code"
           class={inputClass}
           value={form.postalCode}
           onInput={(e) =>

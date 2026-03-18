@@ -18,10 +18,12 @@ function LineItem({
   item,
   currency,
   locale,
+  lang,
 }: {
   item: CartLineItem;
   currency: string;
   locale: string;
+  lang: 'nl' | 'en' | 'de';
 }) {
   return (
     <li class="flex items-center gap-3 py-2">
@@ -41,7 +43,7 @@ function LineItem({
         <div class="min-w-0 mr-2">
           <p class="text-sm text-card-foreground truncate">{item.product_title}</p>
           <p class="text-xs text-muted-foreground">
-            {t('itemCount_one', 'en').replace('{count}', String(item.quantity))}
+            {t('itemCount_one', lang).replace('{count}', String(item.quantity))}
           </p>
         </div>
         <span class="text-sm font-medium text-card-foreground shrink-0">
@@ -81,7 +83,7 @@ export function OrderSummary({ lang, currency }: Props) {
       {/* Line items */}
       <ul class="divide-y divide-border">
         {visibleItems.map((item) => (
-          <LineItem key={item.id} item={item} currency={currency} locale={locale} />
+          <LineItem key={item.id} item={item} currency={currency} locale={locale} lang={lang} />
         ))}
       </ul>
 

@@ -29,7 +29,11 @@ export async function mockStripe(page: Page) {
                       }
                     },
                     destroy: function() {},
-                    on: function() { return this; },
+                    on: function(event, cb) {
+                      if (event === 'ready' && cb) setTimeout(cb, 0);
+                      if (event === 'loaderror') { /* no-op */ }
+                      return this;
+                    },
                     update: function() {},
                   };
                 },

@@ -84,6 +84,7 @@ function StripePaymentFormInner({
     init();
 
     return () => {
+      mountedRef.current = false;
       // Stripe Elements clean up their own DOM on unmount, but we destroy
       // the Elements instance to release resources.
       if (elements) {

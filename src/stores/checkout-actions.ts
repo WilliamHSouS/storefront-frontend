@@ -63,7 +63,7 @@ export function patchDelivery(
 
     try {
       const sdk = client ?? getClient();
-      const { data: responseData, error } = await sdk.PATCH('/api/v1/checkout/{id}/', {
+      const { data: responseData, error } = await sdk.PATCH('/api/v1/checkout/{id}/delivery/', {
         params: { path: { id: checkoutId } },
         body: data,
         signal: controller.signal,

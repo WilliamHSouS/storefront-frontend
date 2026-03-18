@@ -94,14 +94,32 @@ export function persistFormState(state: CheckoutFormState): void {
   }
 }
 
+const FORM_STATE_DEFAULTS: CheckoutFormState = {
+  email: '',
+  phone: '',
+  firstName: '',
+  lastName: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  countryCode: 'NL',
+  fulfillmentMethod: 'delivery',
+  pickupLocationId: null,
+  schedulingMode: 'asap',
+  scheduledDate: null,
+  selectedSlotId: null,
+  selectedShippingRateId: null,
+};
+
 export function restoreFormState(): CheckoutFormState | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = sessionStorage.getItem(FORM_STATE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as CheckoutFormState;
-  } catch (e) {
-    log.warn('checkout', 'Failed to restore form state:', e);
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== 'object' || parsed === null) return null;
+    return { ...FORM_STATE_DEFAULTS, ...parsed };
+  } catch {
     return null;
   }
 }

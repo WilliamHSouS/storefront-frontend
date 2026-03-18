@@ -184,7 +184,7 @@ describe('patchDelivery', () => {
     // Only one PATCH call should have been made (the last one)
     expect(client.PATCH).toHaveBeenCalledTimes(1);
     expect(client.PATCH).toHaveBeenCalledWith(
-      '/api/v1/checkout/{id}/',
+      '/api/v1/checkout/{id}/delivery/',
       expect.objectContaining({
         body: { email: 'c@c.com' },
       }),

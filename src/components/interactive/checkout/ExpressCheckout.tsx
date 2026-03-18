@@ -3,6 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import type { Stripe, PaymentRequest, PaymentRequestPaymentMethodEvent } from '@stripe/stripe-js';
 import { t } from '@/i18n';
 import { createCheckout, initiatePayment } from '@/stores/checkout-actions';
+import { $checkout } from '@/stores/checkout';
 import { getClient } from '@/lib/api';
 import type { Checkout, PaymentResult } from '@/types/checkout';
 
@@ -22,10 +23,6 @@ export interface ExpressCheckoutProps {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function toCents(decimalString: string): number {
-  return Math.round(parseFloat(decimalString) * 100);
-}
-
 /**
  * Awaitable PATCH to set delivery details on a checkout.
  * Unlike the debounced `patchDelivery` from checkout-actions, this returns
@@ -36,7 +33,7 @@ async function patchDeliveryImmediate(
   data: Record<string, unknown>,
 ): Promise<Checkout> {
   const sdk = getClient();
-  const { data: responseData, error } = await sdk.PATCH('/api/v1/checkout/{id}/', {
+  const { data: responseData, error } = await sdk.PATCH('/api/v1/checkout/{id}/delivery/', {
     params: { path: { id: checkoutId } },
     body: data,
   });
@@ -123,15 +120,20 @@ export default function ExpressCheckout({
         setInlineError(null);
 
         try {
-          // Step 1: Create checkout from cart
+          // Step 1: Re-use existing checkout or create from cart
           let checkout: Checkout;
-          try {
-            checkout = await createCheckout(cartId);
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Failed to create checkout';
-            ev.complete('fail');
-            onError(msg);
-            return;
+          const existing = $checkout.get();
+          if (existing?.id) {
+            checkout = existing;
+          } else {
+            try {
+              checkout = await createCheckout(cartId);
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : 'Failed to create checkout';
+              ev.complete('fail');
+              onError(msg);
+              return;
+            }
           }
 
           // Step 2: Set delivery details from payment method
@@ -211,7 +213,7 @@ export default function ExpressCheckout({
         (buttonElement as { destroy: () => void }).destroy();
       }
     };
-  }, [publishableKey, stripeAccount, currency, totalInCents, merchantName, cartId]);
+  }, [publishableKey, stripeAccount, currency, cartId]);
 
   // Update total when it changes
   useEffect(() => {
@@ -238,4 +240,4 @@ export default function ExpressCheckout({
   );
 }
 
-export { toCents };
+export { toCents } from '@/lib/currency';

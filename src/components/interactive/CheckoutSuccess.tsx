@@ -21,7 +21,8 @@ export default function CheckoutSuccess({ lang }: Props) {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const order = params.get('order');
+    const rawOrder = params.get('order');
+    const order = rawOrder && /^[a-zA-Z0-9_-]{1,50}$/.test(rawOrder) ? rawOrder : null;
     const checkoutId = params.get('checkout_id');
     const paymentIntent = params.get('payment_intent');
 
@@ -60,13 +61,16 @@ export default function CheckoutSuccess({ lang }: Props) {
       }, 2000);
 
       // Stop polling after 30s and show a generic success
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         clearInterval(pollInterval);
         setLoading(false);
       }, 30_000);
 
       // Clean up on unmount
-      pollCleanupRef.current = () => clearInterval(pollInterval);
+      pollCleanupRef.current = () => {
+        clearInterval(pollInterval);
+        clearTimeout(timeoutId);
+      };
     } else {
       // No valid params — redirect to menu
       window.location.href = `/${lang}/`;
