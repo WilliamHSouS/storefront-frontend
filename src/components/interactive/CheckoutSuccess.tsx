@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { t } from '@/i18n';
+import { getClient } from '@/lib/api';
+import * as log from '@/lib/logger';
 
 interface Props {
   lang: 'nl' | 'en' | 'de';
@@ -8,6 +10,14 @@ interface Props {
 export default function CheckoutSuccess({ lang }: Props) {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const pollCleanupRef = useRef<(() => void) | null>(null);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      pollCleanupRef.current?.();
+    };
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -28,9 +38,35 @@ export default function CheckoutSuccess({ lang }: Props) {
       setOrderNumber(order);
       setLoading(false);
     } else if (checkoutId && paymentIntent) {
-      // Bank redirect return — completion handled by webhook or ensurePaymentAndComplete (wired in Task 19)
-      setLoading(false);
-      setOrderNumber(null);
+      // Bank redirect return — the webhook handles payment completion server-side.
+      // We poll the checkout status until it's completed or we time out.
+      setLoading(true);
+
+      const sdk = getClient();
+      const pollInterval = setInterval(async () => {
+        try {
+          const { data } = await sdk.GET('/api/v1/checkout/{id}/', {
+            params: { path: { id: checkoutId } },
+          });
+          const checkout = data as { status?: string; order_number?: string | null } | null;
+          if (checkout?.status === 'completed' && checkout.order_number) {
+            clearInterval(pollInterval);
+            setOrderNumber(checkout.order_number);
+            setLoading(false);
+          }
+        } catch (err) {
+          log.error('checkout-success', 'Failed to poll checkout status:', err);
+        }
+      }, 2000);
+
+      // Stop polling after 30s and show a generic success
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setLoading(false);
+      }, 30_000);
+
+      // Clean up on unmount
+      pollCleanupRef.current = () => clearInterval(pollInterval);
     } else {
       // No valid params — redirect to menu
       window.location.href = `/${lang}/`;

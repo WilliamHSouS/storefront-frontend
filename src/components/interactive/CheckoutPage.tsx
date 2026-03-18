@@ -1,14 +1,20 @@
-import { useReducer, useEffect, useCallback, useRef } from 'preact/hooks';
+import { useReducer, useEffect, useCallback, useRef, useState } from 'preact/hooks';
+import { lazy, Suspense } from 'preact/compat';
 import { useStore } from '@nanostores/preact';
 import { $cart, $cartTotal, ensureCart } from '@/stores/cart';
 import { $merchant } from '@/stores/merchant';
 import { $checkout, $checkoutLoading, persistFormState, restoreFormState } from '@/stores/checkout';
-import { createCheckout } from '@/stores/checkout-actions';
+import {
+  createCheckout,
+  initiatePayment,
+  ensurePaymentAndComplete,
+} from '@/stores/checkout-actions';
 import { $addressCoords } from '@/stores/address';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
 import { t } from '@/i18n';
 import * as log from '@/lib/logger';
+import type { Stripe, StripeElements } from '@stripe/stripe-js';
 import type { CheckoutFormState } from '@/types/checkout';
 import { CheckoutHeader } from './checkout/CheckoutHeader';
 import { ContactForm } from './checkout/ContactForm';
@@ -20,6 +26,11 @@ import { PickupLocationPicker } from './checkout/PickupLocationPicker';
 import { PlaceOrderButton } from './checkout/PlaceOrderButton';
 import { PrivacyNotice } from './checkout/PrivacyNotice';
 import SchedulingPicker from './checkout/SchedulingPicker';
+import ExpressCheckout, { toCents } from './checkout/ExpressCheckout';
+
+const StripePaymentForm = lazy(() =>
+  import('./checkout/StripePaymentForm').then((m) => ({ default: m.StripePaymentForm })),
+);
 
 /* ------------------------------------------------------------------ */
 /*  Form reducer — exported for use by Tasks 11-16                     */
@@ -80,6 +91,16 @@ export default function CheckoutPage({ lang }: Props) {
 
   const [form, dispatch] = useReducer(formReducer, INITIAL_FORM_STATE);
   const initializedRef = useRef(false);
+
+  // Stripe payment state
+  const stripeRef = useRef<Stripe | null>(null);
+  const elementsRef = useRef<StripeElements | null>(null);
+  const [paymentReady, setPaymentReady] = useState(false);
+  const [stripeConfig, setStripeConfig] = useState<{
+    clientSecret: string;
+    publishableKey: string;
+    stripeAccount: string;
+  } | null>(null);
 
   const typedLang = lang as 'nl' | 'en' | 'de';
   const currency = merchant?.currency ?? 'EUR';
@@ -150,16 +171,67 @@ export default function CheckoutPage({ lang }: Props) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
+  // ── Initiate payment when checkout progresses past 'created' ─────
+  useEffect(() => {
+    if (!checkout || checkout.status === 'created') return;
+    if (stripeConfig) return; // already initiated
+
+    initiatePayment(checkout.id)
+      .then((result) => {
+        if (result?.client_secret) {
+          setStripeConfig({
+            clientSecret: result.client_secret,
+            // TODO: fetch publishableKey and stripeAccount from payment-gateways endpoint
+            publishableKey: '',
+            stripeAccount: '',
+          });
+        }
+      })
+      .catch((err) => {
+        log.error('checkout', 'Failed to initiate payment:', err);
+      });
+  }, [checkout?.status, checkout?.id, stripeConfig]);
+
   // If cart is empty (redirect pending), show stable wrapper
   if (cart && cart.line_items.length === 0) {
     return <div class="min-h-screen" />;
   }
 
-  // ── Place order handler (placeholder for Task 17) ────────────────
-  const handlePlaceOrder = useCallback(() => {
+  // ── Place order handler ─────────────────────────────────────────
+  const handlePlaceOrder = useCallback(async () => {
+    if (!stripeRef.current || !elementsRef.current || !checkout || !stripeConfig) return;
+
     persistFormState(form);
-    log.warn('checkout', 'Place order triggered — payment flow not yet implemented');
-  }, [form]);
+
+    const { error } = await stripeRef.current.confirmPayment({
+      elements: elementsRef.current,
+      confirmParams: {
+        return_url: `${window.location.origin}/${lang}/checkout/success?checkout_id=${checkout.id}`,
+      },
+      redirect: 'if_required',
+    });
+
+    if (error) {
+      // Stripe shows inline error in Payment Element for most cases
+      log.error('checkout', 'Stripe confirmPayment error:', error.message);
+      return;
+    }
+
+    // Card/wallet payment succeeded inline — complete checkout
+    // Cast to StripeInstance — the real Stripe type is a superset of the simplified interface
+    const result = await ensurePaymentAndComplete(
+      checkout.id,
+      stripeConfig.clientSecret,
+      stripeRef.current as unknown as Parameters<typeof ensurePaymentAndComplete>[2],
+      lang,
+    );
+
+    if (result.status === 'succeeded' && result.redirectUrl) {
+      window.location.href = result.redirectUrl;
+    } else if (result.status === 'error') {
+      log.error('checkout', 'Payment completion error:', result.message);
+    }
+  }, [form, checkout, stripeConfig, lang]);
 
   return (
     <div class="min-h-screen bg-background">
@@ -174,8 +246,22 @@ export default function CheckoutPage({ lang }: Props) {
             <OrderSummary lang={typedLang} currency={currency} />
           </div>
 
-          {/* Placeholder for ExpressCheckout (Task 18) */}
-          <div class="px-4 py-3 text-muted-foreground text-sm">[Express checkout - Task 18]</div>
+          {/* Express checkout (Apple Pay / Google Pay) */}
+          <ExpressCheckout
+            lang={typedLang}
+            publishableKey={stripeConfig?.publishableKey ?? ''}
+            stripeAccount={stripeConfig?.stripeAccount ?? ''}
+            merchantName={merchant.name}
+            currency={currency}
+            totalInCents={toCents(cartTotal)}
+            cartId={cart?.id ?? ''}
+            onSuccess={(orderNumber) => {
+              window.location.href = `/${lang}/checkout/success?order=${orderNumber}`;
+            }}
+            onError={(msg) => {
+              log.error('checkout', 'Express checkout error:', msg);
+            }}
+          />
 
           <FormDivider lang={typedLang} visible={true} />
 
@@ -242,8 +328,33 @@ export default function CheckoutPage({ lang }: Props) {
             />
           </div>
 
-          {/* Placeholder for PaymentSection (Phase 4) */}
-          <div class="px-4 py-3 text-muted-foreground text-sm">[Payment - Phase 4]</div>
+          {/* Stripe Payment Element */}
+          {stripeConfig?.clientSecret && (
+            <div class="px-4 py-4">
+              <h2 class="text-base font-semibold mb-3">{t('payment', typedLang)}</h2>
+              <Suspense fallback={<div class="animate-pulse rounded-lg bg-muted h-[200px]" />}>
+                <StripePaymentForm
+                  clientSecret={stripeConfig.clientSecret}
+                  publishableKey={stripeConfig.publishableKey}
+                  stripeAccount={stripeConfig.stripeAccount}
+                  merchantTheme={{
+                    primary: merchant.theme?.primary,
+                    background: merchant.theme?.background,
+                    foreground: merchant.theme?.foreground,
+                    radius: merchant.theme?.radius,
+                  }}
+                  onStripeReady={(stripe, elements) => {
+                    stripeRef.current = stripe;
+                    elementsRef.current = elements;
+                    setPaymentReady(true);
+                  }}
+                  onError={(msg) => {
+                    log.error('checkout', 'Stripe payment form error:', msg);
+                  }}
+                />
+              </Suspense>
+            </div>
+          )}
 
           {/* Privacy notice */}
           <PrivacyNotice lang={typedLang} />
@@ -253,8 +364,8 @@ export default function CheckoutPage({ lang }: Props) {
             <button
               type="button"
               onClick={handlePlaceOrder}
-              disabled={loading}
-              class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+              disabled={loading || !paymentReady}
+              class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading || !paymentReady ? 'pointer-events-none opacity-50' : ''}`}
             >
               {loading ? (
                 <>
