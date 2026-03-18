@@ -23,8 +23,8 @@ function defaultForm(): CheckoutFormState {
 }
 
 describe('ContactForm', () => {
-  let dispatch: ReturnType<typeof vi.fn>;
-  let onBlur: ReturnType<typeof vi.fn>;
+  let dispatch: (...args: unknown[]) => void;
+  let onBlur: () => void;
 
   beforeEach(() => {
     cleanup();
