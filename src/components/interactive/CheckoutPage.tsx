@@ -446,7 +446,7 @@ export default function CheckoutPage({ lang }: Props) {
       // Step 1: Initiate payment on the backend (creates PaymentIntent)
       const paymentResult = await initiatePayment(checkout.id);
       if (!paymentResult?.client_secret) {
-        log.error('checkout', 'No client_secret returned from payment initiation');
+        $checkoutError.set(t('paymentDeclined', typedLang));
         return;
       }
 
@@ -461,7 +461,7 @@ export default function CheckoutPage({ lang }: Props) {
         });
 
         if (error) {
-          log.error('checkout', 'Stripe confirmPayment error:', error.message);
+          $checkoutError.set(error.message ?? t('paymentDeclined', typedLang));
           return;
         }
 
@@ -478,11 +478,13 @@ export default function CheckoutPage({ lang }: Props) {
         }
       } else {
         // Stripe not loaded — complete via backend (webhook will handle)
-        await completeCheckout(checkout.id);
-        window.location.href = `/${lang}/checkout/success?order=${checkout.order_number ?? ''}`;
+        const completed = await completeCheckout(checkout.id);
+        window.location.href = `/${lang}/checkout/success?order=${completed.order_number ?? ''}`;
       }
     } catch (err) {
-      log.error('checkout', 'Place order error:', err instanceof Error ? err.message : String(err));
+      const msg = err instanceof Error ? err.message : String(err);
+      $checkoutError.set(msg);
+      log.error('checkout', 'Place order error:', msg);
     } finally {
       setIsSubmitting(false);
     }
