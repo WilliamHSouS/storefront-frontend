@@ -113,10 +113,7 @@ export default function CheckoutPage({ lang }: Props) {
     publishableKey: string;
     stripeAccount: string;
   } | null>(null);
-  const [availableFulfillment, setAvailableFulfillment] = useState<('delivery' | 'pickup')[]>([
-    'delivery',
-    'pickup',
-  ]);
+  const [availableFulfillment, setAvailableFulfillment] = useState<('delivery' | 'pickup')[]>([]);
   const [timeSlots, setTimeSlots] = useState<
     Array<{
       id: string;
@@ -545,16 +542,7 @@ export default function CheckoutPage({ lang }: Props) {
 
           <FormDivider lang={typedLang} visible={expressAvailable} />
 
-          {/* Fulfillment method toggle — no wrapper div, toggle handles its own visibility */}
-          <FulfillmentToggle
-            lang={typedLang}
-            form={form}
-            dispatch={dispatch}
-            availableMethods={availableFulfillment}
-            deliveryEligible={availableFulfillment.includes('delivery') ? true : false}
-          />
-
-          {/* Contact information */}
+          {/* Contact information — always visible */}
           <div class="px-4 py-3">
             <ContactForm
               lang={typedLang}
@@ -565,31 +553,44 @@ export default function CheckoutPage({ lang }: Props) {
             />
           </div>
 
-          {/* Delivery address (visible only for delivery) */}
-          {form.fulfillmentMethod === 'delivery' && (
-            <div class="px-4 py-3">
-              <DeliveryAddressForm
+          {/* Fulfillment sections — only after shipping methods are loaded */}
+          {availableFulfillment.length > 0 && (
+            <>
+              <FulfillmentToggle
                 lang={typedLang}
                 form={form}
                 dispatch={dispatch}
-                onBlur={handleBlur}
-                errors={formErrors}
-                visible
+                availableMethods={availableFulfillment}
+                deliveryEligible={availableFulfillment.includes('delivery') ? true : false}
               />
-            </div>
-          )}
 
-          {/* Pickup location (visible only for pickup) */}
-          {form.fulfillmentMethod === 'pickup' && (
-            <div class="px-4 py-3">
-              <PickupLocationPicker
-                lang={typedLang}
-                form={form}
-                dispatch={dispatch}
-                locations={pickupLocations}
-                visible
-              />
-            </div>
+              {/* Delivery address (visible only for delivery) */}
+              {form.fulfillmentMethod === 'delivery' && (
+                <div class="px-4 py-3">
+                  <DeliveryAddressForm
+                    lang={typedLang}
+                    form={form}
+                    dispatch={dispatch}
+                    onBlur={handleBlur}
+                    errors={formErrors}
+                    visible
+                  />
+                </div>
+              )}
+
+              {/* Pickup location (visible only for pickup) */}
+              {form.fulfillmentMethod === 'pickup' && (
+                <div class="px-4 py-3">
+                  <PickupLocationPicker
+                    lang={typedLang}
+                    form={form}
+                    dispatch={dispatch}
+                    locations={pickupLocations}
+                    visible
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {/* Scheduling */}
