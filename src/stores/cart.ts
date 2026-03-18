@@ -3,6 +3,7 @@ import type { StorefrontClient } from '@/lib/sdk-stub';
 import { normalizeCart } from '@/lib/normalize';
 import { getClient } from '@/lib/api';
 import { $addressCoords } from '@/stores/address';
+import { validateStorageId } from '@/lib/validate-id';
 import * as log from '@/lib/logger';
 
 export interface Suggestion {
@@ -136,14 +137,12 @@ export function cartCoordsQuery(): Record<string, string | number> | undefined {
 }
 
 const CART_ID_KEY = 'sous_cart_id';
-/** Cart IDs must be alphanumeric, hyphens, or underscores — prevents path traversal. */
-const CART_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export function getStoredCartId(): string | null {
   if (typeof window === 'undefined') return null;
   try {
     const id = localStorage.getItem(CART_ID_KEY);
-    if (id && !CART_ID_PATTERN.test(id)) {
+    if (id && !validateStorageId(id)) {
       log.warn('cart', 'Invalid cart ID format in localStorage, clearing');
       clearStoredCartId();
       return null;

@@ -45,9 +45,17 @@ export default function CartBar({ lang }: Props) {
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
 
+  // Always render a stable wrapper for DOM stability (CLAUDE.md gotcha)
+  const emptyWrapper = <div class="fixed bottom-0 left-0 right-0 z-40 md:hidden" />;
+
+  // Suppress on checkout pages
+  if (typeof window !== 'undefined' && window.location.pathname.includes('/checkout')) {
+    return emptyWrapper;
+  }
+
   // Hide when: no items, cart drawer open, or category drawer open
   if (itemCount === 0 || isCartOpen || isCategoryDrawerOpen) {
-    return null;
+    return emptyWrapper;
   }
 
   const itemLabel =
