@@ -1,0 +1,27 @@
+src/components/interactive/CheckoutPage.tsx
+  b78cc47572987dc1 108,152-184
+src/stores/checkout-actions.ts
+  b78cc47572987dc1 1,68-69,174
+src/components/interactive/checkout/ExpressCheckout.tsx
+  b78cc47572987dc1 1,39-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "c3930c8dfffd63ab21b6514ed2b391bf7a977dc9",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 77,
+      "total_deletions": 43,
+      "accepted_lines": 57,
+      "overriden_lines": 0
+    }
+  }
+}
