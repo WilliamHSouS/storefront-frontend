@@ -97,7 +97,6 @@ export default function CheckoutPage({ lang }: Props) {
   // Stripe payment state
   const stripeRef = useRef<Stripe | null>(null);
   const elementsRef = useRef<StripeElements | null>(null);
-  const [paymentReady, setPaymentReady] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expressAvailable, setExpressAvailable] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -285,9 +284,10 @@ export default function CheckoutPage({ lang }: Props) {
       config?: GatewayConfigEntry[];
     }
 
+    const gatewayUrl = `/api/v1/checkout/${checkout.id}/payment-gateways/`;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
     client
-      .GET(`/api/v1/checkout/${checkout.id}/payment-gateways/` as any)
+      .GET(gatewayUrl as any)
       .then(({ data }) => {
         const gateways = (data as unknown as PaymentGateway[]) ?? [];
         const stripeGateway = gateways.find((g) => g.id === 'stripe');
@@ -523,7 +523,6 @@ export default function CheckoutPage({ lang }: Props) {
                   onStripeReady={(stripe, elements) => {
                     stripeRef.current = stripe;
                     elementsRef.current = elements;
-                    setPaymentReady(true);
                   }}
                   onError={(msg) => {
                     log.error('checkout', 'Stripe payment form error:', msg);
@@ -541,8 +540,8 @@ export default function CheckoutPage({ lang }: Props) {
             <button
               type="button"
               onClick={handlePlaceOrder}
-              disabled={loading || isSubmitting || !paymentReady}
-              class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading || isSubmitting || !paymentReady ? 'pointer-events-none opacity-50' : ''}`}
+              disabled={loading || isSubmitting}
+              class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading || isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
             >
               {loading ? (
                 <>
@@ -585,7 +584,7 @@ export default function CheckoutPage({ lang }: Props) {
         lang={typedLang}
         currency={currency}
         onPlace={handlePlaceOrder}
-        disabled={isSubmitting || !paymentReady}
+        disabled={isSubmitting}
       />
     </div>
   );
