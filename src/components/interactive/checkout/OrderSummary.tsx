@@ -77,6 +77,7 @@ export function OrderSummary({ lang, currency }: Props) {
   const shipping = hasShippingEstimate ? (checkout ? totals.shipping : cart?.shipping_cost) : null;
   const tax = checkout ? totals.tax : cart?.tax_total;
   const discount = checkout ? totals.discount : cart?.discount_amount;
+  const surchargeTotal = checkout ? checkout.surcharge_total : cart?.surcharge_total;
   const total = checkout ? totals.total : cartTotal;
 
   const discountNum = discount ? parseFloat(discount) : 0;
@@ -119,6 +120,7 @@ export function OrderSummary({ lang, currency }: Props) {
           shipping={shipping ?? null}
           tax={tax ?? '0.00'}
           discount={discountNum > 0 ? discount! : null}
+          surchargeTotal={surchargeTotal}
           total={total ?? '0.00'}
           taxIncluded={true}
           showShippingFree={checkout?.status !== 'created'}
