@@ -16,8 +16,14 @@ import * as log from '@/lib/logger';
 function errorDetail(error: unknown): string {
   if (!error || typeof error !== 'object') return 'Unknown error';
   const e = error as Record<string, unknown>;
+  // Backend returns { error: { message: "...", code: "..." } }
   if (e.body && typeof e.body === 'object') {
     const body = e.body as Record<string, unknown>;
+    if (body.error && typeof body.error === 'object') {
+      const err = body.error as Record<string, unknown>;
+      if (typeof err.message === 'string') return err.message;
+    }
+    if (typeof body.message === 'string') return body.message;
     if (typeof body.detail === 'string') return body.detail;
   }
   if (typeof e.detail === 'string') return e.detail;

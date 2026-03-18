@@ -672,6 +672,9 @@ export default function CheckoutPage({ lang }: Props) {
               )}
             </button>
           </div>
+
+          {/* Bottom spacer for mobile sticky CTA */}
+          <div class="h-24 md:hidden" />
         </div>
 
         {/* ── Right column: sticky order summary (desktop) ───── */}
