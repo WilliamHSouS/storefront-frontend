@@ -390,13 +390,11 @@ export default function CheckoutPage({ lang }: Props) {
 
     const client = getClient();
 
-    interface GatewayConfigEntry {
-      key: string;
-      value: string;
-    }
     interface PaymentGateway {
       id: string;
-      config?: GatewayConfigEntry[];
+      name: string;
+      type: string;
+      config: Record<string, string> | Array<{ key: string; value: string }>;
     }
 
     const gatewayUrl = `/api/v1/checkout/${checkout.id}/payment-gateways/`;
@@ -404,7 +402,6 @@ export default function CheckoutPage({ lang }: Props) {
     client
       .GET(gatewayUrl as any)
       .then(({ data }) => {
-        // Response may be an array or { results: [...] }
         const raw = data as unknown;
         const gateways: PaymentGateway[] = Array.isArray(raw)
           ? raw
@@ -412,9 +409,20 @@ export default function CheckoutPage({ lang }: Props) {
             ? (raw as any).results
             : [];
         const stripeGateway = gateways.find((g) => g.id === 'stripe');
-        const configMap = new Map((stripeGateway?.config ?? []).map((c) => [c.key, c.value]));
-        const pk = (configMap.get('publishable_key') as string) ?? '';
-        const acct = (configMap.get('stripe_account') as string) ?? '';
+        if (!stripeGateway) return;
+
+        // Config may be an object { key: value } or array [{ key, value }]
+        const cfg = stripeGateway.config;
+        let pk = '';
+        let acct = '';
+        if (Array.isArray(cfg)) {
+          pk = cfg.find((c) => c.key === 'publishable_key')?.value ?? '';
+          acct = cfg.find((c) => c.key === 'stripe_account')?.value ?? '';
+        } else if (cfg && typeof cfg === 'object') {
+          pk = (cfg as Record<string, string>).publishable_key ?? '';
+          acct = (cfg as Record<string, string>).stripe_account ?? '';
+        }
+
         if (pk) {
           setStripeConfig({ clientSecret: '', publishableKey: pk, stripeAccount: acct });
         }
