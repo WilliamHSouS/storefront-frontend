@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { loadStripe } from '@stripe/stripe-js';
-import type {
-  Stripe,
-  PaymentRequest,
-  PaymentRequestPaymentMethodEvent,
-} from '@stripe/stripe-js';
+import type { Stripe, PaymentRequest, PaymentRequestPaymentMethodEvent } from '@stripe/stripe-js';
 import { t } from '@/i18n';
 import { createCheckout, initiatePayment } from '@/stores/checkout-actions';
 import { getClient } from '@/lib/api';
@@ -162,20 +158,15 @@ export default function ExpressCheckout({
               last_name: lastName,
               street_address_1:
                 'addressLine' in address
-                  ? (address as { addressLine?: string[] }).addressLine?.[0] ?? ''
-                  : (address as { line1?: string | null }).line1 ?? '',
-              city:
-                'city' in address
-                  ? (address as { city?: string }).city ?? ''
-                  : '',
+                  ? ((address as { addressLine?: string[] }).addressLine?.[0] ?? '')
+                  : ((address as { line1?: string | null }).line1 ?? ''),
+              city: 'city' in address ? ((address as { city?: string }).city ?? '') : '',
               postal_code:
                 'postalCode' in address
-                  ? (address as { postalCode?: string }).postalCode ?? ''
-                  : (address as { postal_code?: string | null }).postal_code ?? '',
+                  ? ((address as { postalCode?: string }).postalCode ?? '')
+                  : ((address as { postal_code?: string | null }).postal_code ?? ''),
               country_code:
-                'country' in address
-                  ? (address as { country?: string }).country ?? 'NL'
-                  : 'NL',
+                'country' in address ? ((address as { country?: string }).country ?? 'NL') : 'NL',
             };
           }
 
@@ -213,7 +204,10 @@ export default function ExpressCheckout({
 
     return () => {
       mountedRef.current = false;
-      if (buttonElement && typeof (buttonElement as { destroy?: () => void }).destroy === 'function') {
+      if (
+        buttonElement &&
+        typeof (buttonElement as { destroy?: () => void }).destroy === 'function'
+      ) {
         (buttonElement as { destroy: () => void }).destroy();
       }
     };
@@ -233,9 +227,7 @@ export default function ExpressCheckout({
 
   return (
     <div class="px-4 py-3">
-      <h2 class="text-sm font-medium text-gray-700 mb-2">
-        {t('expressCheckout', lang)}
-      </h2>
+      <h2 class="text-sm font-medium text-gray-700 mb-2">{t('expressCheckout', lang)}</h2>
       <div ref={buttonRef} />
       {inlineError && (
         <p class="mt-2 text-sm text-red-600" role="alert">
