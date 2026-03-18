@@ -160,7 +160,7 @@ export default function CheckoutPage({ lang }: Props) {
 
     // Only validate fields that have been touched (non-empty)
     if (form.email && !EMAIL_RE.test(form.email)) {
-      errors.email = t('email', typedLang) + ' is not valid';
+      errors.email = t('emailInvalid', typedLang);
     }
 
     setFormErrors((prev) => ({ ...prev, ...errors }));
@@ -266,22 +266,26 @@ export default function CheckoutPage({ lang }: Props) {
   function validateForm(): boolean {
     const errors: Record<string, string> = {};
 
-    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      errors.email = t('email', typedLang) + ' is required';
+    if (!form.email) {
+      errors.email = t('fieldRequired', typedLang, { field: t('email', typedLang) });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errors.email = t('emailInvalid', typedLang);
     }
     if (!form.phone) {
-      errors.phone = t('phone', typedLang) + ' is required';
+      errors.phone = t('fieldRequired', typedLang, { field: t('phone', typedLang) });
     }
     if (!form.firstName) {
-      errors.firstName = t('firstName', typedLang) + ' is required';
+      errors.firstName = t('fieldRequired', typedLang, { field: t('firstName', typedLang) });
     }
     if (!form.lastName) {
-      errors.lastName = t('lastName', typedLang) + ' is required';
+      errors.lastName = t('fieldRequired', typedLang, { field: t('lastName', typedLang) });
     }
     if (form.fulfillmentMethod === 'delivery') {
-      if (!form.street) errors.street = t('street', typedLang) + ' is required';
-      if (!form.city) errors.city = t('city', typedLang) + ' is required';
-      if (!form.postalCode) errors.postalCode = t('postalCode', typedLang) + ' is required';
+      if (!form.street)
+        errors.street = t('fieldRequired', typedLang, { field: t('street', typedLang) });
+      if (!form.city) errors.city = t('fieldRequired', typedLang, { field: t('city', typedLang) });
+      if (!form.postalCode)
+        errors.postalCode = t('fieldRequired', typedLang, { field: t('postalCode', typedLang) });
     }
 
     setFormErrors(errors);
