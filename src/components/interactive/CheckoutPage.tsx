@@ -109,6 +109,21 @@ export default function CheckoutPage({ lang }: Props) {
     'delivery',
     'pickup',
   ]);
+  const [timeSlots, setTimeSlots] = useState<
+    Array<{
+      id: string;
+      start_time: string;
+      end_time: string;
+      capacity: number;
+      reserved_count: number;
+      available: boolean;
+      remaining_capacity: number;
+    }>
+  >([]);
+  const [timeSlotsLoading, setTimeSlotsLoading] = useState(false);
+  const [pickupLocations, setPickupLocations] = useState<
+    Array<{ id: number; name: string; distance_km?: number }>
+  >([]);
 
   const typedLang = lang as 'nl' | 'en' | 'de';
   const currency = merchant?.currency ?? 'EUR';
@@ -159,15 +174,31 @@ export default function CheckoutPage({ lang }: Props) {
       .GET(`/api/v1/checkout/${checkout.id}/shipping/` as any)
       .then(({ data }) => {
         if (!data) return;
-        const groups = data as Array<{ available_rates: Array<{ rate_id: string; name: string }> }>;
+        const groups = data as Array<{
+          id: string;
+          vendor_shipping_provider_id?: number;
+          available_rates: Array<{ rate_id: string; name: string }>;
+          line_items: Array<{ product_id: number | string; title: string }>;
+        }>;
         // Determine available fulfillment types from shipping rates
         const methods = new Set<'delivery' | 'pickup'>();
+        const locations: Array<{ id: number; name: string }> = [];
         for (const group of groups) {
           for (const rate of group.available_rates ?? []) {
             const id = rate.rate_id?.toLowerCase() ?? rate.name?.toLowerCase() ?? '';
-            if (id.includes('pickup')) methods.add('pickup');
-            else methods.add('delivery');
+            if (id.includes('pickup')) {
+              methods.add('pickup');
+              // Use vendor_shipping_provider_id or group index as location ID
+              if (group.vendor_shipping_provider_id) {
+                locations.push({ id: group.vendor_shipping_provider_id, name: rate.name });
+              }
+            } else {
+              methods.add('delivery');
+            }
           }
+        }
+        if (locations.length > 0) {
+          setPickupLocations(locations);
         }
         const available = methods.size > 0 ? Array.from(methods) : ['pickup' as const];
         setAvailableFulfillment(available);
@@ -187,6 +218,46 @@ export default function CheckoutPage({ lang }: Props) {
         log.error('checkout', 'Failed to fetch shipping methods:', err);
       });
   }, [checkout?.id]);
+
+  // ── Fetch time slots for a date ────────────────────────────────
+  const fetchTimeSlots = useCallback(
+    (date: string) => {
+      // Use the first pickup location or default to 1
+      const locationId = form.pickupLocationId ?? pickupLocations[0]?.id ?? 1;
+      setTimeSlotsLoading(true);
+      const client = getClient();
+      const slotsUrl = `/api/v1/fulfillment/locations/${locationId}/slots/?date=${date}`;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
+      client
+        .GET(slotsUrl as any)
+        .then(({ data }) => {
+          if (!data) {
+            setTimeSlots([]);
+            return;
+          }
+          const response = data as {
+            time_slots?: Array<{
+              id: string;
+              start_time: string;
+              end_time: string;
+              capacity: number;
+              reserved_count: number;
+              available: boolean;
+              remaining_capacity: number;
+            }>;
+          };
+          setTimeSlots(response.time_slots ?? []);
+        })
+        .catch((err) => {
+          log.error('checkout', 'Failed to fetch time slots:', err);
+          setTimeSlots([]);
+        })
+        .finally(() => {
+          setTimeSlotsLoading(false);
+        });
+    },
+    [form.pickupLocationId, pickupLocations],
+  );
 
   // ── Redirect to menu if cart is empty ────────────────────────────
   useEffect(() => {
@@ -413,7 +484,6 @@ export default function CheckoutPage({ lang }: Props) {
 
       <div class="mx-auto max-w-5xl md:flex md:gap-8 md:px-4 md:py-6">
         {/* ── Left column: form ──────────────────────────────── */}
-        {}
         <div class="flex-1 md:max-w-xl" onBlur={handleBlur}>
           {/* Mobile order summary (above form) */}
           <div class="px-4 py-4 md:hidden">
@@ -442,16 +512,14 @@ export default function CheckoutPage({ lang }: Props) {
 
           <FormDivider lang={typedLang} visible={expressAvailable} />
 
-          {/* Fulfillment method toggle */}
-          <div class="px-4 py-3">
-            <FulfillmentToggle
-              lang={typedLang}
-              form={form}
-              dispatch={dispatch}
-              availableMethods={availableFulfillment}
-              deliveryEligible={availableFulfillment.includes('delivery') ? true : false}
-            />
-          </div>
+          {/* Fulfillment method toggle — no wrapper div, toggle handles its own visibility */}
+          <FulfillmentToggle
+            lang={typedLang}
+            form={form}
+            dispatch={dispatch}
+            availableMethods={availableFulfillment}
+            deliveryEligible={availableFulfillment.includes('delivery') ? true : false}
+          />
 
           {/* Contact information */}
           <div class="px-4 py-3">
@@ -482,7 +550,7 @@ export default function CheckoutPage({ lang }: Props) {
               lang={typedLang}
               form={form}
               dispatch={dispatch}
-              locations={[]}
+              locations={pickupLocations}
               visible={form.fulfillmentMethod === 'pickup'}
             />
           </div>
@@ -493,15 +561,13 @@ export default function CheckoutPage({ lang }: Props) {
               lang={typedLang}
               form={form}
               dispatch={dispatch}
-              timeSlots={[]}
-              onDateChange={(_date) => {
-                /* TODO: fetch slots from API */
-              }}
+              timeSlots={timeSlots}
+              onDateChange={fetchTimeSlots}
               onSlotSelect={(slotId) => {
                 dispatch({ type: 'SET_FIELD', field: 'selectedSlotId', value: slotId });
               }}
               isPickup={form.fulfillmentMethod === 'pickup'}
-              loading={false}
+              loading={timeSlotsLoading}
             />
           </div>
 
