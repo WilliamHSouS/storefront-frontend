@@ -154,8 +154,8 @@ export default function CheckoutPage({ lang }: Props) {
     if (!checkout?.id) return;
 
     const client = getClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
     client
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec
       .GET(`/api/v1/checkout/${checkout.id}/shipping/` as any)
       .then(({ data }) => {
         if (!data) return;
@@ -413,23 +413,25 @@ export default function CheckoutPage({ lang }: Props) {
             <OrderSummary lang={typedLang} currency={currency} />
           </div>
 
-          {/* Express checkout (Apple Pay / Google Pay) */}
-          <ExpressCheckout
-            lang={typedLang}
-            publishableKey={stripeConfig?.publishableKey ?? ''}
-            stripeAccount={stripeConfig?.stripeAccount ?? ''}
-            merchantName={merchant.name}
-            currency={currency}
-            totalInCents={toCents(cartTotal)}
-            cartId={cart?.id ?? ''}
-            onSuccess={(orderNumber) => {
-              window.location.href = `/${lang}/checkout/success?order=${orderNumber}`;
-            }}
-            onError={(msg) => {
-              log.error('checkout', 'Express checkout error:', msg);
-            }}
-            onAvailable={setExpressAvailable}
-          />
+          {/* Express checkout (Apple Pay / Google Pay) — only when Stripe is configured */}
+          {stripeConfig?.publishableKey && (
+            <ExpressCheckout
+              lang={typedLang}
+              publishableKey={stripeConfig.publishableKey}
+              stripeAccount={stripeConfig.stripeAccount}
+              merchantName={merchant.name}
+              currency={currency}
+              totalInCents={toCents(cartTotal)}
+              cartId={cart?.id ?? ''}
+              onSuccess={(orderNumber) => {
+                window.location.href = `/${lang}/checkout/success?order=${orderNumber}`;
+              }}
+              onError={(msg) => {
+                log.error('checkout', 'Express checkout error:', msg);
+              }}
+              onAvailable={setExpressAvailable}
+            />
+          )}
 
           <FormDivider lang={typedLang} visible={expressAvailable} />
 
@@ -560,9 +562,6 @@ export default function CheckoutPage({ lang }: Props) {
                 </>
               )}
             </button>
-            <p class="mt-3 text-center text-xs text-muted-foreground">
-              {t('privacyNotice', typedLang)}
-            </p>
           </div>
         </div>
 

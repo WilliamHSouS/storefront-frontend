@@ -127,7 +127,7 @@ for (const msg of commsMessages) {
          Inline script checks localStorage for dismissals to prevent flash-then-hide. */
     }
     {
-      ssrTopBanner && (
+      ssrTopBanner && !hideSharedIslands && (
         <>
           <div
             data-ssr-top-banner
@@ -168,8 +168,8 @@ for (const msg of commsMessages) {
         /* best-effort */
       }
     </script>
-    <MerchantComms client:idle lang={langValue} messages={commsMessages} />
-    <DeliveryBanner client:idle lang={langValue} />
+    {!hideSharedIslands && <MerchantComms client:idle lang={langValue} messages={commsMessages} />}
+    {!hideSharedIslands && <DeliveryBanner client:idle lang={langValue} />}
 
     <slot />
 
