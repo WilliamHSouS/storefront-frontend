@@ -11,9 +11,15 @@ import { t } from '@/i18n';
 import * as log from '@/lib/logger';
 import type { CheckoutFormState } from '@/types/checkout';
 import { CheckoutHeader } from './checkout/CheckoutHeader';
+import { ContactForm } from './checkout/ContactForm';
+import DeliveryAddressForm from './checkout/DeliveryAddressForm';
 import { FormDivider } from './checkout/FormDivider';
+import FulfillmentToggle from './checkout/FulfillmentToggle';
 import { OrderSummary } from './checkout/OrderSummary';
+import { PickupLocationPicker } from './checkout/PickupLocationPicker';
 import { PlaceOrderButton } from './checkout/PlaceOrderButton';
+import { PrivacyNotice } from './checkout/PrivacyNotice';
+import SchedulingPicker from './checkout/SchedulingPicker';
 
 /* ------------------------------------------------------------------ */
 /*  Form reducer — exported for use by Tasks 11-16                     */
@@ -173,23 +179,74 @@ export default function CheckoutPage({ lang }: Props) {
 
           <FormDivider lang={typedLang} visible={true} />
 
-          {/* Placeholder for ContactInfoSection (Task 11) */}
-          <div class="px-4 py-3 text-muted-foreground text-sm">[Contact info - Task 11]</div>
+          {/* Fulfillment method toggle */}
+          <div class="px-4 py-3">
+            <FulfillmentToggle
+              lang={typedLang}
+              form={form}
+              dispatch={dispatch}
+              availableMethods={['delivery', 'pickup']}
+              deliveryEligible={null}
+            />
+          </div>
 
-          {/* Placeholder for FulfillmentToggle (Task 12) */}
-          <div class="px-4 py-3 text-muted-foreground text-sm">[Fulfillment toggle - Task 12]</div>
+          {/* Contact information */}
+          <div class="px-4 py-3">
+            <ContactForm
+              lang={typedLang}
+              form={form}
+              dispatch={dispatch}
+              onBlur={handleBlur}
+              errors={{}}
+            />
+          </div>
 
-          {/* Placeholder for AddressSection (Task 13) */}
-          <div class="px-4 py-3 text-muted-foreground text-sm">[Delivery address - Task 13]</div>
+          {/* Delivery address (visible only for delivery) */}
+          <div class="px-4 py-3">
+            <DeliveryAddressForm
+              lang={typedLang}
+              form={form}
+              dispatch={dispatch}
+              onBlur={handleBlur}
+              errors={{}}
+              visible={form.fulfillmentMethod === 'delivery'}
+            />
+          </div>
 
-          {/* Placeholder for SchedulingSection (Task 14) */}
-          <div class="px-4 py-3 text-muted-foreground text-sm">[Scheduling - Task 14]</div>
+          {/* Pickup location (visible only for pickup) */}
+          <div class="px-4 py-3">
+            <PickupLocationPicker
+              lang={typedLang}
+              form={form}
+              dispatch={dispatch}
+              locations={[]}
+              visible={form.fulfillmentMethod === 'pickup'}
+            />
+          </div>
 
-          {/* Placeholder for ShippingRateSelector (Task 15) */}
-          <div class="px-4 py-3 text-muted-foreground text-sm">[Shipping rates - Task 15]</div>
+          {/* Scheduling */}
+          <div class="px-4 py-3">
+            <SchedulingPicker
+              lang={typedLang}
+              form={form}
+              dispatch={dispatch}
+              timeSlots={[]}
+              onDateChange={(_date) => {
+                /* TODO: fetch slots from API */
+              }}
+              onSlotSelect={(slotId) => {
+                dispatch({ type: 'SET_FIELD', field: 'selectedSlotId', value: slotId });
+              }}
+              isPickup={form.fulfillmentMethod === 'pickup'}
+              loading={false}
+            />
+          </div>
 
-          {/* Placeholder for PaymentSection (Task 16) */}
-          <div class="px-4 py-3 text-muted-foreground text-sm">[Payment - Task 16]</div>
+          {/* Placeholder for PaymentSection (Phase 4) */}
+          <div class="px-4 py-3 text-muted-foreground text-sm">[Payment - Phase 4]</div>
+
+          {/* Privacy notice */}
+          <PrivacyNotice lang={typedLang} />
 
           {/* Desktop place order button */}
           <div class="hidden md:block px-4 py-6">
