@@ -1,0 +1,33 @@
+src/components/interactive/CartBar.tsx
+  b78cc47572987dc1 48-55,58
+src/lib/validate-id.test.ts
+  b78cc47572987dc1 1-25
+src/types/checkout.ts
+  b78cc47572987dc1 1-132
+src/stores/cart.ts
+  b78cc47572987dc1 6,145
+src/lib/validate-id.ts
+  b78cc47572987dc1 1-5
+src/middleware.ts
+  b78cc47572987dc1 107-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "4a9126126492a624d1a3222ab7747e721a3040cc",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 5746,
+      "total_deletions": 239,
+      "accepted_lines": 5514,
+      "overriden_lines": 0
+    }
+  }
+}
