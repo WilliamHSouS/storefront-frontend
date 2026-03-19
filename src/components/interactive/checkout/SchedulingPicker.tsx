@@ -56,7 +56,7 @@ export default function SchedulingPicker({
   const listboxRef = useRef<HTMLDivElement>(null);
 
   // How many dates to show at once in the strip
-  const visibleCount = 5;
+  const visibleCount = 4;
   const maxOffset = Math.max(0, dates.length - visibleCount);
   const visibleDates = dates.slice(scrollOffset, scrollOffset + visibleCount);
 
