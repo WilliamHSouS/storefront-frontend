@@ -223,42 +223,65 @@ export default function SchedulingPicker({
                   const selected = form.selectedSlotId === slot.id;
                   const disabled = !slot.available;
                   return (
-                    <label
+                    <div
                       key={slot.id}
+                      role="radio"
+                      aria-checked={selected}
                       aria-disabled={disabled ? 'true' : undefined}
+                      tabIndex={disabled ? -1 : 0}
                       class={`px-4 py-3 rounded-lg border text-sm cursor-pointer transition-colors select-none ${
                         disabled
                           ? 'opacity-50 cursor-not-allowed border-input'
                           : selected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-input'
+                            ? 'border-primary bg-primary/5 font-medium'
+                            : 'border-input hover:border-primary/50'
                       }`}
+                      onClick={() => {
+                        if (!disabled) {
+                          dispatch({
+                            type: 'SET_FIELD',
+                            field: 'selectedSlotId',
+                            value: slot.id,
+                          });
+                          onSlotSelect(slot.id);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                          e.preventDefault();
+                          dispatch({
+                            type: 'SET_FIELD',
+                            field: 'selectedSlotId',
+                            value: slot.id,
+                          });
+                          onSlotSelect(slot.id);
+                        }
+                      }}
                     >
-                      <input
-                        type="radio"
-                        name="timeSlot"
-                        value={slot.id}
-                        checked={selected}
-                        disabled={disabled}
-                        class="sr-only"
-                        onChange={() => {
-                          if (!disabled) {
-                            dispatch({
-                              type: 'SET_FIELD',
-                              field: 'selectedSlotId',
-                              value: slot.id,
-                            });
-                            onSlotSelect(slot.id);
-                          }
-                        }}
-                      />
-                      <span>
-                        {slot.start_time}–{slot.end_time}
+                      <span class="flex items-center justify-between">
+                        <span>
+                          {slot.start_time}–{slot.end_time}
+                          {disabled && (
+                            <span class="ml-2 text-muted-foreground">({t('slotFull', lang)})</span>
+                          )}
+                        </span>
+                        {selected && (
+                          <svg
+                            class="w-4 h-4 text-primary"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width={3}
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
                       </span>
-                      {disabled && (
-                        <span class="ml-2 text-muted-foreground">({t('slotFull', lang)})</span>
-                      )}
-                    </label>
+                    </div>
                   );
                 })}
               </div>
