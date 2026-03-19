@@ -42,6 +42,7 @@ export interface Cart {
   id: string;
   line_items: CartLineItem[];
   cart_total: string;
+  estimated_total?: string;
   cart_savings?: string;
   item_count: number;
   subtotal?: string;
@@ -84,7 +85,10 @@ export const $cartLoading = atom(false);
 
 export const $itemCount = computed($cart, (cart) => cart?.item_count ?? 0);
 
-export const $cartTotal = computed($cart, (cart) => cart?.cart_total ?? '0.00');
+export const $cartTotal = computed(
+  $cart,
+  (cart) => cart?.estimated_total ?? cart?.cart_total ?? '0.00',
+);
 
 export interface EligiblePromotion {
   id: number;
