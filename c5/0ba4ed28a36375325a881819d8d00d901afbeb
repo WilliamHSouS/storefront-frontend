@@ -1,0 +1,27 @@
+src/lib/sdk-stub.ts
+  b78cc47572987dc1 131,135-141
+src/lib/comms.ts
+  b78cc47572987dc1 145
+src/lib/comms.test.ts
+  b78cc47572987dc1 193
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "c50ba4ed28a36375325a881819d8d00d901afbeb",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 4,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
