@@ -266,11 +266,12 @@ export default function CheckoutPage({ lang }: Props) {
   // ── Fetch time slots for a date ────────────────────────────────
   const fetchTimeSlots = useCallback(
     (date: string) => {
-      // Use the first pickup location or default to 1
-      const locationId = form.pickupLocationId ?? pickupLocations[0]?.id ?? 1;
+      const locationId = form.pickupLocationId ?? pickupLocations[0]?.id;
+      if (!locationId) return; // Need a selected location to fetch slots
       setTimeSlotsLoading(true);
       const client = getClient();
-      const slotsUrl = `/api/v1/fulfillment/locations/${locationId}/slots/?date=${date}`;
+      // Use pickup-location-specific time slots endpoint
+      const slotsUrl = `/api/v1/pickup-locations/${locationId}/time-slots/?date=${date}`;
 
       client
         .GET(slotsUrl as any)
