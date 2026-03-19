@@ -1,0 +1,23 @@
+src/components/interactive/checkout/SchedulingPicker.tsx
+  b78cc47572987dc1 226,228-229,231,236-237,239,249-251,261-272,274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "89d19518259ba75a2e7f3abd029b0d95c34daf30",
+  "prompts": {
+    "b78cc47572987dc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "026017fe-1c90-478f-a2b5-1590c4798909",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 40,
+      "total_deletions": 27,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    }
+  }
+}
