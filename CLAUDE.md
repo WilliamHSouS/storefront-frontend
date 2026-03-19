@@ -111,9 +111,10 @@ Cart ID persisted in `localStorage`. The e2e mock server (`e2e/helpers/mock-api.
 
 Merchant configs live in `src/merchants/{slug}.json`, loaded statically via `import.meta.glob()`. Hostname resolution (`src/lib/resolve-merchant.ts`):
 
-- `{slug}.poweredbysous.com` → slug
+- `{slug}.{PLATFORM_SUFFIX}` → slug (suffix configured via `PLATFORM_SUFFIXES` env var)
 - Custom domains via `CUSTOM_DOMAINS` env var (JSON map)
 - Fallback: `DEFAULT_MERCHANT` env var
+- Local dev default: `.poweredbysous.localhost` (when `PLATFORM_SUFFIXES` is unset)
 
 Each merchant defines: theme (HSL colors, fonts, radius), languages, currency, layout (grid/list), contact info, SEO settings.
 
@@ -148,14 +149,15 @@ Middleware applies cache headers after page execution:
 
 ## Environment Variables
 
-| Variable              | Purpose                                 |
-| --------------------- | --------------------------------------- |
-| `API_BASE_URL`        | Server-side API base                    |
-| `PUBLIC_API_BASE_URL` | Client-side API base (browser)          |
-| `DEFAULT_MERCHANT`    | Fallback merchant slug                  |
-| `CUSTOM_DOMAINS`      | JSON map: custom domain → merchant slug |
-| `PUBLIC_POSTHOG_KEY`  | PostHog analytics key                   |
-| `AUTH_COOKIE_DOMAIN`  | Auth cookie domain                      |
+| Variable              | Purpose                                                                         |
+| --------------------- | ------------------------------------------------------------------------------- |
+| `API_BASE_URL`        | Server-side API base                                                            |
+| `PUBLIC_API_BASE_URL` | Client-side API base (browser)                                                  |
+| `DEFAULT_MERCHANT`    | Fallback merchant slug                                                          |
+| `CUSTOM_DOMAINS`      | JSON map: custom domain → merchant slug                                         |
+| `PLATFORM_SUFFIXES`   | Comma-separated platform domain suffixes (fallback: `.poweredbysous.localhost`) |
+| `PUBLIC_POSTHOG_KEY`  | PostHog analytics key                                                           |
+| `AUTH_COOKIE_DOMAIN`  | Auth cookie domain                                                              |
 
 ## Common Patterns
 

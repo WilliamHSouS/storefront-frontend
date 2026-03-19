@@ -8,7 +8,7 @@ import { loadMerchantConfig } from '@/merchants';
  */
 describe('merchant resolution pipeline', () => {
   it('resolves a known merchant from production subdomain', () => {
-    const slug = resolveMerchantSlug('bar-sumac.poweredbysous.com');
+    const slug = resolveMerchantSlug('bar-sumac.ordersous.com', '{}', undefined, '.ordersous.com');
     const config = loadMerchantConfig(slug);
     expect(config).not.toBeNull();
     expect(config!.slug).toBe('bar-sumac');
@@ -16,7 +16,12 @@ describe('merchant resolution pipeline', () => {
   });
 
   it('returns null config for unknown merchant', () => {
-    const slug = resolveMerchantSlug('nonexistent.poweredbysous.com');
+    const slug = resolveMerchantSlug(
+      'nonexistent.ordersous.com',
+      '{}',
+      undefined,
+      '.ordersous.com',
+    );
     const config = loadMerchantConfig(slug);
     expect(config).toBeNull();
   });

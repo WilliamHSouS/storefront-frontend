@@ -2,12 +2,36 @@ import { describe, it, expect, vi } from 'vitest';
 import { resolveMerchantSlug } from './resolve-merchant';
 
 describe('resolveMerchantSlug', () => {
-  it('extracts slug from production domain', () => {
-    expect(resolveMerchantSlug('bar-sumac.poweredbysous.com')).toBe('bar-sumac');
+  it('extracts slug from platform domain via PLATFORM_SUFFIXES', () => {
+    expect(resolveMerchantSlug('bar-sumac.ordersous.com', '{}', undefined, '.ordersous.com')).toBe(
+      'bar-sumac',
+    );
   });
 
-  it('extracts slug from localhost with port', () => {
+  it('supports multiple comma-separated suffixes', () => {
+    const suffixes = '.ordersous.com, .poweredbysous.localhost';
+    expect(resolveMerchantSlug('bar-sumac.ordersous.com', '{}', undefined, suffixes)).toBe(
+      'bar-sumac',
+    );
+    expect(
+      resolveMerchantSlug('bar-sumac.poweredbysous.localhost:4321', '{}', undefined, suffixes),
+    ).toBe('bar-sumac');
+  });
+
+  it('auto-prepends dot if suffix is missing it', () => {
+    expect(resolveMerchantSlug('bar-sumac.ordersous.com', '{}', undefined, 'ordersous.com')).toBe(
+      'bar-sumac',
+    );
+  });
+
+  it('falls back to .poweredbysous.localhost when no PLATFORM_SUFFIXES', () => {
     expect(resolveMerchantSlug('bar-sumac.poweredbysous.localhost:4321')).toBe('bar-sumac');
+  });
+
+  it('falls back to .poweredbysous.localhost for empty string', () => {
+    expect(resolveMerchantSlug('bar-sumac.poweredbysous.localhost:4321', '{}', undefined, '')).toBe(
+      'bar-sumac',
+    );
   });
 
   it('falls back to DEFAULT_MERCHANT for Vercel hostnames', () => {
@@ -41,6 +65,18 @@ describe('resolveMerchantSlug', () => {
     );
     warnSpy.mockRestore();
     (globalThis as Record<string, unknown>).__TESTING__ = true;
+  });
+
+  it('strips Vercel preview branch suffix from slug', () => {
+    expect(
+      resolveMerchantSlug('bar-sumac--feat-xyz.ordersous.com', '{}', undefined, '.ordersous.com'),
+    ).toBe('bar-sumac');
+  });
+
+  it('falls back to default when hostname equals the suffix (no subdomain)', () => {
+    expect(resolveMerchantSlug('.ordersous.com', '{}', 'fallback', '.ordersous.com')).toBe(
+      'fallback',
+    );
   });
 
   it('falls back to DEFAULT_MERCHANT for bare localhost', () => {
