@@ -190,7 +190,11 @@ describe('createCommsBatcher', () => {
       'https://api.test/api/v1/merchant-comms/storefront/events/',
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Vendor-ID': 'vendor-1' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Merchant-ID': 'vendor-1',
+          'X-Vendor-ID': 'vendor-1',
+        },
         body: JSON.stringify({ events: [makeEvent('1'), makeEvent('2')] }),
       }),
     );

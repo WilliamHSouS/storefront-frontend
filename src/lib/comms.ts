@@ -142,7 +142,11 @@ export function createCommsBatcher(
     try {
       fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Vendor-ID': vendorId },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Merchant-ID': vendorId,
+          'X-Vendor-ID': vendorId,
+        },
         body: JSON.stringify({ events: batch }),
       }).catch(() => {
         /* fire-and-forget */

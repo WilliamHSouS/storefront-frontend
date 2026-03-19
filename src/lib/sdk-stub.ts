@@ -128,9 +128,17 @@ function wrapCall(promise: Promise<RawSdkResponse>): Promise<ApiResult> {
 
 export function createStorefrontClient(options: CreateClientOptions): StorefrontClient {
   const baseFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
-  const fetchFn = options.hmacSecret
+  const hmacFetch = options.hmacSecret
     ? createSigningFetch(baseFetch, options.hmacSecret)
     : baseFetch;
+
+  // Add X-Merchant-ID header alongside X-Vendor-ID (backend migration)
+  const merchantId = options.vendorId;
+  const fetchFn: typeof baseFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const headers = new Headers(init?.headers);
+    headers.set('X-Merchant-ID', merchantId);
+    return hmacFetch(input, { ...init, headers });
+  };
 
   const realClient = createRealClient({
     baseUrl: options.baseUrl,
