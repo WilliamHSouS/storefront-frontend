@@ -22,11 +22,14 @@ export function PlaceOrderButton({ lang, currency, onPlace, disabled: externalDi
   // Hide when virtual keyboard is open (mobile)
   useEffect(() => {
     const onFocusIn = (e: FocusEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
-      ) {
+      const target = e.target as HTMLInputElement | null;
+      if (!target) return;
+      // Only hide for inputs that open the virtual keyboard
+      const isTextInput =
+        target.tagName === 'TEXTAREA' ||
+        (target.tagName === 'INPUT' &&
+          !['radio', 'checkbox', 'button', 'submit', 'reset', 'range'].includes(target.type));
+      if (isTextInput) {
         setKeyboardOpen(true);
       }
     };
