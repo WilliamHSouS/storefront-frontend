@@ -371,8 +371,18 @@ export default function CheckoutPage({ lang }: Props) {
       deliveryData.shipping_method_id = form.selectedShippingRateId;
     }
 
-    if (form.selectedSlotId) {
-      deliveryData.fulfillment_slot_id = form.selectedSlotId;
+    // Send selected pickup time as metadata (not as fulfillment_slot_id — that requires a UUID
+    // from the fulfillment reservation system, not from the pickup time window endpoint)
+    if (form.selectedSlotId && form.schedulingMode === 'scheduled') {
+      const [startTime, endTime] = form.selectedSlotId.split('-');
+      if (startTime && endTime) {
+        deliveryData.metadata = {
+          ...((deliveryData.metadata as Record<string, unknown>) ?? {}),
+          pickup_time_start: startTime,
+          pickup_time_end: endTime,
+          scheduled_date: form.scheduledDate,
+        };
+      }
     }
 
     patchDelivery(checkoutId, deliveryData);
