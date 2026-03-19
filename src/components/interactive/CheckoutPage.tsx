@@ -356,7 +356,11 @@ export default function CheckoutPage({ lang }: Props) {
 
     const deliveryData: Record<string, unknown> = {
       email: form.email,
-      shipping_address: {
+    };
+
+    // Only include address for delivery (pickup doesn't need it)
+    if (form.fulfillmentMethod === 'delivery') {
+      deliveryData.shipping_address = {
         first_name: form.firstName,
         last_name: form.lastName,
         street_address_1: form.street,
@@ -364,8 +368,8 @@ export default function CheckoutPage({ lang }: Props) {
         postal_code: form.postalCode,
         country_code: form.countryCode,
         phone_number: form.phone,
-      },
-    };
+      };
+    }
 
     if (form.selectedShippingRateId) {
       deliveryData.shipping_method_id = form.selectedShippingRateId;
@@ -383,6 +387,26 @@ export default function CheckoutPage({ lang }: Props) {
 
     patchDelivery(checkoutId, deliveryData);
   }, [form, checkout?.id, validateFieldsForPatch]);
+
+  // ── Auto-PATCH when fulfillment method or pickup location changes ──
+  // These changes don't come from text field blur, so they need their own trigger
+  useEffect(() => {
+    // Only if contact info is complete and checkout exists
+    if (!checkout?.id) return;
+    if (!form.email || !EMAIL_RE.test(form.email)) return;
+    if (!form.firstName || !form.lastName || !form.phone) return;
+
+    handleBlur();
+  }, [
+    form.fulfillmentMethod,
+    form.pickupLocationId,
+    checkout?.id,
+    form.email,
+    form.firstName,
+    form.lastName,
+    form.phone,
+    handleBlur,
+  ]);
 
   // ── Cross-tab cart change detection ──────────────────────────────
   useEffect(() => {
