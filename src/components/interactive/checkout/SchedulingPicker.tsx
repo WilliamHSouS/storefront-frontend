@@ -176,7 +176,7 @@ export default function SchedulingPicker({
                     role="option"
                     aria-selected={selected}
                     tabIndex={selected ? 0 : -1}
-                    class={`px-3 py-2 rounded-lg text-sm text-center cursor-pointer transition-colors select-none whitespace-nowrap flex-shrink-0 ${
+                    class={`px-3 py-2 rounded-lg text-sm text-center cursor-pointer transition-colors select-none whitespace-nowrap flex-1 ${
                       selected
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card border border-input'
