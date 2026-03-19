@@ -390,11 +390,14 @@ export default function CheckoutPage({ lang }: Props) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // ── Fetch payment gateway config (Stripe keys) after checkout created ──
-  // Payment is NOT initiated here — only when user clicks Place Order
+  // ── Fetch payment gateway config + initiate payment for Stripe Element ──
+  // Initiates a PaymentIntent to get client_secret for mounting the Payment Element.
+  // Only runs after checkout has delivery details set (backend requires delivery_set status).
   useEffect(() => {
     if (!checkout?.id) return;
     if (stripeConfig) return;
+    // Wait until checkout has progressed past 'created' (needs delivery details)
+    if (checkout.status === 'created') return;
 
     const client = getClient();
 
@@ -432,13 +435,27 @@ export default function CheckoutPage({ lang }: Props) {
         }
 
         if (pk) {
-          setStripeConfig({ clientSecret: '', publishableKey: pk, stripeAccount: acct });
+          // Initiate payment to get client_secret for mounting the Payment Element
+          // This creates a PaymentIntent but does NOT complete the checkout
+          initiatePayment(checkout!.id)
+            .then((paymentResult) => {
+              if (paymentResult?.client_secret) {
+                setStripeConfig({
+                  clientSecret: paymentResult.client_secret,
+                  publishableKey: pk,
+                  stripeAccount: acct,
+                });
+              }
+            })
+            .catch((err) => {
+              log.error('checkout', 'Failed to initiate payment:', err);
+            });
         }
       })
       .catch((err) => {
         log.error('checkout', 'Failed to fetch payment gateways:', err);
       });
-  }, [checkout?.id, stripeConfig]);
+  }, [checkout?.id, checkout?.status, stripeConfig]);
 
   // ── Form validation ─────────────────────────────────────────────
   function validateForm(): boolean {
@@ -478,8 +495,8 @@ export default function CheckoutPage({ lang }: Props) {
   }
 
   // ── Place order handler ─────────────────────────────────────────
-  // Payment is initiated HERE (on user click), not automatically.
-  // Flow: validate → initiate payment (gets client_secret) → confirm with Stripe → complete
+  // PaymentIntent is already created (when Payment Element mounted).
+  // Flow: validate → confirm with Stripe → complete checkout
   const handlePlaceOrder = useCallback(async () => {
     if (isSubmitting) return;
     if (!validateForm()) return;
@@ -489,15 +506,8 @@ export default function CheckoutPage({ lang }: Props) {
     persistFormState(form);
 
     try {
-      // Step 1: Initiate payment on the backend (creates PaymentIntent)
-      const paymentResult = await initiatePayment(checkout.id);
-      if (!paymentResult?.client_secret) {
-        $checkoutError.set(t('paymentDeclined', typedLang));
-        return;
-      }
-
-      // Step 2: If Stripe is loaded and Payment Element is mounted, confirm payment
-      if (stripeRef.current && elementsRef.current) {
+      // If Stripe Payment Element is mounted, confirm the existing PaymentIntent
+      if (stripeRef.current && elementsRef.current && stripeConfig?.clientSecret) {
         const { error } = await stripeRef.current.confirmPayment({
           elements: elementsRef.current,
           confirmParams: {
@@ -514,7 +524,7 @@ export default function CheckoutPage({ lang }: Props) {
         // Card/wallet payment succeeded inline — complete checkout
         const result = await ensurePaymentAndComplete(
           checkout.id,
-          paymentResult.client_secret,
+          stripeConfig.clientSecret,
           stripeRef.current as unknown as Parameters<typeof ensurePaymentAndComplete>[2],
           lang,
         );
