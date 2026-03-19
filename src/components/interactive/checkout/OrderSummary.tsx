@@ -68,16 +68,18 @@ export function OrderSummary({ lang, currency }: Props) {
 
   // Use checkout totals if available, fall back to cart
   const subtotal = checkout ? totals.subtotal : cart?.subtotal;
-  // Only show shipping when checkout exists (backend calculated it) or cart has a real shipping estimate
-  // Don't show when no address entered — cart.shipping_cost defaults to "0.00" which would show "Free"
-  const hasShippingEstimate =
-    checkout != null ||
-    (cart?.shipping_estimate?.total_shipping != null &&
-      cart.shipping_estimate.total_shipping !== '0.00');
-  const shipping = hasShippingEstimate ? (checkout ? totals.shipping : cart?.shipping_cost) : null;
   const tax = checkout ? totals.tax : cart?.tax_total;
   const discount = checkout ? totals.discount : cart?.discount_amount;
   const surchargeTotal = checkout ? checkout.surcharge_total : cart?.surcharge_total;
+
+  // Shipping: prefer checkout's shipping (after delivery set), fall back to cart's estimate
+  const checkoutShipping = checkout ? totals.shipping : null;
+  const cartShipping = cart?.shipping_estimate?.total_shipping ?? cart?.shipping_cost;
+  const checkoutHasShipping = checkoutShipping != null && parseFloat(checkoutShipping) > 0;
+  const cartHasShipping = cartShipping != null && parseFloat(cartShipping) > 0;
+  const shipping = checkoutHasShipping ? checkoutShipping : cartHasShipping ? cartShipping : null;
+
+  // Total: use cartTotal (which prefers estimated_total including shipping)
   const total = checkout ? totals.total : cartTotal;
 
   const discountNum = discount ? parseFloat(discount) : 0;
@@ -123,7 +125,7 @@ export function OrderSummary({ lang, currency }: Props) {
           surchargeTotal={surchargeTotal}
           total={total ?? '0.00'}
           taxIncluded={true}
-          showShippingFree={checkout?.status !== 'created'}
+          showShippingFree={checkoutHasShipping || cartHasShipping}
         />
       </div>
     </div>
