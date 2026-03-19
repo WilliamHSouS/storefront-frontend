@@ -371,7 +371,13 @@ export default function CheckoutPage({ lang }: Props) {
       deliveryData.shipping_method_id = form.selectedShippingRateId;
     }
 
-    if (form.selectedSlotId && form.schedulingMode === 'scheduled') {
+    // Only send fulfillment_slot_id if it looks like a valid UUID
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (
+      form.selectedSlotId &&
+      form.schedulingMode === 'scheduled' &&
+      UUID_RE.test(form.selectedSlotId)
+    ) {
       deliveryData.fulfillment_slot_id = form.selectedSlotId;
     }
 
@@ -658,7 +664,11 @@ export default function CheckoutPage({ lang }: Props) {
               form={form}
               dispatch={dispatch}
               timeSlots={timeSlots}
-              onDateChange={fetchTimeSlots}
+              onDateChange={(date) => {
+                // Clear selected slot when date changes (old slot is for a different date)
+                dispatch({ type: 'SET_FIELD', field: 'selectedSlotId', value: null });
+                fetchTimeSlots(date);
+              }}
               onSlotSelect={(slotId) => {
                 dispatch({ type: 'SET_FIELD', field: 'selectedSlotId', value: slotId });
               }}
