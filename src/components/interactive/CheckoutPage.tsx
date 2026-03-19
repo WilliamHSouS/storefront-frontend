@@ -281,16 +281,24 @@ export default function CheckoutPage({ lang }: Props) {
           }
           const response = data as {
             time_slots?: Array<{
-              id: string;
+              id?: string;
               start_time: string;
               end_time: string;
-              capacity: number;
-              reserved_count: number;
               available: boolean;
-              remaining_capacity: number;
+              capacity?: number;
+              reserved_count?: number;
+              remaining_capacity?: number;
             }>;
           };
-          setTimeSlots(response.time_slots ?? []);
+          // Generate IDs from time window if backend doesn't provide them
+          const slots = (response.time_slots ?? []).map((s) => ({
+            ...s,
+            id: s.id ?? `${s.start_time}-${s.end_time}`,
+            capacity: s.capacity ?? 0,
+            reserved_count: s.reserved_count ?? 0,
+            remaining_capacity: s.remaining_capacity ?? 0,
+          }));
+          setTimeSlots(slots);
         })
         .catch((err) => {
           log.error('checkout', 'Failed to fetch time slots:', err);
