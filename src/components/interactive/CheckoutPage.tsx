@@ -236,54 +236,31 @@ export default function CheckoutPage({ lang }: Props) {
       });
   }, [cart?.id, cart?.line_items.length, checkout?.cart_id, checkout?.status]);
 
-  // ── Fetch available shipping methods after checkout is created ────
+  // ── Determine available fulfillment methods from cart + pickup locations ──
+  // Use cart's existing shipping estimate (already calculated on menu page)
+  // and pickup locations to determine what's available — no separate API call needed
   useEffect(() => {
-    if (!checkout?.id) return;
+    const available: ('delivery' | 'pickup')[] = [];
 
-    const client = getClient();
-    client
+    // Cart has shipping estimate = delivery is available
+    const hasShipping =
+      cart?.shipping_estimate?.total_shipping != null ||
+      (cart?.shipping_cost != null && parseFloat(cart.shipping_cost) > 0);
+    if (hasShipping) available.push('delivery');
 
-      .GET(`/api/v1/checkout/${checkout.id}/shipping/` as any)
-      .then(({ data }) => {
-        // Determine available fulfillment methods:
-        // - If pickup locations exist, pickup is available
-        // - If shipping rates exist (from the endpoint), delivery is available
-        const available: ('delivery' | 'pickup')[] = [];
+    // Pickup locations exist = pickup is available
+    if (pickupLocations.length > 0) available.push('pickup');
 
-        const groups = Array.isArray(data)
-          ? (data as Array<{
-              id: string;
-              available_rates: Array<{ rate_id: string; name: string; cost: string }>;
-            }>)
-          : [];
+    // Fallback: show both and let the backend validate
+    if (available.length === 0) available.push('delivery', 'pickup');
 
-        // Any shipping rates = delivery is available
-        const hasShippingRates = groups.some((g) => (g.available_rates?.length ?? 0) > 0);
-        if (hasShippingRates) available.push('delivery');
+    setAvailableFulfillment(available);
 
-        // Pickup locations fetched separately — if any exist, pickup is available
-        if (pickupLocations.length > 0) available.push('pickup');
-
-        // Fallback: if nothing, show both and let the backend validate
-        if (available.length === 0) available.push('delivery', 'pickup');
-
-        setAvailableFulfillment(available);
-
-        // Auto-select the first available method if current selection isn't available
-        if (!available.includes(form.fulfillmentMethod)) {
-          dispatch({ type: 'SET_FULFILLMENT', method: available[0] });
-        }
-
-        // Auto-select shipping rate if only one is available
-        if (groups.length === 1 && groups[0].available_rates?.length === 1) {
-          const rateId = groups[0].available_rates[0].rate_id;
-          dispatch({ type: 'SET_FIELD', field: 'selectedShippingRateId', value: rateId });
-        }
-      })
-      .catch((err) => {
-        log.error('checkout', 'Failed to fetch shipping methods:', err);
-      });
-  }, [checkout?.id]);
+    // Auto-select the first available method if current selection isn't available
+    if (available.length > 0 && !available.includes(form.fulfillmentMethod)) {
+      dispatch({ type: 'SET_FULFILLMENT', method: available[0] });
+    }
+  }, [cart?.shipping_estimate, cart?.shipping_cost, pickupLocations.length]);
 
   // ── Fetch time slots for a date ────────────────────────────────
   const fetchTimeSlots = useCallback(
