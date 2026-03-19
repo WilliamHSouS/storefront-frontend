@@ -1,0 +1,33 @@
+src/components/interactive/checkout/StripePaymentForm.tsx
+  5c8b5e1a51036ef3 9,24,62-68
+src/stores/cart.ts
+  5c8b5e1a51036ef3 179-184
+src/components/interactive/checkout/SchedulingPicker.tsx
+  5c8b5e1a51036ef3 212
+src/components/interactive/CheckoutSuccess.tsx
+  5c8b5e1a51036ef3 4-5,41-42,59-60
+src/components/interactive/CheckoutPage.tsx
+  5c8b5e1a51036ef3 253-257,260,298,634-635,641-642,701
+src/components/interactive/checkout/FulfillmentToggle.tsx
+  5c8b5e1a51036ef3 27,34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "82293f0caa8060a286d74d777df5cdfe5a48dedf",
+  "prompts": {
+    "5c8b5e1a51036ef3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4859595d-769f-4532-ac45-4c6c95aa37ad",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 22,
+      "accepted_lines": 36,
+      "overriden_lines": 0
+    }
+  }
+}
