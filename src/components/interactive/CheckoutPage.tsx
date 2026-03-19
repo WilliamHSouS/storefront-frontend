@@ -230,21 +230,28 @@ export default function CheckoutPage({ lang }: Props) {
 
       .GET(`/api/v1/checkout/${checkout.id}/shipping/` as any)
       .then(({ data }) => {
-        if (!data) return;
-        const groups = data as Array<{
-          id: string;
-          available_rates: Array<{ rate_id: string; name: string }>;
-        }>;
-        // Determine available fulfillment types from shipping rates
-        const methods = new Set<'delivery' | 'pickup'>();
-        for (const group of groups) {
-          for (const rate of group.available_rates ?? []) {
-            const id = rate.rate_id?.toLowerCase() ?? rate.name?.toLowerCase() ?? '';
-            if (id.includes('pickup')) methods.add('pickup');
-            else methods.add('delivery');
-          }
-        }
-        const available = methods.size > 0 ? Array.from(methods) : ['pickup' as const];
+        // Determine available fulfillment methods:
+        // - If pickup locations exist, pickup is available
+        // - If shipping rates exist (from the endpoint), delivery is available
+        const available: ('delivery' | 'pickup')[] = [];
+
+        const groups = Array.isArray(data)
+          ? (data as Array<{
+              id: string;
+              available_rates: Array<{ rate_id: string; name: string; cost: string }>;
+            }>)
+          : [];
+
+        // Any shipping rates = delivery is available
+        const hasShippingRates = groups.some((g) => (g.available_rates?.length ?? 0) > 0);
+        if (hasShippingRates) available.push('delivery');
+
+        // Pickup locations fetched separately — if any exist, pickup is available
+        if (pickupLocations.length > 0) available.push('pickup');
+
+        // Fallback: if nothing, show both and let the backend validate
+        if (available.length === 0) available.push('delivery', 'pickup');
+
         setAvailableFulfillment(available);
 
         // Auto-select the first available method if current selection isn't available
