@@ -21,6 +21,16 @@ function errorDetail(error: unknown): string {
     const body = e.body as Record<string, unknown>;
     if (body.error && typeof body.error === 'object') {
       const err = body.error as Record<string, unknown>;
+      // If validation error with field details, format them
+      if (err.details && typeof err.details === 'object') {
+        const details = err.details as Record<string, string[]>;
+        const messages = Object.entries(details).map(([field, errors]) => {
+          const fieldName = field.replace(/_/g, ' ');
+          const errorMsg = Array.isArray(errors) ? errors.join(', ') : String(errors);
+          return `${fieldName}: ${errorMsg}`;
+        });
+        if (messages.length > 0) return messages.join('. ');
+      }
       if (typeof err.message === 'string') return err.message;
     }
     if (typeof body.message === 'string') return body.message;
