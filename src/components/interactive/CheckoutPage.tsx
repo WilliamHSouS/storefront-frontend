@@ -236,31 +236,16 @@ export default function CheckoutPage({ lang }: Props) {
       });
   }, [cart?.id, cart?.line_items.length, checkout?.cart_id, checkout?.status]);
 
-  // ── Determine available fulfillment methods from cart + pickup locations ──
-  // Use cart's existing shipping estimate (already calculated on menu page)
-  // and pickup locations to determine what's available — no separate API call needed
+  // ── Determine available fulfillment methods ──
+  // Always show delivery (customer can enter address, backend validates).
+  // Show pickup when pickup locations exist.
   useEffect(() => {
-    const available: ('delivery' | 'pickup')[] = [];
+    const available: ('delivery' | 'pickup')[] = ['delivery'];
 
-    // Cart has shipping estimate = delivery is available
-    const hasShipping =
-      cart?.shipping_estimate?.total_shipping != null ||
-      (cart?.shipping_cost != null && parseFloat(cart.shipping_cost) > 0);
-    if (hasShipping) available.push('delivery');
-
-    // Pickup locations exist = pickup is available
     if (pickupLocations.length > 0) available.push('pickup');
 
-    // Fallback: show both and let the backend validate
-    if (available.length === 0) available.push('delivery', 'pickup');
-
     setAvailableFulfillment(available);
-
-    // Auto-select the first available method if current selection isn't available
-    if (available.length > 0 && !available.includes(form.fulfillmentMethod)) {
-      dispatch({ type: 'SET_FULFILLMENT', method: available[0] });
-    }
-  }, [cart?.shipping_estimate, cart?.shipping_cost, pickupLocations.length]);
+  }, [pickupLocations.length]);
 
   // ── Fetch time slots for a date ────────────────────────────────
   const fetchTimeSlots = useCallback(
