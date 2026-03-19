@@ -140,7 +140,7 @@ export default function SchedulingPicker({
       {form.schedulingMode === 'scheduled' && (
         <>
           {/* Date strip */}
-          <div class="flex items-center gap-1 mb-4 overflow-hidden">
+          <div class="flex items-center gap-1 mb-4">
             <button
               type="button"
               class="p-2 rounded-full hover:bg-muted flex-shrink-0"
