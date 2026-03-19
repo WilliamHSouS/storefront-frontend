@@ -8,5 +8,5 @@ const langValue = lang as 'nl' | 'en' | 'de';
 ---
 
 <BaseLayout title={t('checkoutTitle', langValue)} hideSharedIslands={true}>
-  <CheckoutPage client:only="preact" lang={langValue} />
+  <CheckoutPage client:load lang={langValue} />
 </BaseLayout>
