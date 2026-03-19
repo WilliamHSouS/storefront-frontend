@@ -270,7 +270,7 @@ export default function CheckoutPage({ lang }: Props) {
       const locationId = form.pickupLocationId ?? pickupLocations[0]?.id ?? 1;
       setTimeSlotsLoading(true);
       const client = getClient();
-      const slotsUrl = `/api/v1/pickup-locations/${locationId}/time-slots/?date=${date}`;
+      const slotsUrl = `/api/v1/fulfillment/locations/${locationId}/slots/?date=${date}`;
 
       client
         .GET(slotsUrl as any)
@@ -371,18 +371,8 @@ export default function CheckoutPage({ lang }: Props) {
       deliveryData.shipping_method_id = form.selectedShippingRateId;
     }
 
-    // Send selected pickup time as metadata (not as fulfillment_slot_id — that requires a UUID
-    // from the fulfillment reservation system, not from the pickup time window endpoint)
     if (form.selectedSlotId && form.schedulingMode === 'scheduled') {
-      const [startTime, endTime] = form.selectedSlotId.split('-');
-      if (startTime && endTime) {
-        deliveryData.metadata = {
-          ...((deliveryData.metadata as Record<string, unknown>) ?? {}),
-          pickup_time_start: startTime,
-          pickup_time_end: endTime,
-          scheduled_date: form.scheduledDate,
-        };
-      }
+      deliveryData.fulfillment_slot_id = form.selectedSlotId;
     }
 
     patchDelivery(checkoutId, deliveryData);
