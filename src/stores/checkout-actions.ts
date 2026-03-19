@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec; interpolated URLs + body casts needed */
 import { getClient } from '@/lib/api';
+import { $cart, clearStoredCartId } from '@/stores/cart';
 import {
   $checkout,
   $checkoutLoading,
@@ -220,6 +221,9 @@ export async function completeCheckout(
     const checkout = data as Checkout;
     $checkout.set(checkout);
     clearStoredCheckoutId();
+    // Clear cart after successful order completion
+    $cart.set(null);
+    clearStoredCartId();
     return checkout;
   } finally {
     $checkoutLoading.set(false);
