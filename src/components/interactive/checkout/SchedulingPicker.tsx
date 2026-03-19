@@ -220,7 +220,8 @@ export default function SchedulingPicker({
 
               <div role="radiogroup" aria-label={t('selectTime', lang)} class="flex flex-col gap-2">
                 {slotsToShow.map((slot) => {
-                  const selected = form.selectedSlotId === slot.id;
+                  const selected =
+                    form.selectedSlotId != null && form.selectedSlotId === String(slot.id);
                   const disabled = !slot.available;
                   return (
                     <div
@@ -241,7 +242,7 @@ export default function SchedulingPicker({
                           dispatch({
                             type: 'SET_FIELD',
                             field: 'selectedSlotId',
-                            value: slot.id,
+                            value: String(slot.id),
                           });
                           onSlotSelect(slot.id);
                         }
@@ -252,7 +253,7 @@ export default function SchedulingPicker({
                           dispatch({
                             type: 'SET_FIELD',
                             field: 'selectedSlotId',
-                            value: slot.id,
+                            value: String(slot.id),
                           });
                           onSlotSelect(slot.id);
                         }
