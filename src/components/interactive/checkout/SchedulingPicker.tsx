@@ -218,7 +218,11 @@ export default function SchedulingPicker({
                 </div>
               )}
 
-              <div role="radiogroup" aria-label={t('selectTime', lang)} class="flex flex-col gap-2">
+              <div
+                role="radiogroup"
+                aria-label={t('selectTime', lang)}
+                class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"
+              >
                 {slotsToShow.map((slot) => {
                   const selected =
                     form.selectedSlotId != null && form.selectedSlotId === String(slot.id);
