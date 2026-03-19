@@ -216,9 +216,24 @@ export default function CheckoutPage({ lang }: Props) {
       $checkout.set(null);
     }
 
-    createCheckout(cart.id).catch((err) => {
-      log.error('checkout', 'Failed to create checkout:', err);
-    });
+    createCheckout(cart.id)
+      .then((newCheckout) => {
+        if (!newCheckout) return;
+
+        // Immediately PATCH with address context if available, so shipping is calculated from the start
+        const coords = $addressCoords.get();
+        if (coords?.postalCode) {
+          patchDelivery(newCheckout.id, {
+            shipping_address: {
+              postal_code: coords.postalCode,
+              country_code: coords.country ?? 'NL',
+            },
+          });
+        }
+      })
+      .catch((err) => {
+        log.error('checkout', 'Failed to create checkout:', err);
+      });
   }, [cart?.id, cart?.line_items.length, checkout?.cart_id, checkout?.status]);
 
   // ── Fetch available shipping methods after checkout is created ────
