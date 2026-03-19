@@ -48,7 +48,8 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   }
   const customDomains = process.env.CUSTOM_DOMAINS ?? import.meta.env.CUSTOM_DOMAINS;
   const defaultMerchant = process.env.DEFAULT_MERCHANT ?? import.meta.env.DEFAULT_MERCHANT;
-  const slug = resolveMerchantSlug(hostname, customDomains, defaultMerchant);
+  const platformSuffixes = process.env.PLATFORM_SUFFIXES ?? import.meta.env.PLATFORM_SUFFIXES;
+  const slug = resolveMerchantSlug(hostname, customDomains, defaultMerchant, platformSuffixes);
   const merchant = loadMerchantConfig(slug);
 
   if (!merchant) {
