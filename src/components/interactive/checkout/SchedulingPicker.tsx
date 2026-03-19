@@ -10,7 +10,6 @@ interface SchedulingPickerProps {
   timeSlots: TimeSlot[];
   onDateChange: (date: string) => void;
   onSlotSelect: (slotId: string) => void;
-  isPickup: boolean;
   loading: boolean;
 }
 
@@ -47,7 +46,6 @@ export default function SchedulingPicker({
   timeSlots,
   onDateChange,
   onSlotSelect,
-  isPickup,
   loading,
 }: SchedulingPickerProps) {
   const [showAll, setShowAll] = useState(false);
@@ -209,100 +207,94 @@ export default function SchedulingPicker({
             </button>
           </div>
 
-          {/* Time slots (pickup only) */}
-          {isPickup && (
-            <div class="relative">
-              {loading && (
-                <div class="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg z-10">
-                  <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
+          {/* Time slots */}
+          <div class="relative">
+            {loading && (
+              <div class="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg z-10">
+                <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
 
-              <div
-                role="radiogroup"
-                aria-label={t('selectTime', lang)}
-                class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"
-              >
-                {slotsToShow.map((slot) => {
-                  const selected =
-                    form.selectedSlotId != null && form.selectedSlotId === String(slot.id);
-                  const disabled = !slot.available;
-                  return (
-                    <div
-                      key={slot.id}
-                      role="radio"
-                      aria-checked={selected}
-                      aria-disabled={disabled ? 'true' : undefined}
-                      tabIndex={disabled ? -1 : 0}
-                      class={`px-4 py-3 rounded-lg border text-sm cursor-pointer transition-colors select-none ${
-                        disabled
-                          ? 'opacity-50 cursor-not-allowed border-input'
-                          : selected
-                            ? 'border-primary bg-primary/5 font-medium'
-                            : 'border-input hover:border-primary/50'
-                      }`}
-                      onClick={() => {
-                        if (!disabled) {
-                          dispatch({
-                            type: 'SET_FIELD',
-                            field: 'selectedSlotId',
-                            value: String(slot.id),
-                          });
-                          onSlotSelect(slot.id);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-                          e.preventDefault();
-                          dispatch({
-                            type: 'SET_FIELD',
-                            field: 'selectedSlotId',
-                            value: String(slot.id),
-                          });
-                          onSlotSelect(slot.id);
-                        }
-                      }}
-                    >
-                      <span class="flex items-center justify-between">
-                        <span>
-                          {slot.start_time}–{slot.end_time}
-                          {disabled && (
-                            <span class="ml-2 text-muted-foreground">({t('slotFull', lang)})</span>
-                          )}
-                        </span>
-                        {selected && (
-                          <svg
-                            class="w-4 h-4 text-primary"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width={3}
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
+            <div
+              role="radiogroup"
+              aria-label={t('selectTime', lang)}
+              class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"
+            >
+              {slotsToShow.map((slot) => {
+                const selected =
+                  form.selectedSlotId != null && form.selectedSlotId === String(slot.id);
+                const disabled = !slot.available;
+                return (
+                  <div
+                    key={slot.id}
+                    role="radio"
+                    aria-checked={selected}
+                    aria-disabled={disabled ? 'true' : undefined}
+                    tabIndex={disabled ? -1 : 0}
+                    class={`px-4 py-3 rounded-lg border text-sm cursor-pointer transition-colors select-none ${
+                      disabled
+                        ? 'opacity-50 cursor-not-allowed border-input'
+                        : selected
+                          ? 'border-primary bg-primary/5 font-medium'
+                          : 'border-input hover:border-primary/50'
+                    }`}
+                    onClick={() => {
+                      if (!disabled) {
+                        dispatch({
+                          type: 'SET_FIELD',
+                          field: 'selectedSlotId',
+                          value: String(slot.id),
+                        });
+                        onSlotSelect(slot.id);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        dispatch({
+                          type: 'SET_FIELD',
+                          field: 'selectedSlotId',
+                          value: String(slot.id),
+                        });
+                        onSlotSelect(slot.id);
+                      }
+                    }}
+                  >
+                    <span class="flex items-center justify-between">
+                      <span>
+                        {slot.start_time}–{slot.end_time}
+                        {disabled && (
+                          <span class="ml-2 text-muted-foreground">({t('slotFull', lang)})</span>
                         )}
                       </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Show all times toggle */}
-              {timeSlots.some((s) => !s.available) && (
-                <button
-                  type="button"
-                  class="mt-2 text-sm text-primary underline"
-                  onClick={() => setShowAll(!showAll)}
-                >
-                  {showAll ? t('selectTime', lang) : t('showAllTimes', lang)}
-                </button>
-              )}
+                      {selected && (
+                        <svg
+                          class="w-4 h-4 text-primary"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width={3}
+                        >
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-          )}
+
+            {/* Show all times toggle */}
+            {timeSlots.some((s) => !s.available) && (
+              <button
+                type="button"
+                class="mt-2 text-sm text-primary underline"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? t('selectTime', lang) : t('showAllTimes', lang)}
+              </button>
+            )}
+          </div>
         </>
       )}
     </section>

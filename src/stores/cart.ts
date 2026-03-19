@@ -176,6 +176,12 @@ export function clearStoredCartId(): void {
   }
 }
 
+/** Reset cart state and clear persisted cart ID (e.g. after successful order). */
+export function clearCart(): void {
+  $cart.set(null);
+  clearStoredCartId();
+}
+
 let pendingEnsure: Promise<string> | null = null;
 
 /**

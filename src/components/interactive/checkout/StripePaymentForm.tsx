@@ -6,6 +6,7 @@ interface StripePaymentFormProps {
   clientSecret: string;
   publishableKey: string;
   stripeAccount: string;
+  billingName?: string;
   merchantTheme?: {
     primary?: string;
     background?: string;
@@ -20,6 +21,7 @@ function StripePaymentFormInner({
   clientSecret,
   publishableKey,
   stripeAccount,
+  billingName,
   merchantTheme,
   onStripeReady,
   onError,
@@ -57,7 +59,13 @@ function StripePaymentFormInner({
 
         elements = stripe.elements({ clientSecret, appearance });
 
-        const paymentElement = elements.create('payment');
+        const paymentElement = elements.create('payment', {
+          defaultValues: {
+            billingDetails: {
+              name: billingName || '',
+            },
+          },
+        });
 
         if (!containerRef.current) {
           onError?.('Payment form container not found.');

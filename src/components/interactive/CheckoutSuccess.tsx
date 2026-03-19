@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { t } from '@/i18n';
 import { getClient } from '@/lib/api';
+import { clearCart } from '@/stores/cart';
+import { clearStoredCheckoutId } from '@/stores/checkout';
 import * as log from '@/lib/logger';
 
 interface Props {
@@ -36,6 +38,8 @@ export default function CheckoutSuccess({ lang }: Props) {
 
     if (order && !paymentIntent) {
       // Direct redirect from inline payment — order already completed
+      clearCart();
+      clearStoredCheckoutId();
       setOrderNumber(order);
       setLoading(false);
     } else if (checkoutId && paymentIntent) {
@@ -52,6 +56,8 @@ export default function CheckoutSuccess({ lang }: Props) {
           const checkout = data as { status?: string; order_number?: string | null } | null;
           if (checkout?.status === 'completed' && checkout.order_number) {
             clearInterval(pollInterval);
+            clearCart();
+            clearStoredCheckoutId();
             setOrderNumber(checkout.order_number);
             setLoading(false);
           }

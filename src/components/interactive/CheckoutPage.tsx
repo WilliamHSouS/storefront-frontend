@@ -250,12 +250,14 @@ export default function CheckoutPage({ lang }: Props) {
   // ── Fetch time slots for a date ────────────────────────────────
   const fetchTimeSlots = useCallback(
     (date: string) => {
-      const locationId = form.pickupLocationId ?? pickupLocations[0]?.id;
-      if (!locationId) return; // Need a selected location to fetch slots
+      // For pickup, use the selected pickup location; for delivery, use "default" (merchant location)
+      const locationId =
+        form.fulfillmentMethod === 'pickup'
+          ? (form.pickupLocationId ?? pickupLocations[0]?.id ?? 'default')
+          : 'default';
       setTimeSlotsLoading(true);
       const client = getClient();
-      // Use pickup-location-specific time slots endpoint
-      const slotsUrl = `/api/v1/pickup-locations/${locationId}/time-slots/?date=${date}`;
+      const slotsUrl = `/api/v1/fulfillment/locations/${locationId}/slots/?date=${date}`;
 
       client
         .GET(slotsUrl as any)
@@ -293,7 +295,7 @@ export default function CheckoutPage({ lang }: Props) {
           setTimeSlotsLoading(false);
         });
     },
-    [form.pickupLocationId, pickupLocations],
+    [form.fulfillmentMethod, form.pickupLocationId, pickupLocations],
   );
 
   // ── Redirect to menu if cart is empty ────────────────────────────
@@ -629,13 +631,15 @@ export default function CheckoutPage({ lang }: Props) {
           {/* Fulfillment sections — only after shipping methods are loaded */}
           {availableFulfillment.length > 0 && (
             <>
-              <FulfillmentToggle
-                lang={typedLang}
-                form={form}
-                dispatch={dispatch}
-                availableMethods={availableFulfillment}
-                deliveryEligible={availableFulfillment.includes('delivery') ? true : false}
-              />
+              <div class="px-4 py-3">
+                <FulfillmentToggle
+                  lang={typedLang}
+                  form={form}
+                  dispatch={dispatch}
+                  availableMethods={availableFulfillment}
+                  deliveryEligible={availableFulfillment.includes('delivery') ? true : false}
+                />
+              </div>
 
               {/* Delivery address (visible only for delivery) */}
               {form.fulfillmentMethod === 'delivery' && (
@@ -681,7 +685,6 @@ export default function CheckoutPage({ lang }: Props) {
               onSlotSelect={(slotId) => {
                 dispatch({ type: 'SET_FIELD', field: 'selectedSlotId', value: slotId });
               }}
-              isPickup={form.fulfillmentMethod === 'pickup'}
               loading={timeSlotsLoading}
             />
           </div>
@@ -695,6 +698,7 @@ export default function CheckoutPage({ lang }: Props) {
                   clientSecret={stripeConfig.clientSecret}
                   publishableKey={stripeConfig.publishableKey}
                   stripeAccount={stripeConfig.stripeAccount}
+                  billingName={`${form.firstName} ${form.lastName}`.trim()}
                   merchantTheme={{
                     primary: merchant.theme?.primary,
                     background: merchant.theme?.background,
