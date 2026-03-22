@@ -15,14 +15,14 @@ export interface CartLineItemFixture {
     price_modifier: string;
     quantity: number;
   }>;
-  /** OpenAPI required fields for CartLineItem */
-  fulfillment_type: string;
-  fulfillment_date: string;
-  tax_rate: string;
-  tax_amount: string;
-  product_type: string;
-  surcharges: unknown[];
-  gift_card_details: Record<string, unknown> | null;
+  /** OpenAPI fields — optional in fixtures, defaults added by mock API */
+  fulfillment_type?: string;
+  fulfillment_date?: string;
+  tax_rate?: string;
+  tax_amount?: string;
+  product_type?: string;
+  surcharges?: unknown[];
+  gift_card_details?: Record<string, unknown> | null;
   discount?: {
     type: string;
     label: string;
@@ -37,26 +37,25 @@ export interface CartFixture {
   cart_total: string;
   cart_savings?: string;
   item_count: number;
-  /** OpenAPI required fields for Cart */
-  merchant_id: number;
-  status: string;
-  subtotal: string;
-  tax_total: string;
+  /** OpenAPI fields — optional in fixtures, defaults added by mock API */
+  merchant_id?: number;
+  status?: string;
+  subtotal?: string;
+  tax_total?: string;
   tax_included?: boolean;
   shipping_cost?: string;
-  shipping_estimate: {
+  shipping_estimate?: {
     groups: unknown[];
     total_shipping: string;
     ships_in_parts: boolean;
   } | null;
-  /** OpenAPI: nullable object (applied discount info or null). */
-  discount: Record<string, unknown> | null;
+  discount?: Record<string, unknown> | null;
   discount_amount?: string;
   promotion_discount_amount?: string;
-  promotion: { id: number; name: string; discount_amount: string } | null;
-  expires_at: string;
-  created_at: string;
-  updated_at: string;
+  promotion?: { id: number; name: string; discount_amount: string } | null;
+  expires_at?: string;
+  created_at?: string;
+  updated_at?: string;
   applied_discount?: {
     id: string;
     code: string;
