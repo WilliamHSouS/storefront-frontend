@@ -72,6 +72,14 @@ export interface Checkout {
   purpose: string;
   created_at: string | null;
   updated_at: string | null;
+  available_payment_gateways: PaymentGatewayConfig[] | null;
+}
+
+export interface PaymentGatewayConfig {
+  id: string;
+  name: string;
+  type: string;
+  config: Record<string, string>;
 }
 
 export interface PaymentResult extends Checkout {

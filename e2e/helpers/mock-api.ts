@@ -77,6 +77,20 @@ function checkoutToResponse(checkout: CheckoutState) {
     display_discount_amount: checkout.discount_amount,
     display_promotion_discount_amount: '0.00',
     display_total: checkout.total,
+    available_payment_gateways:
+      checkout.status !== 'created'
+        ? [
+            {
+              id: 'stripe',
+              name: 'Card Payment',
+              type: 'card',
+              config: {
+                publishable_key: 'pk_test_mock',
+                stripe_account: 'acct_mock',
+              },
+            },
+          ]
+        : null,
     gift_card_details: null,
     purpose: 'default',
     created_at: new Date().toISOString(),
@@ -776,6 +790,23 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       client_secret: 'pi_mock_secret',
       payment_intent_id: 'pi_mock_123',
     });
+    return;
+  }
+
+  // ── Checkout: confirm payment (replaces polling) ──
+  const checkoutConfirmMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/confirm-payment\/$/);
+  if (method === 'POST' && checkoutConfirmMatch) {
+    const id = checkoutConfirmMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    if (checkout.status !== 'completed') {
+      checkout.status = 'completed';
+      checkout.order_number = `ORD-${Date.now()}`;
+    }
+    json(res, checkoutToResponse(checkout));
     return;
   }
 

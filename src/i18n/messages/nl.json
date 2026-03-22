@@ -142,6 +142,8 @@
   "orderNumber": "Order number",
   "thankYou": "Thank you for your order",
   "confirmingOrder": "We're confirming your order...",
+  "paymentReceived": "Betaling ontvangen",
+  "orderProcessing": "Je bestelling wordt verwerkt — je ontvangt binnenkort een bevestiging.",
   "backToCart": "Back to cart",
   "cartExpired": "Your cart has expired",
   "cartChanged": "Your cart has changed",

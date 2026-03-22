@@ -24,14 +24,14 @@ export default function FulfillmentToggle({
   return (
     <fieldset>
       <legend class="text-sm font-medium mb-2">{t('fulfillmentMethod', lang)}</legend>
-      <div role="radiogroup" class="inline-flex gap-2">
+      <div role="radiogroup" class="flex gap-2">
         {availableMethods.map((method) => {
           const selected = form.fulfillmentMethod === method;
           const disabled = method === 'delivery' && deliveryEligible === false;
           return (
             <label
               key={method}
-              class={`flex items-center justify-center min-h-[44px] px-6 rounded-md cursor-pointer text-sm font-medium transition-colors select-none ${
+              class={`flex-1 flex items-center justify-center min-h-[48px] px-4 rounded-md cursor-pointer text-sm font-medium transition-colors select-none ${
                 selected ? 'bg-primary text-primary-foreground' : 'bg-card border border-input'
               } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             >

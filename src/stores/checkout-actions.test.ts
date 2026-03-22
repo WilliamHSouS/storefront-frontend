@@ -60,6 +60,7 @@ function makeCheckout(overrides: Partial<Checkout> = {}): Checkout {
     purpose: 'standard',
     created_at: null,
     updated_at: null,
+    available_payment_gateways: null,
     ...overrides,
   };
 }

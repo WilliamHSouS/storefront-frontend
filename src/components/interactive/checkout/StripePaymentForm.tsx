@@ -59,13 +59,22 @@ function StripePaymentFormInner({
 
         elements = stripe.elements({ clientSecret, appearance });
 
+        /* eslint-disable @typescript-eslint/no-explicit-any -- paymentMethodOrder + layout not yet in @stripe/stripe-js types */
         const paymentElement = elements.create('payment', {
           defaultValues: {
             billingDetails: {
               name: billingName || '',
             },
           },
-        });
+          paymentMethodOrder: ['ideal', 'card'],
+          layout: {
+            type: 'accordion',
+            defaultCollapsed: false,
+            radios: true,
+            spacedAccordionItems: true,
+          },
+        } as any);
+        /* eslint-enable @typescript-eslint/no-explicit-any */
 
         if (!containerRef.current) {
           onError?.('Payment form container not found.');

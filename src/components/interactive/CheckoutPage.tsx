@@ -409,100 +409,39 @@ export default function CheckoutPage({ lang }: Props) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // ── Fetch payment gateway config + initiate payment for Stripe Element ──
-  // Initiates a PaymentIntent to get client_secret for mounting the Payment Element.
-  // Only runs after checkout has delivery details set (backend requires delivery_set status).
+  // ── Initiate payment when gateway config is available from checkout ──
+  // Gateway config comes from the checkout response (after delivery_set).
+  // We only need to initiate payment to get a client_secret for the Stripe Element.
   useEffect(() => {
     if (!checkout?.id) return;
     if (stripeConfig) return;
-    // Wait until checkout has progressed past 'created' (needs delivery details)
-    if (checkout.status === 'created') return;
 
-    const client = getClient();
+    const gateways = checkout.available_payment_gateways;
+    if (!gateways) return;
 
-    interface PaymentGateway {
-      id: string;
-      name: string;
-      type: string;
-      config: Record<string, string> | Array<{ key: string; value: string }>;
-    }
+    const stripeGateway = gateways.find((g) => g.id === 'stripe');
+    if (!stripeGateway) return;
 
-    const gatewayUrl = `/api/v1/checkout/${checkout.id}/payment-gateways/`;
+    const pk = stripeGateway.config.publishable_key ?? '';
+    const acct = stripeGateway.config.stripe_account ?? '';
+    if (!pk) return;
 
-    client
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic endpoint not in SDK
-      .GET(gatewayUrl as any)
-      .then(({ data, error }) => {
-        if (error) {
-          $checkoutError.set(
-            `Payment gateway error: ${'message' in error ? error.message : JSON.stringify(error)}`,
-          );
-          return;
-        }
-        const raw = data as unknown;
-        const rawObj = raw as Record<string, unknown>;
-        const gateways: PaymentGateway[] = Array.isArray(raw)
-          ? raw
-          : Array.isArray(rawObj?.results)
-            ? (rawObj.results as PaymentGateway[])
-            : [];
-        const stripeGateway = gateways.find((g) => g.id === 'stripe');
-        if (!stripeGateway) {
-          log.warn('checkout', 'No Stripe gateway found in:', JSON.stringify(gateways));
-          return;
-        }
-
-        // Config may be an object { key: value } or array [{ key, value }]
-        const cfg = stripeGateway.config;
-        let pk = '';
-        let acct = '';
-        if (Array.isArray(cfg)) {
-          pk = cfg.find((c) => c.key === 'publishable_key')?.value ?? '';
-          acct = cfg.find((c) => c.key === 'stripe_account')?.value ?? '';
-        } else if (cfg && typeof cfg === 'object') {
-          pk = (cfg as Record<string, string>).publishable_key ?? '';
-          acct = (cfg as Record<string, string>).stripe_account ?? '';
-        }
-
-        if (!pk) {
-          log.warn(
-            'checkout',
-            'Stripe gateway found but no publishable_key in config:',
-            JSON.stringify(cfg),
-          );
-          return;
-        }
-
-        // Initiate payment to get client_secret for mounting the Payment Element
-        // This creates a PaymentIntent but does NOT complete the checkout
-        initiatePayment(checkout!.id)
-          .then((paymentResult) => {
-            if (paymentResult?.client_secret) {
-              setStripeConfig({
-                clientSecret: paymentResult.client_secret,
-                publishableKey: pk,
-                stripeAccount: acct,
-              });
-            } else {
-              log.warn(
-                'checkout',
-                'initiatePayment response missing client_secret:',
-                JSON.stringify(paymentResult),
-              );
-            }
-          })
-          .catch((err) => {
-            const msg = err instanceof Error ? err.message : String(err);
-            $checkoutError.set(`Payment initialization failed: ${msg}`);
-            log.error('checkout', 'Failed to initiate payment:', err);
+    initiatePayment(checkout.id)
+      .then((paymentResult) => {
+        if (paymentResult?.client_secret) {
+          setStripeConfig({
+            clientSecret: paymentResult.client_secret,
+            publishableKey: pk,
+            stripeAccount: acct,
           });
+        }
       })
       .catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
-        $checkoutError.set(`Failed to load payment methods: ${msg}`);
-        log.error('checkout', 'Failed to fetch payment gateways:', err);
+        $checkoutError.set(`Payment initialization failed: ${msg}`);
+        log.error('checkout', 'Failed to initiate payment:', err);
       });
-  }, [checkout?.id, checkout?.status, stripeConfig]);
+  }, [checkout?.id, checkout?.available_payment_gateways, stripeConfig]);
 
   // ── Form validation ─────────────────────────────────────────────
   function validateForm(): boolean {

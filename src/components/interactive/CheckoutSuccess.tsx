@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { t } from '@/i18n';
 import { getClient } from '@/lib/api';
 import { clearCart } from '@/stores/cart';
@@ -9,18 +9,17 @@ interface Props {
   lang: 'nl' | 'en' | 'de';
 }
 
+interface ConfirmPaymentError {
+  error_code: string;
+  message: string;
+  details?: { psp_status?: string };
+}
+
 export default function CheckoutSuccess({ lang }: Props) {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timedOut, setTimedOut] = useState(false);
-  const pollCleanupRef = useRef<(() => void) | null>(null);
-
-  // Clean up polling on unmount
-  useEffect(() => {
-    return () => {
-      pollCleanupRef.current?.();
-    };
-  }, []);
+  const [fallback, setFallback] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -28,6 +27,7 @@ export default function CheckoutSuccess({ lang }: Props) {
     const order = rawOrder && /^[a-zA-Z0-9_-]{1,50}$/.test(rawOrder) ? rawOrder : null;
     const checkoutId = params.get('checkout_id');
     const paymentIntent = params.get('payment_intent');
+    const clientSecret = params.get('payment_intent_client_secret');
 
     // Clean sensitive params from URL immediately
     if (paymentIntent) {
@@ -43,57 +43,92 @@ export default function CheckoutSuccess({ lang }: Props) {
       clearStoredCheckoutId();
       setOrderNumber(order);
       setLoading(false);
-    } else if (checkoutId && paymentIntent) {
-      // Bank redirect return — the webhook handles payment completion server-side.
-      // We poll the checkout status until it's completed or we time out.
-      setLoading(true);
-
-      const sdk = getClient();
-      const pollInterval = setInterval(async () => {
-        try {
-          const { data } = await sdk.GET('/api/v1/checkout/{checkout_id}/', {
-            params: { path: { checkout_id: checkoutId } },
-          });
-          const checkout = data as { status?: string; order_number?: string | null } | null;
-          log.warn('checkout-success', 'Polling checkout status', {
-            checkoutId,
-            status: checkout?.status,
-          });
-          if (checkout?.status === 'completed' && checkout.order_number) {
-            clearInterval(pollInterval);
-            clearCart();
-            clearStoredCheckoutId();
-            setOrderNumber(checkout.order_number);
-            setLoading(false);
-          }
-        } catch (err) {
-          log.error('checkout-success', 'Failed to poll checkout status:', err);
-        }
-      }, 2000);
-
-      // Stop polling after 30s — payment is committed but backend hasn't confirmed yet.
-      // Clear cart (the order is paid, this cart is dead) and show a softer message.
-      const timeoutId = setTimeout(() => {
-        clearInterval(pollInterval);
-        log.warn('checkout-success', 'Polling timed out — showing fallback', {
-          checkoutId,
-        });
-        clearCart();
-        clearStoredCheckoutId();
-        setTimedOut(true);
-        setLoading(false);
-      }, 30_000);
-
-      // Clean up on unmount
-      pollCleanupRef.current = () => {
-        clearInterval(pollInterval);
-        clearTimeout(timeoutId);
-      };
+    } else if (checkoutId && paymentIntent && clientSecret) {
+      // Bank redirect return — confirm payment synchronously
+      confirmPayment(checkoutId, paymentIntent, clientSecret);
     } else {
       // No valid params — redirect to menu
       window.location.href = `/${lang}/`;
     }
   }, [lang]);
+
+  async function confirmPayment(
+    checkoutId: string,
+    paymentIntent: string,
+    clientSecret: string,
+    isRetry = false,
+  ) {
+    try {
+      const sdk = getClient();
+      const confirmUrl = `/api/v1/checkout/${checkoutId}/confirm-payment/`;
+
+      /* eslint-disable @typescript-eslint/no-explicit-any -- new endpoint not yet in SDK types */
+      const { data, error } = await sdk.POST(
+        confirmUrl as any,
+        {
+          body: {
+            gateway_id: 'stripe',
+            payment_intent: paymentIntent,
+            payment_intent_client_secret: clientSecret,
+          },
+        } as any,
+      );
+      /* eslint-enable @typescript-eslint/no-explicit-any */
+
+      if (error) {
+        const err = error as unknown as ConfirmPaymentError;
+        switch (err.error_code) {
+          case 'PAYMENT_NOT_CONFIRMED':
+            if (err.details?.psp_status === 'requires_action') {
+              // 3DS incomplete — re-trigger via Stripe SDK
+              // For now, show fallback since we don't have Stripe instance here
+              log.warn('checkout-success', '3DS required but Stripe not available on success page');
+              showFallback();
+            } else {
+              // Card declined
+              setErrorMessage(err.message || t('paymentDeclined', lang));
+              setLoading(false);
+            }
+            break;
+          case 'GATEWAY_UNAVAILABLE':
+            if (!isRetry) {
+              // Auto-retry once
+              log.warn('checkout-success', 'Gateway unavailable, retrying...');
+              await confirmPayment(checkoutId, paymentIntent, clientSecret, true);
+            } else {
+              showFallback();
+            }
+            break;
+          default:
+            setErrorMessage(err.message || t('paymentDeclined', lang));
+            setLoading(false);
+        }
+        return;
+      }
+
+      // Success
+      const checkout = data as { order_number?: string; status?: string } | null;
+      clearCart();
+      clearStoredCheckoutId();
+      setOrderNumber(checkout?.order_number ?? null);
+      setLoading(false);
+    } catch (err) {
+      // Network error — same as 502
+      log.error('checkout-success', 'confirm-payment network error:', err);
+      if (!isRetry) {
+        await confirmPayment(checkoutId, paymentIntent, clientSecret, true);
+      } else {
+        showFallback();
+      }
+    }
+  }
+
+  function showFallback() {
+    clearCart();
+    clearStoredCheckoutId();
+    setFallback(true);
+    setLoading(false);
+  }
 
   if (loading) {
     return (
@@ -103,8 +138,25 @@ export default function CheckoutSuccess({ lang }: Props) {
     );
   }
 
-  const heading = timedOut ? t('paymentReceived', lang) : t('orderConfirmed', lang);
-  const message = timedOut ? t('orderProcessing', lang) : t('thankYou', lang);
+  if (errorMessage) {
+    return (
+      <div class="max-w-lg mx-auto px-4 py-12 text-center">
+        <div class="mb-6">
+          <h1 class="text-2xl font-heading font-bold">{t('paymentDeclined', lang)}</h1>
+          <p class="text-muted-foreground mt-2">{errorMessage}</p>
+        </div>
+        <a
+          href={`/${lang}/checkout`}
+          class="inline-block mt-8 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
+        >
+          {t('backToCart', lang)}
+        </a>
+      </div>
+    );
+  }
+
+  const heading = fallback ? t('paymentReceived', lang) : t('orderConfirmed', lang);
+  const message = fallback ? t('orderProcessing', lang) : t('thankYou', lang);
 
   return (
     <div class="max-w-lg mx-auto px-4 py-12 text-center">
