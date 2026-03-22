@@ -86,6 +86,9 @@ $isCartOpen                    — cart drawer visibility
 $selectedProduct               — product detail modal
 $activeCategory                — category filter
 $merchant                      — merchant config (bridged from SSR via window.__MERCHANT__)
+$checkout, $checkoutTotals     — checkout state + computed display totals
+$addressCoords, $addressEligibility — address location + fulfillment eligibility
+$toasts                        — toast notification queue
 ```
 
 ### SDK / API Client
@@ -94,6 +97,38 @@ $merchant                      — merchant config (bridged from SSR via window.
 **Client-side:** `getClient()` from `src/lib/api.ts` (lazy singleton)
 
 Both return `ApiResult<T> = { data: T; error: null } | { data: null; error: Error }`.
+
+### API Contract & Type Safety
+
+**The SDK is the contract.** `@poweredbysous/storefront-sdk` is generated from the backend's OpenAPI spec (`openapi.storefront.v1.json`). TypeScript enforces the contract at compile time — but only if we don't bypass it.
+
+**Rules:**
+
+1. **Never use `as any` on SDK paths.** If a path isn't recognized, the SDK needs updating — not a cast. File an issue or regenerate the SDK. Targeted `as any` on the `opts` parameter is acceptable when the SDK's per-path options type is too strict.
+2. **Use path literals, not interpolated strings.** `'/api/v1/checkout/{checkout_id}/'` with `params: { path: { checkout_id } }` — not `` `/api/v1/checkout/${id}/` ``.
+3. **Type response data from the SDK, not local interfaces.** The SDK's response types are the source of truth. If a local type diverges, update the local type or cast through `unknown`.
+4. **`sdk-stub.ts` preserves SDK generics.** The `StorefrontClient` interface uses the SDK's `paths` type so method calls are type-checked against the OpenAPI spec. Do not weaken the interface.
+
+**When adding new API calls:**
+
+```typescript
+// ✅ Correct — typed path, typed params
+const { data, error } = await sdk.GET('/api/v1/checkout/{checkout_id}/', {
+  params: { path: { checkout_id: id } },
+});
+
+// ❌ Wrong — interpolated string bypasses type checking
+const { data, error } = await sdk.GET(`/api/v1/checkout/${id}/` as any);
+```
+
+**Mock API contract tests:** `e2e/contract.spec.ts` validates that `e2e/helpers/mock-api.ts` responses match the backend's OpenAPI schema. When adding new mock endpoints, add a corresponding contract test. Run `npx playwright test e2e/contract.spec.ts` to verify.
+
+**SDK update process:**
+
+1. Backend team updates API → regenerates `openapi.storefront.v1.json`
+2. SDK is regenerated from the spec → `@poweredbysous/storefront-sdk` version bump
+3. Frontend updates SDK dep → `pnpm check` catches any breaking changes at compile time
+4. Contract tests catch mock drift → update `e2e/helpers/mock-api.ts` to match
 
 ### Cart API Endpoints
 
@@ -106,6 +141,35 @@ DELETE /api/v1/cart/{cart_id}/items/{id}/   # Remove item
 ```
 
 Cart ID persisted in `localStorage`. The e2e mock server (`e2e/helpers/mock-api.ts`) must match these exact paths.
+
+### Checkout API Endpoints
+
+```
+POST   /api/v1/checkout/                              # Create checkout from cart
+GET    /api/v1/checkout/{id}/                          # Fetch checkout
+PATCH  /api/v1/checkout/{id}/delivery/                 # Update delivery details (address, contact, shipping method)
+GET    /api/v1/checkout/{id}/payment-gateways/         # List payment gateways (Stripe config)
+POST   /api/v1/checkout/{id}/payment/                  # Initiate payment (returns client_secret)
+POST   /api/v1/checkout/{id}/complete/                 # Complete checkout after payment
+GET    /api/v1/checkout/{id}/shipping/                 # Shipping rate groups
+GET    /api/v1/fulfillment/locations/{id}/slots/       # Time slots for a location + date
+POST   /api/v1/fulfillment/address-check/              # Check address eligibility + available fulfillment types
+GET    /api/v1/pickup-locations/                        # List merchant pickup locations
+```
+
+Checkout ID persisted in `sessionStorage`. Cleared on successful order completion.
+
+### Checkout Flow
+
+The checkout is a multi-step progression driven by status transitions:
+
+1. **Cart → Checkout** (`createCheckout`): POST creates checkout from cart ID
+2. **Delivery PATCH** (`patchDelivery`): Debounced 500ms. Sends contact info, address, `fulfillment_type`, and `shipping_method_id`. Backend transitions status from `created` → `delivery_set`
+3. **Payment Gateway**: Effect watches for `delivery_set` status → fetches gateway config → calls `initiatePayment` to get Stripe `client_secret` → mounts Payment Element
+4. **Place Order**: `confirmPayment` with Stripe → `completeCheckout` or redirect for bank payments (iDEAL)
+5. **Success**: Poll checkout status for bank redirects. Clear cart + checkout on confirmation
+
+**Address eligibility** (`$addressEligibility`): The address-check API returns `available_fulfillment_types` (e.g. `['local_delivery', 'pickup']`) and `available_shipping_providers`. The checkout derives `fulfillment_type` and `shipping_method_id` from this data — never hardcode these values.
 
 ### Multi-Merchant
 
@@ -190,3 +254,6 @@ const cart = useStore($cart);
 - **Bundle budget.** Total client JS must stay under 65 KB gzipped. Run `pnpm size:check` before merging.
 - **Falsy value checks on API data.** Use `== null` or `=== undefined` instead of `!value` when checking API string values that could be `"0"` or `"0.00"`. JavaScript truthiness conflates "missing" with "zero", hiding valid data like free shipping.
 - **Island DOM stability.** Preact islands mounted before `<slot/>` in BaseLayout must never return `null`. Always render a stable wrapper element to prevent Astro from re-evaluating sibling islands on state changes.
+- **Checkout delivery PATCH is opt-in partial update.** The backend's `set_delivery()` guards each field with `if field is not None` — only fields present in the request body get updated. The backend auto-resolves `shipping_method_id` from `fulfillment_type`, so the frontend only needs to send `fulfillment_type` (not the shipping method). However, other fields like `email`, `shipping_address`, etc. are still silently skipped if omitted.
+- **Never `as any` SDK paths.** The SDK types ARE the API contract. If TypeScript rejects a path literal, the path is wrong or the SDK needs updating — don't cast it away. See "API Contract & Type Safety" above.
+- **Mock API drift.** The hand-maintained `e2e/helpers/mock-api.ts` can silently diverge from the real backend. Always run `npx playwright test e2e/contract.spec.ts` after modifying mock endpoints.
