@@ -1,0 +1,61 @@
+src/components/interactive/SearchBar.tsx
+  4060d237b54f5fd1 66
+src/pages/[lang]/pages/[slug].astro
+  4060d237b54f5fd1 21
+src/layouts/BaseLayout.astro
+  4060d237b54f5fd1 58-59,62-63
+src/components/interactive/CheckoutPage.tsx
+  4060d237b54f5fd1 1,176,264,433,441
+  5c8b5e1a51036ef3 348-351,363-364,435-439,451,467,469,478-488,491-492
+src/components/interactive/CheckoutSuccess.tsx
+  5c8b5e1a51036ef3 15,70-71,74-76,99-101,116-117
+  4060d237b54f5fd1 54-55
+src/components/interactive/CartBar.tsx
+  4060d237b54f5fd1 29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "39d13251383e5101002cc977dc019f3ce721cd73",
+  "prompts": {
+    "100ead46ec8a6523": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38e0194e-07f0-4f06-bb78-e47a351f2fd7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 12,
+      "accepted_lines": 1624,
+      "overriden_lines": 0
+    },
+    "5c8b5e1a51036ef3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4859595d-769f-4532-ac45-4c6c95aa37ad",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 417,
+      "overriden_lines": 0
+    }
+  }
+}
