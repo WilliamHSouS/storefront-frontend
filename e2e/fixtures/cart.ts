@@ -1,49 +1,118 @@
 /** Cart state fixtures matching the API Cart response shape. */
 
+export interface CartLineItemFixture {
+  id: string;
+  product_id: string;
+  product_title: string;
+  product_image?: string;
+  quantity: number;
+  unit_price: string;
+  line_total: string;
+  options: Array<{
+    option_id: string;
+    option_title: string;
+    option_group_title: string;
+    price_modifier: string;
+    quantity: number;
+  }>;
+  /** OpenAPI required fields for CartLineItem */
+  fulfillment_type: string;
+  fulfillment_date: string;
+  tax_rate: string;
+  tax_amount: string;
+  product_type: string;
+  surcharges: unknown[];
+  gift_card_details: Record<string, unknown> | null;
+  discount?: {
+    type: string;
+    label: string;
+    savings: string;
+  };
+  notes?: string;
+}
+
 export interface CartFixture {
   id: string;
-  line_items: Array<{
-    id: string;
-    product_id: string;
-    product_title: string;
-    product_image?: string;
-    quantity: number;
-    unit_price: string;
-    line_total: string;
-    options: Array<{
-      option_id: string;
-      option_title: string;
-      option_group_title: string;
-      price_modifier: string;
-      quantity: number;
-    }>;
-    discount?: {
-      type: string;
-      label: string;
-      savings: string;
-    };
-    notes?: string;
-  }>;
+  line_items: CartLineItemFixture[];
   cart_total: string;
   cart_savings?: string;
   item_count: number;
-  subtotal?: string;
-  tax_total?: string;
+  /** OpenAPI required fields for Cart */
+  merchant_id: number;
+  status: string;
+  subtotal: string;
+  tax_total: string;
   tax_included?: boolean;
   shipping_cost?: string;
+  shipping_estimate: {
+    groups: unknown[];
+    total_shipping: string;
+    ships_in_parts: boolean;
+  } | null;
+  /** OpenAPI: nullable object (applied discount info or null). */
+  discount: Record<string, unknown> | null;
   discount_amount?: string;
   promotion_discount_amount?: string;
+  promotion: { id: number; name: string; discount_amount: string } | null;
+  expires_at: string;
+  created_at: string;
+  updated_at: string;
   applied_discount?: {
     id: string;
     code: string;
     name: string;
     discount_amount: string;
   };
-  promotion?: {
-    id: number;
-    name: string;
-    discount_amount: string;
-  } | null;
+}
+
+/** Default values for OpenAPI-required Cart fields. */
+function cartDefaults(): Pick<
+  CartFixture,
+  | 'merchant_id'
+  | 'status'
+  | 'subtotal'
+  | 'tax_total'
+  | 'shipping_estimate'
+  | 'discount'
+  | 'promotion'
+  | 'expires_at'
+  | 'created_at'
+  | 'updated_at'
+> {
+  return {
+    merchant_id: 1,
+    status: 'active',
+    subtotal: '0.00',
+    tax_total: '0.00',
+    shipping_estimate: null,
+    discount: null,
+    promotion: null,
+    expires_at: new Date(Date.now() + 86400000).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+/** Default values for OpenAPI-required CartLineItem fields. */
+function lineItemDefaults(): Pick<
+  CartLineItemFixture,
+  | 'fulfillment_type'
+  | 'fulfillment_date'
+  | 'tax_rate'
+  | 'tax_amount'
+  | 'product_type'
+  | 'surcharges'
+  | 'gift_card_details'
+> {
+  return {
+    fulfillment_type: 'local_delivery',
+    fulfillment_date: new Date().toISOString().slice(0, 10),
+    tax_rate: '0.09',
+    tax_amount: '0.00',
+    product_type: 'physical',
+    surcharges: [],
+    gift_card_details: null,
+  };
 }
 
 export function emptyCart(): CartFixture {
@@ -52,6 +121,7 @@ export function emptyCart(): CartFixture {
     line_items: [],
     cart_total: '0.00',
     item_count: 0,
+    ...cartDefaults(),
   };
 }
 
@@ -68,10 +138,14 @@ export function cartWithOneItem(): CartFixture {
         unit_price: '8.50',
         line_total: '8.50',
         options: [],
+        ...lineItemDefaults(),
       },
     ],
     cart_total: '8.50',
     item_count: 1,
+    ...cartDefaults(),
+    subtotal: '8.50',
+    tax_total: '0.70',
   };
 }
 
@@ -88,6 +162,7 @@ export function cartWithMultipleItems(): CartFixture {
         unit_price: '8.50',
         line_total: '17.00',
         options: [],
+        ...lineItemDefaults(),
       },
       {
         id: 'li-2',
@@ -106,10 +181,14 @@ export function cartWithMultipleItems(): CartFixture {
             quantity: 1,
           },
         ],
+        ...lineItemDefaults(),
       },
     ],
     cart_total: '31.50',
     item_count: 3,
+    ...cartDefaults(),
+    subtotal: '31.50',
+    tax_total: '2.60',
   };
 }
 
@@ -141,10 +220,14 @@ export function cartWithModifiers(): CartFixture {
             quantity: 1,
           },
         ],
+        ...lineItemDefaults(),
       },
     ],
     cart_total: '16.50',
     item_count: 1,
+    ...cartDefaults(),
+    subtotal: '16.50',
+    tax_total: '1.36',
   };
 }
 
@@ -166,10 +249,14 @@ export function cartWithDiscount(): CartFixture {
           label: '15% off',
           savings: '0.90',
         },
+        ...lineItemDefaults(),
       },
     ],
     cart_total: '5.10',
     cart_savings: '0.90',
     item_count: 1,
+    ...cartDefaults(),
+    subtotal: '5.10',
+    tax_total: '0.42',
   };
 }

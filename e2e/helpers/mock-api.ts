@@ -213,10 +213,18 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     // Valid: starts with "1015" → in delivery zone
     if (postalCode.startsWith('1015')) {
       json(res, {
-        latitude: 52.3702,
-        longitude: 4.8952,
+        latitude: '52.3702',
+        longitude: '4.8952',
         available_fulfillment_types: ['local_delivery', 'pickup'],
-        available_shipping_providers: [{ id: 1, name: 'PostNL', type: 'postal' }],
+        available_shipping_providers: [
+          {
+            id: 1,
+            name: 'PostNL',
+            delivery_model: 'postal',
+            base_delivery_fee: '4.95',
+            free_delivery_threshold: null,
+          },
+        ],
         pickup_locations: [{ id: 1, name: 'Amsterdam Centraal', distance_km: 1.2 }],
         delivery_unavailable: false,
         near_delivery_zone: false,
@@ -227,10 +235,18 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     // Valid, in delivery zone with free shipping: starts with "2000"
     if (postalCode.startsWith('2000')) {
       json(res, {
-        latitude: 52.16,
-        longitude: 4.49,
+        latitude: '52.16',
+        longitude: '4.49',
         available_fulfillment_types: ['local_delivery', 'pickup'],
-        available_shipping_providers: [{ id: 1, name: 'PostNL', type: 'postal' }],
+        available_shipping_providers: [
+          {
+            id: 1,
+            name: 'PostNL',
+            delivery_model: 'postal',
+            base_delivery_fee: '0.00',
+            free_delivery_threshold: '25.00',
+          },
+        ],
         pickup_locations: [{ id: 3, name: 'Leiden Centraal', distance_km: 0.8 }],
         delivery_unavailable: false,
         near_delivery_zone: false,
@@ -241,8 +257,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     // Valid but out of area: starts with "9999"
     if (postalCode.startsWith('9999')) {
       json(res, {
-        latitude: 53.2,
-        longitude: 6.5,
+        latitude: '53.2',
+        longitude: '6.5',
         available_fulfillment_types: ['pickup'],
         available_shipping_providers: [],
         pickup_locations: [{ id: 2, name: 'Groningen Station', distance_km: 45.0 }],
@@ -455,6 +471,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       line_total: '0.00', // recalculated below
       options: options,
       notes: body.notes,
+      fulfillment_type: 'local_delivery',
+      fulfillment_date: new Date().toISOString().slice(0, 10),
+      tax_rate: '0.09',
+      tax_amount: '0.00',
+      product_type: 'physical',
+      surcharges: [] as unknown[],
+      gift_card_details: null as Record<string, unknown> | null,
     };
 
     state.cart.line_items.push(lineItem);
@@ -548,11 +571,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
     const discount = testDiscounts[code];
     if (!discount) {
-      json(res, { detail: 'Invalid discount code' }, 400);
+      json(res, { error: { code: 'VALIDATION_ERROR', message: 'Invalid discount code' } }, 400);
       return;
     }
     if (code === 'EXPIRED') {
-      json(res, { detail: 'Discount code expired' }, 400);
+      json(res, { error: { code: 'VALIDATION_ERROR', message: 'Discount code expired' } }, 400);
       return;
     }
 
@@ -582,6 +605,23 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     state.cart.discount_amount = '0.00';
     recalcCart(state.cart);
     json(res, state.cart);
+    return;
+  }
+
+  // ── Pickup locations ──
+  if (method === 'GET' && path === '/api/v1/pickup-locations/') {
+    json(res, [
+      {
+        id: 1,
+        name: 'Poke Perfect Amsterdam',
+        address: {
+          street: 'Damstraat 1',
+          city: 'Amsterdam',
+          postal_code: '1012LG',
+        },
+        pickup_instructions: 'Collect at the counter',
+      },
+    ]);
     return;
   }
 
