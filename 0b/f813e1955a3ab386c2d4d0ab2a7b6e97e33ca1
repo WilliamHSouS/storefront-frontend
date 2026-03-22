@@ -1,0 +1,67 @@
+src/stores/address-actions.ts
+  4060d237b54f5fd1 74-75
+src/stores/cart-actions.ts
+  100ead46ec8a6523 7,111-112,119
+  4060d237b54f5fd1 51-52,103,136,154,175
+src/stores/cart.test.ts
+  4060d237b54f5fd1 94-95
+  100ead46ec8a6523 15,217-231,238,245-257
+src/stores/cart-actions.test.ts
+  4060d237b54f5fd1 68-69,189-190
+  100ead46ec8a6523 301,315-326,475,479
+src/stores/checkout-actions.test.ts
+  4060d237b54f5fd1 143-145,184,186,220-225,253,255
+src/stores/checkout-actions.ts
+  4060d237b54f5fd1 87-89,226
+src/stores/cart.ts
+  4060d237b54f5fd1 237-238
+  100ead46ec8a6523 114-118,122-126,136-153
+src/stores/cart.integration.test.ts
+  4060d237b54f5fd1 136-137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "0bf813e1955a3ab386c2d4d0ab2a7b6e97e33ca1",
+  "prompts": {
+    "100ead46ec8a6523": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38e0194e-07f0-4f06-bb78-e47a351f2fd7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 102,
+      "overriden_lines": 0
+    },
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 69,
+      "total_deletions": 52,
+      "accepted_lines": 1665,
+      "overriden_lines": 0
+    },
+    "5c8b5e1a51036ef3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4859595d-769f-4532-ac45-4c6c95aa37ad",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 329,
+      "total_deletions": 18,
+      "accepted_lines": 418,
+      "overriden_lines": 0
+    }
+  }
+}
