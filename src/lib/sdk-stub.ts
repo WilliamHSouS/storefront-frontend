@@ -10,6 +10,8 @@
  */
 
 import { createStorefrontClient as createRealClient } from '@poweredbysous/storefront-sdk';
+import type { paths } from '@poweredbysous/storefront-sdk';
+import type { PathsWithMethod } from 'openapi-typescript-helpers';
 
 export interface ApiError {
   status: number;
@@ -31,12 +33,39 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
-export interface StorefrontClient {
-  GET: (path: string, options?: RequestOptions) => Promise<ApiResult>;
-  POST: (path: string, options?: RequestOptions) => Promise<ApiResult>;
-  PATCH: (path: string, options?: RequestOptions) => Promise<ApiResult>;
-  DELETE: (path: string, options?: RequestOptions) => Promise<ApiResult>;
+// Helper types to extract response from the SDK's paths type
+type SuccessResponse<T> = T extends { content: { 'application/json': infer R } } ? R : unknown;
+type Get200Or201<T> = T extends { 200: infer R }
+  ? SuccessResponse<R>
+  : T extends { 201: infer R }
+    ? SuccessResponse<R>
+    : unknown;
+type MethodResponse<P extends keyof paths, M extends string> = paths[P] extends {
+  [K in M]: { responses: infer R };
 }
+  ? Get200Or201<R>
+  : unknown;
+
+export interface StorefrontClient {
+  GET: <P extends PathsWithMethod<paths, 'get'>>(
+    path: P,
+    options?: RequestOptions,
+  ) => Promise<ApiResult<MethodResponse<P, 'get'>>>;
+  POST: <P extends PathsWithMethod<paths, 'post'>>(
+    path: P,
+    options?: RequestOptions,
+  ) => Promise<ApiResult<MethodResponse<P, 'post'>>>;
+  PATCH: <P extends PathsWithMethod<paths, 'patch'>>(
+    path: P,
+    options?: RequestOptions,
+  ) => Promise<ApiResult<MethodResponse<P, 'patch'>>>;
+  DELETE: <P extends PathsWithMethod<paths, 'delete'>>(
+    path: P,
+    options?: RequestOptions,
+  ) => Promise<ApiResult<MethodResponse<P, 'delete'>>>;
+}
+
+export type { paths };
 
 export interface CreateClientOptions {
   baseUrl: string;
@@ -148,12 +177,12 @@ export function createStorefrontClient(options: CreateClientOptions): Storefront
     fetch: fetchFn,
   });
 
-  /* eslint-disable @typescript-eslint/no-explicit-any -- intentional: shim erases strict OpenAPI path-literal types */
+  /* eslint-disable @typescript-eslint/no-explicit-any -- opts cast bridges our RequestOptions to the SDK's per-path shape; return cast bridges wrapCall's ApiResult<unknown> to the inferred MethodResponse */
   return {
-    GET: (path, opts?) => wrapCall(realClient.GET(path as any, opts as any)),
-    POST: (path, opts?) => wrapCall(realClient.POST(path as any, opts as any)),
-    PATCH: (path, opts?) => wrapCall(realClient.PATCH(path as any, opts as any)),
-    DELETE: (path, opts?) => wrapCall(realClient.DELETE(path as any, opts as any)),
+    GET: (path, opts?) => wrapCall(realClient.GET(path, opts as any)) as any,
+    POST: (path, opts?) => wrapCall(realClient.POST(path, opts as any)) as any,
+    PATCH: (path, opts?) => wrapCall(realClient.PATCH(path, opts as any)) as any,
+    DELETE: (path, opts?) => wrapCall(realClient.DELETE(path, opts as any)) as any,
   };
   /* eslint-enable @typescript-eslint/no-explicit-any */
 }
