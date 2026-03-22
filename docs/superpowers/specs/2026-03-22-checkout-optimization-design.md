@@ -35,6 +35,8 @@ Into a single call returning:
 
 **Impact:** Eliminates one sequential round-trip on the critical path (delivery_set → payment form visible).
 
+**Payment method configuration:** The `prepare-payment` endpoint must create the PaymentIntent with the same `payment_method_types` as the current `POST /payment/` endpoint (iDEAL + card). The frontend relies on Stripe auto-detection from the PaymentIntent — no explicit `paymentMethodTypes` is passed to `elements()`. The backend must preserve this behavior when merging the two steps.
+
 **Frontend change:** Replace `initiatePayment()` in `checkout-actions.ts` with `preparePayment()` that calls this endpoint. `CheckoutPaymentSection` watches for `delivery_set` and calls `preparePayment()` to get both gateway config and client_secret in one shot.
 
 ### 1b. Add `POST /checkout/{id}/confirm-payment/` to OpenAPI spec
@@ -77,23 +79,25 @@ Split the 749-line `CheckoutPage.tsx` into focused components:
 
 ### CheckoutPaymentSection.tsx (new, ~120 lines)
 
-- Extracts Stripe payment mounting logic (current lines 412-444 + 662-687)
+- Extracts Stripe payment mounting logic (the `delivery_set` watcher + Payment Element render block)
 - Watches for `delivery_set` status → calls `preparePayment()` (new merged endpoint)
 - Manages `stripeConfig` state locally — parent doesn't need to know about `client_secret`
-- Owns `stripeRef` and `elementsRef`
+- Sets a `$stripePayment` nanostore atom (`{ stripe, elements, clientSecret }`) so `CheckoutPlaceOrder` can read it without prop drilling
 - Handles Stripe preload if gateway config available from checkout creation (proposal 1c)
+- Must include the `mountedRef` strict-mode guard (same pattern as `StripePaymentForm`) to prevent double-initialization
 
 ### CheckoutFormOrchestrator.tsx (new, ~100 lines)
 
-- Extracts the blur → validate → PATCH cycle (current lines 310-398)
+- Extracts the blur → validate → PATCH cycle (the `handleBlur` + validation + auto-PATCH-on-fulfillment-change logic)
 - Owns `handleBlur`, `validateFieldsForPatch`, and the auto-PATCH effect
 - Wraps ContactForm, FulfillmentToggle, DeliveryAddressForm, PickupLocationPicker
 - Calls `cancelPendingPatch()` on unmount cleanup
+- Maps `CheckoutFormState.fulfillmentMethod` (`'delivery' | 'pickup'`) to API `fulfillment_type` (`'local_delivery' | 'pickup'`) when assembling the PATCH body — this is the single location for that mapping
 
 ### CheckoutPlaceOrder.tsx (new, ~80 lines)
 
-- Extracts `handlePlaceOrder` + `validateForm` (current lines 447-533)
-- Receives `stripeRef`, `elementsRef`, `stripeConfig` via props or a shared ref
+- Extracts `handlePlaceOrder` + `validateForm` (the form validation + Stripe confirm + complete-checkout logic)
+- Reads Stripe instances from the `$stripePayment` nanostore atom (set by `CheckoutPaymentSection`)
 - Renders both desktop and mobile place-order buttons
 - On error: scrolls to error banner + brief button shake animation
 
@@ -122,7 +126,7 @@ XState adds ~12KB min-gzipped, significant against the 65KB bundle budget. The e
 
 Current: silent `catch` blocks log warnings but give no user feedback. If sessionStorage is unavailable (Safari private browsing, quota exceeded), checkout silently loses state on refresh.
 
-**Fix:** Add a `$storageAvailable` atom checked once on mount. If unavailable, show a non-blocking toast: "Your browser doesn't support saving form progress. Please complete checkout in one session." Form still works — just no persistence.
+**Fix:** Add a `$storageAvailable` atom checked once on mount. If unavailable, show a non-blocking toast using the i18n key `storageUnavailable` (add translations for nl/en/de). Form still works — just no persistence.
 
 ### 3c. Debounce cleanup on unmount
 
@@ -200,10 +204,13 @@ No backwards compatibility layer needed. Both frontend and backend deploy togeth
 
 ### Deployment order
 
-1. Backend deploys: new `prepare-payment` endpoint, `confirm-payment` in spec, eager gateway config
-2. SDK regenerated from updated OpenAPI spec
-3. Frontend updates SDK dep, deploys with all changes
-4. (Optional cleanup) Backend removes old `POST /payment/` endpoint in a follow-up
+1. Backend merges: new `prepare-payment` endpoint, `confirm-payment` in spec, eager gateway config
+2. Backend CI publishes updated `openapi.storefront.v1.json` → triggers SDK regeneration → new `@poweredbysous/storefront-sdk` version published to registry
+3. Frontend PR updates SDK dep (`pnpm update @poweredbysous/storefront-sdk`). **CI gate:** `pnpm check` must pass with the new SDK, confirming all new endpoints are typed. Do not merge until the SDK version includes the new endpoints.
+4. Coordinated deploy: backend + frontend deploy together (same release window)
+5. (Optional cleanup) Backend removes old `POST /payment/` endpoint in a follow-up
+
+**SDK ownership:** The backend team owns SDK regeneration. Frontend blocks on the published SDK version before merging.
 
 ### Rollback plan
 
