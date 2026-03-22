@@ -1,0 +1,80 @@
+e2e/helpers/stripe-mock.ts
+  5c8b5e1a51036ef3 81
+  4060d237b54f5fd1 7-9,24-29,45-53,74-80,82-83
+e2e/helpers/mock-api.ts
+  5c8b5e1a51036ef3 80-93,796-812
+src/i18n/messages/nl.json
+  5c8b5e1a51036ef3 145-146
+src/components/interactive/checkout/FulfillmentToggle.tsx
+  5c8b5e1a51036ef3 27,34
+src/components/interactive/checkout/StripePaymentForm.tsx
+  5c8b5e1a51036ef3 62,69-77
+docs/proposals/checkout-payment-flow-frontend-response.md
+  5c8b5e1a51036ef3 1-113
+src/i18n/messages/de.json
+  5c8b5e1a51036ef3 145-146
+src/components/interactive/CheckoutPage.tsx
+  5c8b5e1a51036ef3 412-414,419-420,422-423,425-427,429-435,437,441-442,444
+src/types/checkout.ts
+  5c8b5e1a51036ef3 75-82
+src/stores/checkout-actions.test.ts
+  5c8b5e1a51036ef3 63
+docs/proposals/checkout-delivery-api-improvements.md
+  5c8b5e1a51036ef3 1-133
+src/stores/checkout.test.ts
+  5c8b5e1a51036ef3 95
+docs/proposals/checkout-payment-flow-simplification.md
+  5c8b5e1a51036ef3 1-194
+src/components/interactive/CheckoutSuccess.tsx
+  5c8b5e1a51036ef3 1,12-17,21-22,30,46-48,55-61,63-103,106-107,109-121,124-129,141-150,155-156
+src/components/interactive/DiscountCodeInput.tsx
+  100ead46ec8a6523 39-48
+src/i18n/messages/en.json
+  5c8b5e1a51036ef3 145-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "d222a9f5991818a452d7642807df1451e7d5bd89",
+  "prompts": {
+    "100ead46ec8a6523": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38e0194e-07f0-4f06-bb78-e47a351f2fd7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 753,
+      "overriden_lines": 0
+    },
+    "5c8b5e1a51036ef3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4859595d-769f-4532-ac45-4c6c95aa37ad",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 289,
+      "total_deletions": 142,
+      "accepted_lines": 630,
+      "overriden_lines": 0
+    }
+  }
+}
