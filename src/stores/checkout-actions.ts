@@ -85,11 +85,12 @@ export function patchDelivery(
       const sdk = client ?? getClient();
       const { data: responseData, error } = await sdk.PATCH(
         '/api/v1/checkout/{checkout_id}/delivery/',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- body shape varies by caller
+
         {
           params: { path: { checkout_id: checkoutId } },
           body: data,
           signal: controller.signal,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opts shape bridges local RequestOptions to SDK per-path type
         } as any,
       );
 
@@ -104,6 +105,10 @@ export function patchDelivery(
       }
 
       $checkout.set(responseData as unknown as Checkout);
+      log.warn('checkout', 'Delivery details set', {
+        checkoutId,
+        fulfillmentType: data.fulfillment_type,
+      });
       $checkoutError.set(null);
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
@@ -145,6 +150,11 @@ export async function createCheckout(cartId: string, client?: StorefrontClient):
     const checkout = data as unknown as Checkout;
     $checkout.set(checkout);
     setStoredCheckoutId(checkout.id);
+    log.warn('checkout', 'Checkout created', {
+      checkoutId: checkout.id,
+      cartId,
+      lineItemCount: checkout.line_items?.length,
+    });
     return checkout;
   } finally {
     $checkoutLoading.set(false);
@@ -201,6 +211,10 @@ export async function initiatePayment(
       throw new Error(`Failed to initiate payment: ${errorDetail(error)}`);
     }
 
+    log.warn('checkout', 'Payment initiated', {
+      checkoutId,
+      gateway: 'stripe',
+    });
     return data as unknown as PaymentResult;
   } finally {
     $checkoutLoading.set(false);
@@ -231,6 +245,10 @@ export async function completeCheckout(
 
     const checkout = data as unknown as Checkout;
     $checkout.set(checkout);
+    log.warn('checkout', 'Checkout completed', {
+      checkoutId,
+      orderNumber: checkout.order_number,
+    });
     clearStoredCheckoutId();
     // Clear cart after successful order completion
     $cart.set(null);

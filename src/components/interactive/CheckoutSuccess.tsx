@@ -55,6 +55,10 @@ export default function CheckoutSuccess({ lang }: Props) {
             params: { path: { checkout_id: checkoutId } },
           });
           const checkout = data as { status?: string; order_number?: string | null } | null;
+          log.warn('checkout-success', 'Polling checkout status', {
+            checkoutId,
+            status: checkout?.status,
+          });
           if (checkout?.status === 'completed' && checkout.order_number) {
             clearInterval(pollInterval);
             clearCart();
@@ -71,6 +75,9 @@ export default function CheckoutSuccess({ lang }: Props) {
       // Clear cart (the order is paid, this cart is dead) and show a softer message.
       const timeoutId = setTimeout(() => {
         clearInterval(pollInterval);
+        log.warn('checkout-success', 'Polling timed out — showing fallback', {
+          checkoutId,
+        });
         clearCart();
         clearStoredCheckoutId();
         setTimedOut(true);
