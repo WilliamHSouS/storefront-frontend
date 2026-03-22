@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec; interpolated URLs + body casts needed */
 import { getClient } from '@/lib/api';
 import { $cart, clearStoredCartId } from '@/stores/cart';
 import {
@@ -85,8 +84,13 @@ export function patchDelivery(
     try {
       const sdk = client ?? getClient();
       const { data: responseData, error } = await sdk.PATCH(
-        `/api/v1/checkout/${checkoutId}/delivery/` as any,
-        { body: data, signal: controller.signal } as any,
+        '/api/v1/checkout/{checkout_id}/delivery/',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- body shape varies by caller
+        {
+          params: { path: { checkout_id: checkoutId } },
+          body: data,
+          signal: controller.signal,
+        } as any,
       );
 
       // Discard stale response
@@ -99,7 +103,7 @@ export function patchDelivery(
         return;
       }
 
-      $checkout.set(responseData as Checkout);
+      $checkout.set(responseData as unknown as Checkout);
       $checkoutError.set(null);
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
@@ -138,7 +142,7 @@ export async function createCheckout(cartId: string, client?: StorefrontClient):
       throw new Error(`Failed to create checkout: ${errorDetail(error)}`);
     }
 
-    const checkout = data as Checkout;
+    const checkout = data as unknown as Checkout;
     $checkout.set(checkout);
     setStoredCheckoutId(checkout.id);
     return checkout;
@@ -159,13 +163,15 @@ export async function fetchCheckout(
   $checkoutLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.GET(`/api/v1/checkout/${checkoutId}/` as any);
+    const { data, error } = await sdk.GET('/api/v1/checkout/{checkout_id}/', {
+      params: { path: { checkout_id: checkoutId } },
+    });
 
     if (error || !data) {
       throw new Error(`Failed to fetch checkout: ${errorDetail(error)}`);
     }
 
-    const checkout = data as Checkout;
+    const checkout = data as unknown as Checkout;
     $checkout.set(checkout);
     return checkout;
   } finally {
@@ -186,15 +192,16 @@ export async function initiatePayment(
   try {
     const sdk = client ?? getClient();
     const { data, error } = await sdk.POST(
-      `/api/v1/checkout/${checkoutId}/payment/` as any,
-      { body: { gateway_id: 'stripe' } } as any,
+      '/api/v1/checkout/{checkout_id}/payment/',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- body shape not in SDK types
+      { params: { path: { checkout_id: checkoutId } }, body: { gateway_id: 'stripe' } } as any,
     );
 
     if (error || !data) {
       throw new Error(`Failed to initiate payment: ${errorDetail(error)}`);
     }
 
-    return data as PaymentResult;
+    return data as unknown as PaymentResult;
   } finally {
     $checkoutLoading.set(false);
   }
@@ -212,13 +219,17 @@ export async function completeCheckout(
   $checkoutLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.POST(`/api/v1/checkout/${checkoutId}/complete/` as any);
+    const { data, error } = await sdk.POST(
+      '/api/v1/checkout/{checkout_id}/complete/',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- params shape not matching SDK
+      { params: { path: { checkout_id: checkoutId } } } as any,
+    );
 
     if (error || !data) {
       throw new Error(`Failed to complete checkout: ${errorDetail(error)}`);
     }
 
-    const checkout = data as Checkout;
+    const checkout = data as unknown as Checkout;
     $checkout.set(checkout);
     clearStoredCheckoutId();
     // Clear cart after successful order completion
@@ -280,8 +291,9 @@ export async function ensurePaymentAndComplete(
   // 4. Handle payment intent status
   switch (paymentIntent.status) {
     case 'succeeded': {
-      await completeCheckout(checkoutId, client);
-      return { status: 'succeeded', redirectUrl: successUrl };
+      const completed = await completeCheckout(checkoutId, client);
+      const orderParam = completed.order_number ? `?order=${completed.order_number}` : '';
+      return { status: 'succeeded', redirectUrl: `${successUrl}${orderParam}` };
     }
     case 'processing': {
       return {

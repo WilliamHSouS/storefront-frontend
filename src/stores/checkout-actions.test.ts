@@ -140,7 +140,9 @@ describe('fetchCheckout', () => {
 
     expect(result).toMatchObject({ id: 'chk-42' });
     expect($checkout.get()).toMatchObject({ id: 'chk-42' });
-    expect(client.GET).toHaveBeenCalledWith('/api/v1/checkout/chk-42/');
+    expect(client.GET).toHaveBeenCalledWith('/api/v1/checkout/{checkout_id}/', {
+      params: { path: { checkout_id: 'chk-42' } },
+    });
   });
 
   it('throws on API error', async () => {
@@ -179,8 +181,9 @@ describe('patchDelivery', () => {
     // Only one PATCH call should have been made (the last one)
     expect(client.PATCH).toHaveBeenCalledTimes(1);
     expect(client.PATCH).toHaveBeenCalledWith(
-      '/api/v1/checkout/chk-1/delivery/',
+      '/api/v1/checkout/{checkout_id}/delivery/',
       expect.objectContaining({
+        params: { path: { checkout_id: 'chk-1' } },
         body: { email: 'c@c.com' },
       }),
     );
@@ -214,7 +217,12 @@ describe('completeCheckout', () => {
 
     expect(result).toMatchObject({ id: 'chk-1', status: 'completed' });
     expect(sessionStorage.getItem('sous_checkout_id')).toBeNull();
-    expect(client.POST).toHaveBeenCalledWith('/api/v1/checkout/chk-1/complete/');
+    expect(client.POST).toHaveBeenCalledWith(
+      '/api/v1/checkout/{checkout_id}/complete/',
+      expect.objectContaining({
+        params: { path: { checkout_id: 'chk-1' } },
+      }),
+    );
   });
 
   it('throws on API error', async () => {
@@ -242,8 +250,9 @@ describe('initiatePayment', () => {
 
     expect(result).toMatchObject({ client_secret: 'cs_test_123' });
     expect(client.POST).toHaveBeenCalledWith(
-      '/api/v1/checkout/chk-1/payment/',
+      '/api/v1/checkout/{checkout_id}/payment/',
       expect.objectContaining({
+        params: { path: { checkout_id: 'chk-1' } },
         body: { gateway_id: 'stripe' },
       }),
     );

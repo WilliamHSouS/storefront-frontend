@@ -71,7 +71,8 @@ export async function onAddressChange(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const client = getClient();
-    const { data, error } = await client.POST('/api/v1/fulfillment/address-check/', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK missing this endpoint
+    const { data, error } = await client.POST('/api/v1/fulfillment/address-check/' as any, {
       body: { postal_code: input.postalCode, country: input.country },
     });
 

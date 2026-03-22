@@ -133,8 +133,8 @@ describe('ensureCart', () => {
     const id = await ensureCart(mockClient as never);
     expect(id).toBe('cart-stored');
     expect($cart.get()).toMatchObject(fetchedCart);
-    expect(mockClient.GET).toHaveBeenCalledWith('/api/v1/cart/{id}/', {
-      params: { path: { id: 'cart-stored' } },
+    expect(mockClient.GET).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/', {
+      params: { path: { cart_id: 'cart-stored' } },
     });
   });
 
