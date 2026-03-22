@@ -26,8 +26,8 @@ export default function CartBar({ lang }: Props) {
     if ($addressCoords.get()) return;
     const client = getClient();
     client
-      .GET(`/api/v1/cart/{id}/`, {
-        params: { path: { id: cartId }, query: cartCoordsQuery() },
+      .GET(`/api/v1/cart/{cart_id}/`, {
+        params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
       })
       .then(({ data }) => {
         if (data) $cart.set(normalizeCart(data as Record<string, unknown>));

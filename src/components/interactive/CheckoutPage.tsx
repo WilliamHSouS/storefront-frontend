@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- checkout/location endpoints not in OpenAPI spec */
+// Checkout/location endpoints use dynamic URLs not in the OpenAPI spec — targeted `as any` casts below.
 import { useReducer, useEffect, useCallback, useRef, useState } from 'preact/hooks';
 import { lazy, Suspense } from 'preact/compat';
 import { useStore } from '@nanostores/preact';
@@ -173,6 +173,7 @@ export default function CheckoutPage({ lang }: Props) {
     const locationsUrl = '/api/v1/pickup-locations/';
 
     client
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic endpoint not in SDK
       .GET(locationsUrl as any)
       .then(({ data }) => {
         if (!data || !Array.isArray(data)) return;
@@ -260,6 +261,7 @@ export default function CheckoutPage({ lang }: Props) {
       const slotsUrl = `/api/v1/fulfillment/locations/${locationId}/slots/?date=${date}`;
 
       client
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic endpoint not in SDK
         .GET(slotsUrl as any)
         .then(({ data }) => {
           if (!data) {
@@ -343,23 +345,23 @@ export default function CheckoutPage({ lang }: Props) {
 
     const deliveryData: Record<string, unknown> = {
       email: form.email,
+      first_name: form.firstName,
+      last_name: form.lastName,
+      phone_number: form.phone,
+      fulfillment_type: form.fulfillmentMethod === 'pickup' ? 'pickup' : 'local_delivery',
     };
 
-    // Only include address for delivery (pickup doesn't need it)
     if (form.fulfillmentMethod === 'delivery') {
       deliveryData.shipping_address = {
-        first_name: form.firstName,
-        last_name: form.lastName,
         street_address_1: form.street,
         city: form.city,
         postal_code: form.postalCode,
         country_code: form.countryCode,
-        phone_number: form.phone,
       };
     }
 
-    if (form.selectedShippingRateId) {
-      deliveryData.shipping_method_id = form.selectedShippingRateId;
+    if (form.fulfillmentMethod === 'pickup' && form.pickupLocationId) {
+      deliveryData.pickup_location_id = form.pickupLocationId;
     }
 
     // Only send fulfillment_slot_id if it looks like a valid UUID
@@ -428,16 +430,27 @@ export default function CheckoutPage({ lang }: Props) {
     const gatewayUrl = `/api/v1/checkout/${checkout.id}/payment-gateways/`;
 
     client
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic endpoint not in SDK
       .GET(gatewayUrl as any)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          $checkoutError.set(
+            `Payment gateway error: ${'message' in error ? error.message : JSON.stringify(error)}`,
+          );
+          return;
+        }
         const raw = data as unknown;
+        const rawObj = raw as Record<string, unknown>;
         const gateways: PaymentGateway[] = Array.isArray(raw)
           ? raw
-          : Array.isArray((raw as any)?.results)
-            ? (raw as any).results
+          : Array.isArray(rawObj?.results)
+            ? (rawObj.results as PaymentGateway[])
             : [];
         const stripeGateway = gateways.find((g) => g.id === 'stripe');
-        if (!stripeGateway) return;
+        if (!stripeGateway) {
+          log.warn('checkout', 'No Stripe gateway found in:', JSON.stringify(gateways));
+          return;
+        }
 
         // Config may be an object { key: value } or array [{ key, value }]
         const cfg = stripeGateway.config;
@@ -451,25 +464,42 @@ export default function CheckoutPage({ lang }: Props) {
           acct = (cfg as Record<string, string>).stripe_account ?? '';
         }
 
-        if (pk) {
-          // Initiate payment to get client_secret for mounting the Payment Element
-          // This creates a PaymentIntent but does NOT complete the checkout
-          initiatePayment(checkout!.id)
-            .then((paymentResult) => {
-              if (paymentResult?.client_secret) {
-                setStripeConfig({
-                  clientSecret: paymentResult.client_secret,
-                  publishableKey: pk,
-                  stripeAccount: acct,
-                });
-              }
-            })
-            .catch((err) => {
-              log.error('checkout', 'Failed to initiate payment:', err);
-            });
+        if (!pk) {
+          log.warn(
+            'checkout',
+            'Stripe gateway found but no publishable_key in config:',
+            JSON.stringify(cfg),
+          );
+          return;
         }
+
+        // Initiate payment to get client_secret for mounting the Payment Element
+        // This creates a PaymentIntent but does NOT complete the checkout
+        initiatePayment(checkout!.id)
+          .then((paymentResult) => {
+            if (paymentResult?.client_secret) {
+              setStripeConfig({
+                clientSecret: paymentResult.client_secret,
+                publishableKey: pk,
+                stripeAccount: acct,
+              });
+            } else {
+              log.warn(
+                'checkout',
+                'initiatePayment response missing client_secret:',
+                JSON.stringify(paymentResult),
+              );
+            }
+          })
+          .catch((err) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            $checkoutError.set(`Payment initialization failed: ${msg}`);
+            log.error('checkout', 'Failed to initiate payment:', err);
+          });
       })
       .catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        $checkoutError.set(`Failed to load payment methods: ${msg}`);
         log.error('checkout', 'Failed to fetch payment gateways:', err);
       });
   }, [checkout?.id, checkout?.status, stripeConfig]);

@@ -55,11 +55,12 @@ let commsMessages: CommsMessage[] = [];
   const sdk = Astro.locals.sdk;
   if (sdk) {
     try {
-      const { data } = await sdk.GET('/api/v1/merchant-comms/storefront/active/');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- merchant-comms endpoint not in SDK
+      const { data } = await sdk.GET('/api/v1/merchant-comms/storefront/active/' as any);
       if (data) {
         commsMessages = Array.isArray(data)
-          ? data
-          : (((data as Record<string, unknown>).results as CommsMessage[]) ?? []);
+          ? (data as unknown as CommsMessage[])
+          : (((data as unknown as Record<string, unknown>).results as CommsMessage[]) ?? []);
       }
     } catch {
       // Silent degradation — no banners is better than a broken page

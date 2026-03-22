@@ -63,7 +63,7 @@ export default function SearchBar({ lang }: Props) {
         signal: controller.signal,
       });
       if (data) {
-        const page = data as { results: Array<Record<string, unknown>> };
+        const page = data as unknown as { results: Array<Record<string, unknown>> };
         const items = page.results ?? [];
         if (items.length > 0) {
           setResults(items.map(normalizeProduct));

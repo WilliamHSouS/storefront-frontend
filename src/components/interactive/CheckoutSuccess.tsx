@@ -12,6 +12,7 @@ interface Props {
 export default function CheckoutSuccess({ lang }: Props) {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timedOut, setTimedOut] = useState(false);
   const pollCleanupRef = useRef<(() => void) | null>(null);
 
   // Clean up polling on unmount
@@ -50,8 +51,8 @@ export default function CheckoutSuccess({ lang }: Props) {
       const sdk = getClient();
       const pollInterval = setInterval(async () => {
         try {
-          const { data } = await sdk.GET('/api/v1/checkout/{id}/', {
-            params: { path: { id: checkoutId } },
+          const { data } = await sdk.GET('/api/v1/checkout/{checkout_id}/', {
+            params: { path: { checkout_id: checkoutId } },
           });
           const checkout = data as { status?: string; order_number?: string | null } | null;
           if (checkout?.status === 'completed' && checkout.order_number) {
@@ -66,9 +67,13 @@ export default function CheckoutSuccess({ lang }: Props) {
         }
       }, 2000);
 
-      // Stop polling after 30s and show a generic success
+      // Stop polling after 30s — payment is committed but backend hasn't confirmed yet.
+      // Clear cart (the order is paid, this cart is dead) and show a softer message.
       const timeoutId = setTimeout(() => {
         clearInterval(pollInterval);
+        clearCart();
+        clearStoredCheckoutId();
+        setTimedOut(true);
         setLoading(false);
       }, 30_000);
 
@@ -91,6 +96,9 @@ export default function CheckoutSuccess({ lang }: Props) {
     );
   }
 
+  const heading = timedOut ? t('paymentReceived', lang) : t('orderConfirmed', lang);
+  const message = timedOut ? t('orderProcessing', lang) : t('thankYou', lang);
+
   return (
     <div class="max-w-lg mx-auto px-4 py-12 text-center">
       <div class="mb-6">
@@ -105,8 +113,8 @@ export default function CheckoutSuccess({ lang }: Props) {
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 class="text-2xl font-heading font-bold">{t('orderConfirmed', lang)}</h1>
-        <p class="text-muted-foreground mt-2">{t('thankYou', lang)}</p>
+        <h1 class="text-2xl font-heading font-bold">{heading}</h1>
+        <p class="text-muted-foreground mt-2">{message}</p>
       </div>
 
       {orderNumber && (

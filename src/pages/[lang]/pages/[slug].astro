@@ -18,7 +18,7 @@ const { data: page, error } = await sdk.GET(`/api/v1/pages/{slug}/`, {
 
 if (!page) {
   // Distinguish 404 (missing page) from server errors
-  const status = (error as Record<string, unknown> | null)?.status;
+  const status = (error as unknown as Record<string, unknown> | null)?.status;
   if (typeof status === 'number' && status >= 500) {
     return new Response('Service unavailable', { status: 502 });
   }
