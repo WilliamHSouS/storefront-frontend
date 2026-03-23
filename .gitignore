@@ -34,6 +34,14 @@ e2e/.report/
 # coverage
 coverage/
 
+# runtime caches
+node-compile-cache/
+playwright-transform-cache-*/
+tsx-*/
+
+# claude
+.claude/scheduled_tasks.lock
+
 # debug
 npm-debug.log*
 pnpm-debug.log*
