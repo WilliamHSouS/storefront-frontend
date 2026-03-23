@@ -12,6 +12,7 @@ import { checkStorageAvailable, $storageAvailable } from '@/stores/checkout-paym
 import { createCheckout, patchDelivery } from '@/stores/checkout-actions';
 import { showToast } from '@/stores/toast';
 import { $addressCoords } from '@/stores/address';
+import { onAddressChange } from '@/stores/address-actions';
 import { getClient } from '@/lib/api';
 import { t } from '@/i18n/client';
 import * as log from '@/lib/logger';
@@ -105,6 +106,34 @@ export default function CheckoutPage({ lang }: Props) {
     }
   }, []);
 
+  // ── Pre-populate form from checkout's saved address ─────────────
+  // If the checkout has address/contact data but the form is empty (no
+  // sessionStorage restore), populate the form so the user doesn't re-type.
+  useEffect(() => {
+    if (!checkout) return;
+    // Only populate if the form is still empty (no user input yet)
+    if (form.email || form.firstName) return;
+
+    if (checkout.email) {
+      dispatch({ type: 'SET_FIELD', field: 'email', value: checkout.email });
+    }
+    if (checkout.shipping_address) {
+      const addr = checkout.shipping_address;
+      if (addr.first_name)
+        dispatch({ type: 'SET_FIELD', field: 'firstName', value: addr.first_name });
+      if (addr.last_name) dispatch({ type: 'SET_FIELD', field: 'lastName', value: addr.last_name });
+      if (addr.phone_number)
+        dispatch({ type: 'SET_FIELD', field: 'phone', value: addr.phone_number });
+      if (addr.street_address_1)
+        dispatch({ type: 'SET_FIELD', field: 'street', value: addr.street_address_1 });
+      if (addr.city) dispatch({ type: 'SET_FIELD', field: 'city', value: addr.city });
+      if (addr.postal_code)
+        dispatch({ type: 'SET_FIELD', field: 'postalCode', value: addr.postal_code });
+      if (addr.country_code)
+        dispatch({ type: 'SET_FIELD', field: 'countryCode', value: addr.country_code });
+    }
+  }, [checkout?.id]);
+
   // ── Ensure cart exists on mount ──────────────────────────────────
   useEffect(() => {
     const client = getClient();
@@ -155,6 +184,22 @@ export default function CheckoutPage({ lang }: Props) {
         log.error('checkout', 'Failed to create checkout:', err);
       });
   }, [cart?.id, cart?.line_items.length, checkout?.cart_id, checkout?.status]);
+
+  // ── Hydrate address store from checkout's shipping_address ──────
+  // If the checkout already has address data (e.g. from a previous session)
+  // but $addressCoords is empty, run address-check to get lat/lng and
+  // refresh the cart's shipping estimate.
+  useEffect(() => {
+    if (!checkout?.shipping_address) return;
+    if ($addressCoords.get()) return; // already have address data
+
+    const { postal_code, country_code } = checkout.shipping_address;
+    if (!postal_code) return;
+
+    onAddressChange({ postalCode: postal_code, country: country_code || 'NL' }).catch((err) => {
+      log.warn('checkout', 'Failed to hydrate address from checkout:', err);
+    });
+  }, [checkout?.shipping_address]);
 
   // ── Redirect to menu if cart is empty ────────────────────────────
   useEffect(() => {
