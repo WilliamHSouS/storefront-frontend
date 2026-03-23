@@ -125,11 +125,18 @@ export default function CheckoutFormOrchestrator({
   // ── Fetch time slots for a date ────────────────────────────────
   const fetchTimeSlots = useCallback(
     (date: string) => {
-      // For pickup, use the selected pickup location; for delivery, use "default" (merchant location)
+      // For pickup, use the selected pickup location; for delivery, use the first location
+      // The backend requires a numeric location_id — "default" is not accepted
       const locationId =
         form.fulfillmentMethod === 'pickup'
-          ? (form.pickupLocationId ?? pickupLocations[0]?.id ?? 'default')
-          : 'default';
+          ? (form.pickupLocationId ?? pickupLocations[0]?.id)
+          : pickupLocations[0]?.id;
+
+      if (!locationId) {
+        // No location available — can't fetch time slots
+        setTimeSlots([]);
+        return;
+      }
       setTimeSlotsLoading(true);
       const client = getClient();
 
