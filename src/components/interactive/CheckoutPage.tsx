@@ -8,9 +8,12 @@ import {
   clearStoredCheckoutId,
   restoreFormState,
 } from '@/stores/checkout';
+import { checkStorageAvailable, $storageAvailable } from '@/stores/checkout-payment';
 import { createCheckout, patchDelivery } from '@/stores/checkout-actions';
+import { showToast } from '@/stores/toast';
 import { $addressCoords } from '@/stores/address';
 import { getClient } from '@/lib/api';
+import { t } from '@/i18n';
 import * as log from '@/lib/logger';
 import type { CheckoutFormState } from '@/types/checkout';
 import { CheckoutHeader } from './checkout/CheckoutHeader';
@@ -108,6 +111,14 @@ export default function CheckoutPage({ lang }: Props) {
     ensureCart(client).catch((err) => {
       log.error('checkout', 'Failed to ensure cart:', err);
     });
+  }, []);
+
+  // ── Check sessionStorage availability ──────────────────────────────
+  useEffect(() => {
+    checkStorageAvailable();
+    if (!$storageAvailable.get()) {
+      showToast(t('storageUnavailable', typedLang), 'error');
+    }
   }, []);
 
   // ── Create checkout from cart when cart is ready ──────────────────
