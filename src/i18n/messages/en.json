@@ -162,5 +162,8 @@
   "fieldRequired": "{field} is required",
   "emailInvalid": "Please enter a valid email address",
   "phoneInvalid": "Please enter a valid phone number",
-  "viewDetails": "View details"
+  "viewDetails": "View details",
+  "storageUnavailable": "Your browser doesn't support saving form progress. Please complete checkout in one session.",
+  "paymentRetry": "Payment failed. Please try again.",
+  "cartUpdated": "Your cart was updated."
 }

@@ -162,5 +162,8 @@
   "fieldRequired": "{field} is verplicht",
   "emailInvalid": "Vul een geldig e-mailadres in",
   "phoneInvalid": "Vul een geldig telefoonnummer in",
-  "viewDetails": "Bekijk details"
+  "viewDetails": "Bekijk details",
+  "storageUnavailable": "Je browser ondersteunt het opslaan van formuliervoortgang niet. Rond de bestelling af in één sessie.",
+  "paymentRetry": "Betaling mislukt. Probeer het opnieuw.",
+  "cartUpdated": "Je winkelwagen is bijgewerkt."
 }
