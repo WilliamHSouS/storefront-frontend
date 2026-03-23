@@ -1,0 +1,38 @@
+e2e/contract.spec.ts
+  e2bab03e229e7b6f 8-11,16-20,24-27,29-30,32-35,37,42-86,88-89,91-94,96,98-104,107-108,110
+e2e/helpers/mock-api-contract-guard.ts
+  e2bab03e229e7b6f 1-501
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "3666435c96761f1deaad54d6ca5d5033f44e17fb",
+  "prompts": {
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 726,
+      "overriden_lines": 0
+    },
+    "e2bab03e229e7b6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2010a912-0343-40a6-95ea-2c984d0f8159",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 600,
+      "total_deletions": 199,
+      "accepted_lines": 595,
+      "overriden_lines": 0
+    }
+  }
+}
