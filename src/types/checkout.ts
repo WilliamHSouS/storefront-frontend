@@ -99,6 +99,7 @@ export interface ShippingRate {
 
 export interface ShippingGroup {
   id: string;
+  merchant_shipping_provider_id: number;
   shipping_cost: string;
   selected_rate_id: string | null;
   is_digital: boolean;

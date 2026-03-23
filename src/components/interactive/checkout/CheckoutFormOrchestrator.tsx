@@ -123,65 +123,74 @@ export default function CheckoutFormOrchestrator({
   }, [pickupLocations.length]);
 
   // ── Fetch time slots for a date ────────────────────────────────
+  // Uses the unified /fulfillment/time-slots/ endpoint which returns granular
+  // slots (split by slot_interval_minutes). Requires merchant_shipping_provider_id
+  // from the checkout's shipping groups.
   const fetchTimeSlots = useCallback(
-    (date: string) => {
-      // For pickup, use the selected pickup location; for delivery, use the first location
-      // The backend requires a numeric location_id — "default" is not accepted
-      const locationId =
-        form.fulfillmentMethod === 'pickup'
-          ? (form.pickupLocationId ?? pickupLocations[0]?.id)
-          : pickupLocations[0]?.id;
-
-      if (!locationId) {
-        // No location available — can't fetch time slots
+    async (date: string) => {
+      if (!checkoutId) {
         setTimeSlots([]);
         return;
       }
       setTimeSlotsLoading(true);
       const client = getClient();
 
-      client
-        .GET('/api/v1/fulfillment/locations/{location_id}/slots/', {
-          params: {
-            path: { location_id: String(locationId) },
-            query: { date },
-          },
-        })
-        .then(({ data }) => {
-          if (!data) {
-            setTimeSlots([]);
-            return;
-          }
-          const response = data as {
-            time_slots?: Array<{
-              id?: string;
-              start_time: string;
-              end_time: string;
-              available: boolean;
-              capacity?: number;
-              reserved_count?: number;
-              remaining_capacity?: number;
-            }>;
-          };
-          // Generate IDs from time window if backend doesn't provide them
-          const slots = (response.time_slots ?? []).map((s) => ({
-            ...s,
-            id: s.id ?? `${s.start_time}-${s.end_time}`,
-            capacity: s.capacity ?? 0,
-            reserved_count: s.reserved_count ?? 0,
-            remaining_capacity: s.remaining_capacity ?? 0,
-          }));
-          setTimeSlots(slots);
-        })
-        .catch((err) => {
-          log.error('checkout', 'Failed to fetch time slots:', err);
+      try {
+        // First, get the merchant_shipping_provider_id from checkout shipping groups
+        const { data: shippingData } = await client.GET(
+          '/api/v1/checkout/{checkout_id}/shipping/',
+          { params: { path: { checkout_id: checkoutId } } },
+        );
+
+        const groups = shippingData as unknown as Array<{
+          merchant_shipping_provider_id?: number;
+        }> | null;
+        const mspId = groups?.[0]?.merchant_shipping_provider_id;
+
+        if (!mspId) {
+          // No shipping provider configured — fall back to empty slots
           setTimeSlots([]);
-        })
-        .finally(() => {
           setTimeSlotsLoading(false);
-        });
+          return;
+        }
+
+        // Fetch granular time slots from the unified endpoint
+        const slotsUrl = `/api/v1/fulfillment/time-slots/?merchant_shipping_provider_id=${mspId}&date=${date}`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unified time-slots endpoint not yet in SDK types; remove after SDK regeneration
+        const { data } = await client.GET(slotsUrl as any);
+
+        if (!data) {
+          setTimeSlots([]);
+          return;
+        }
+        const response = data as {
+          time_slots?: Array<{
+            id?: string;
+            start_time: string;
+            end_time: string;
+            available: boolean;
+            capacity?: number;
+            reserved_count?: number;
+            remaining_capacity?: number;
+          }>;
+        };
+        // Generate IDs from time window if backend doesn't provide them
+        const slots = (response.time_slots ?? []).map((s) => ({
+          ...s,
+          id: s.id ?? `${s.start_time}-${s.end_time}`,
+          capacity: s.capacity ?? 0,
+          reserved_count: s.reserved_count ?? 0,
+          remaining_capacity: s.remaining_capacity ?? 0,
+        }));
+        setTimeSlots(slots);
+      } catch (err) {
+        log.error('checkout', 'Failed to fetch time slots:', err);
+        setTimeSlots([]);
+      } finally {
+        setTimeSlotsLoading(false);
+      }
     },
-    [form.fulfillmentMethod, form.pickupLocationId, pickupLocations],
+    [checkoutId],
   );
 
   // ── Field-level validation (on blur) ─────────────────────────────
