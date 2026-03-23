@@ -1,5 +1,4 @@
 import { useReducer, useEffect, useCallback, useRef, useState } from 'preact/hooks';
-import { lazy, Suspense } from 'preact/compat';
 import { useStore } from '@nanostores/preact';
 import { $cart, $cartTotal, ensureCart } from '@/stores/cart';
 import { $merchant } from '@/stores/merchant';
@@ -14,28 +13,22 @@ import {
 import {
   createCheckout,
   patchDelivery,
-  initiatePayment,
   completeCheckout,
   ensurePaymentAndComplete,
 } from '@/stores/checkout-actions';
+import { $stripePayment } from '@/stores/checkout-payment';
 import { $addressCoords } from '@/stores/address';
-import { formatPrice, langToLocale, toCents } from '@/lib/currency';
+import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
 import { t } from '@/i18n';
 import * as log from '@/lib/logger';
-import type { Stripe, StripeElements } from '@stripe/stripe-js';
 import type { CheckoutFormState } from '@/types/checkout';
 import { CheckoutHeader } from './checkout/CheckoutHeader';
-import { FormDivider } from './checkout/FormDivider';
 import { OrderSummary } from './checkout/OrderSummary';
 import { PlaceOrderButton } from './checkout/PlaceOrderButton';
 import { PrivacyNotice } from './checkout/PrivacyNotice';
 import CheckoutFormOrchestrator from './checkout/CheckoutFormOrchestrator';
-import ExpressCheckout from './checkout/ExpressCheckout';
-
-const StripePaymentForm = lazy(() =>
-  import('./checkout/StripePaymentForm').then((m) => ({ default: m.StripePaymentForm })),
-);
+import CheckoutPaymentSection from './checkout/CheckoutPaymentSection';
 
 /* ------------------------------------------------------------------ */
 /*  Form reducer — exported for use by Tasks 11-16                     */
@@ -98,17 +91,8 @@ export default function CheckoutPage({ lang }: Props) {
   const [form, dispatch] = useReducer(formReducer, INITIAL_FORM_STATE);
   const initializedRef = useRef(false);
 
-  // Stripe payment state
-  const stripeRef = useRef<Stripe | null>(null);
-  const elementsRef = useRef<StripeElements | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [expressAvailable, setExpressAvailable] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [stripeConfig, setStripeConfig] = useState<{
-    clientSecret: string;
-    publishableKey: string;
-    stripeAccount: string;
-  } | null>(null);
 
   const typedLang = lang as 'nl' | 'en' | 'de';
   const currency = merchant?.currency ?? 'EUR';
@@ -193,40 +177,6 @@ export default function CheckoutPage({ lang }: Props) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // ── Initiate payment when gateway config is available from checkout ──
-  // Gateway config comes from the checkout response (after delivery_set).
-  // We only need to initiate payment to get a client_secret for the Stripe Element.
-  useEffect(() => {
-    if (!checkout?.id) return;
-    if (stripeConfig) return;
-
-    const gateways = checkout.available_payment_gateways;
-    if (!gateways) return;
-
-    const stripeGateway = gateways.find((g) => g.id === 'stripe');
-    if (!stripeGateway) return;
-
-    const pk = stripeGateway.config.publishable_key ?? '';
-    const acct = stripeGateway.config.stripe_account ?? '';
-    if (!pk) return;
-
-    initiatePayment(checkout.id)
-      .then((paymentResult) => {
-        if (paymentResult?.client_secret) {
-          setStripeConfig({
-            clientSecret: paymentResult.client_secret,
-            publishableKey: pk,
-            stripeAccount: acct,
-          });
-        }
-      })
-      .catch((err) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        $checkoutError.set(`Payment initialization failed: ${msg}`);
-        log.error('checkout', 'Failed to initiate payment:', err);
-      });
-  }, [checkout?.id, checkout?.available_payment_gateways, stripeConfig]);
-
   // ── Form validation ─────────────────────────────────────────────
   function validateForm(): boolean {
     const errors: Record<string, string> = {};
@@ -277,9 +227,10 @@ export default function CheckoutPage({ lang }: Props) {
 
     try {
       // If Stripe Payment Element is mounted, confirm the existing PaymentIntent
-      if (stripeRef.current && elementsRef.current && stripeConfig?.clientSecret) {
-        const { error } = await stripeRef.current.confirmPayment({
-          elements: elementsRef.current,
+      const payment = $stripePayment.get();
+      if (payment) {
+        const { error } = await payment.stripe.confirmPayment({
+          elements: payment.elements,
           confirmParams: {
             return_url: `${window.location.origin}/${lang}/checkout/success?checkout_id=${checkout.id}`,
           },
@@ -294,8 +245,8 @@ export default function CheckoutPage({ lang }: Props) {
         // Card/wallet payment succeeded inline — complete checkout
         const result = await ensurePaymentAndComplete(
           checkout.id,
-          stripeConfig.clientSecret,
-          stripeRef.current as unknown as Parameters<typeof ensurePaymentAndComplete>[2],
+          payment.clientSecret,
+          payment.stripe as unknown as Parameters<typeof ensurePaymentAndComplete>[2],
           lang,
         );
 
@@ -314,7 +265,7 @@ export default function CheckoutPage({ lang }: Props) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, form, checkout, stripeConfig, lang]);
+  }, [isSubmitting, form, checkout, lang]);
 
   // ── Hydration guard (after all hooks to satisfy Rules of Hooks) ──
   if (!merchant) {
@@ -348,27 +299,23 @@ export default function CheckoutPage({ lang }: Props) {
             </div>
           )}
 
-          {/* Express checkout (Apple Pay / Google Pay) — only when Stripe is configured */}
-          {stripeConfig?.publishableKey && (
-            <ExpressCheckout
-              lang={typedLang}
-              publishableKey={stripeConfig.publishableKey}
-              stripeAccount={stripeConfig.stripeAccount}
-              merchantName={merchant.name}
-              currency={currency}
-              totalInCents={toCents(cartTotal)}
-              cartId={cart?.id ?? ''}
-              onSuccess={(orderNumber) => {
-                window.location.href = `/${lang}/checkout/success?order=${orderNumber}`;
-              }}
-              onError={(msg) => {
-                log.error('checkout', 'Express checkout error:', msg);
-              }}
-              onAvailable={setExpressAvailable}
-            />
-          )}
-
-          <FormDivider lang={typedLang} visible={expressAvailable} />
+          <CheckoutPaymentSection
+            lang={typedLang}
+            form={form}
+            currency={currency}
+            cartId={cart?.id ?? ''}
+            cartTotal={cartTotal}
+            merchantName={merchant.name}
+            merchantTheme={{
+              primary: merchant.theme?.primary,
+              background: merchant.theme?.background,
+              foreground: merchant.theme?.foreground,
+              radius: merchant.theme?.radius,
+            }}
+            onError={(msg) => {
+              log.error('checkout', 'Payment section error:', msg);
+            }}
+          />
 
           <CheckoutFormOrchestrator
             lang={typedLang}
@@ -379,34 +326,6 @@ export default function CheckoutPage({ lang }: Props) {
             checkoutId={checkout?.id}
             merchantSlug={merchant?.slug}
           />
-
-          {/* Stripe Payment Element */}
-          {stripeConfig?.clientSecret && (
-            <div class="px-4 py-4">
-              <h2 class="text-base font-semibold mb-3">{t('payment', typedLang)}</h2>
-              <Suspense fallback={<div class="animate-pulse rounded-lg bg-muted h-[200px]" />}>
-                <StripePaymentForm
-                  clientSecret={stripeConfig.clientSecret}
-                  publishableKey={stripeConfig.publishableKey}
-                  stripeAccount={stripeConfig.stripeAccount}
-                  billingName={`${form.firstName} ${form.lastName}`.trim()}
-                  merchantTheme={{
-                    primary: merchant.theme?.primary,
-                    background: merchant.theme?.background,
-                    foreground: merchant.theme?.foreground,
-                    radius: merchant.theme?.radius,
-                  }}
-                  onStripeReady={(stripe, elements) => {
-                    stripeRef.current = stripe;
-                    elementsRef.current = elements;
-                  }}
-                  onError={(msg) => {
-                    log.error('checkout', 'Stripe payment form error:', msg);
-                  }}
-                />
-              </Suspense>
-            </div>
-          )}
 
           {/* Privacy notice */}
           <PrivacyNotice lang={typedLang} />
