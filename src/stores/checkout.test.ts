@@ -337,3 +337,52 @@ describe('form state persistence', () => {
     expect(restoreFormState()).toBeNull();
   });
 });
+
+import {
+  $stripePayment,
+  $storageAvailable,
+  checkStorageAvailable,
+} from '@/stores/checkout-payment';
+
+describe('$stripePayment', () => {
+  it('starts as null', () => {
+    expect($stripePayment.get()).toBeNull();
+  });
+
+  it('stores stripe, elements, and clientSecret', () => {
+    const mockStripe = { confirmPayment: vi.fn() };
+    const mockElements = { getElement: vi.fn() };
+    $stripePayment.set({
+      stripe: mockStripe as any,
+      elements: mockElements as any,
+      clientSecret: 'pi_test_secret',
+    });
+    const val = $stripePayment.get();
+    expect(val?.clientSecret).toBe('pi_test_secret');
+    expect(val?.stripe).toBe(mockStripe);
+    $stripePayment.set(null);
+  });
+});
+
+describe('$storageAvailable / checkStorageAvailable', () => {
+  it('returns true when sessionStorage works', () => {
+    expect(checkStorageAvailable()).toBe(true);
+    expect($storageAvailable.get()).toBe(true);
+  });
+
+  it('returns false when sessionStorage throws', () => {
+    const original = globalThis.sessionStorage;
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      get: () => {
+        throw new Error('blocked');
+      },
+      configurable: true,
+    });
+    expect(checkStorageAvailable()).toBe(false);
+    expect($storageAvailable.get()).toBe(false);
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      value: original,
+      configurable: true,
+    });
+  });
+});
