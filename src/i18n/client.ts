@@ -1,0 +1,45 @@
+/**
+ * Client-side i18n — reads from window.__MESSAGES__ (injected by BaseLayout).
+ *
+ * This module does NOT import the JSON translation files. Instead, the server
+ * injects the active language's messages into the page via a script tag.
+ * This saves ~4.5 kB gzipped by avoiding bundling all 3 language files.
+ *
+ * For server-side usage (Astro components), use '@/i18n' which has all languages.
+ */
+
+// Type-only import — erased at compile time, does NOT pull in the JSON files
+import type { MessageKey } from './index';
+
+type Messages = Record<string, string>;
+
+function getDict(): Messages {
+  if (typeof window !== 'undefined' && window.__MESSAGES__) {
+    return window.__MESSAGES__;
+  }
+  return {};
+}
+
+/**
+ * Get a translated string — client-side version.
+ * Reads from window.__MESSAGES__ injected by BaseLayout.
+ * Falls back to returning the key itself if the message is missing.
+ */
+export function t(
+  key: MessageKey,
+  _lang: string,
+  params?: Record<string, string | number>,
+): string {
+  const dict = getDict();
+  let text = dict[key] ?? key;
+
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replace(`{${k}}`, String(v));
+    }
+  }
+
+  return text;
+}
+
+export type { MessageKey };

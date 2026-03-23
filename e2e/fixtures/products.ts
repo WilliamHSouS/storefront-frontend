@@ -1,9 +1,36 @@
 /** Product and category fixture data matching the API response shapes. */
 
 export const categories = [
-  { id: 'cat-1', name: 'Starters', slug: 'starters' },
-  { id: 'cat-2', name: 'Main Courses', slug: 'main-courses' },
-  { id: 'cat-3', name: 'Drinks', slug: 'drinks' },
+  {
+    id: 'cat-1',
+    name: 'Starters',
+    slug: 'starters',
+    description: '',
+    parent_id: null,
+    depth: 0,
+    children: [],
+    product_count: 2,
+  },
+  {
+    id: 'cat-2',
+    name: 'Main Courses',
+    slug: 'main-courses',
+    description: '',
+    parent_id: null,
+    depth: 0,
+    children: [],
+    product_count: 1,
+  },
+  {
+    id: 'cat-3',
+    name: 'Drinks',
+    slug: 'drinks',
+    description: '',
+    parent_id: null,
+    depth: 0,
+    children: [],
+    product_count: 1,
+  },
 ];
 
 /** Default values for OpenAPI-required product fields. */
@@ -12,10 +39,10 @@ function productDefaults() {
     address_fulfillment_types: ['local_delivery', 'pickup'],
     availability_state: 'available',
     created_at: '2025-01-01T00:00:00Z',
-    images: [] as Array<{ id: number; url: string; alt: string; position: number }>,
+    images: [] as Array<{ id: number; image_url: string; alt: string; position: number }>,
     merchant_id: 1,
     pickup_only: false,
-    product_type: 'physical',
+    product_type: { id: 1, name: 'physical', slug: 'physical' },
     tags: [] as string[],
     updated_at: '2025-01-01T00:00:00Z',
     vat_rate: '0.09',
@@ -36,7 +63,7 @@ export const products = [
     images: [
       {
         id: 1,
-        url: 'https://images.example.com/falafel-wrap.jpg',
+        image_url: 'https://images.example.com/falafel-wrap.jpg',
         alt: 'Falafel Wrap',
         position: 0,
       },
@@ -56,7 +83,7 @@ export const products = [
     images: [
       {
         id: 2,
-        url: 'https://images.example.com/shawarma-bowl.jpg',
+        image_url: 'https://images.example.com/shawarma-bowl.jpg',
         alt: 'Shawarma Bowl',
         position: 0,
       },
@@ -85,7 +112,9 @@ export const products = [
     discount: { type: 'percentage', value: 15 },
     ...productDefaults(),
     availability_state: 'sold_out',
-    images: [{ id: 4, url: 'https://images.example.com/baklava.jpg', alt: 'Baklava', position: 0 }],
+    images: [
+      { id: 4, image_url: 'https://images.example.com/baklava.jpg', alt: 'Baklava', position: 0 },
+    ],
   },
 ];
 

@@ -365,7 +365,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
   // ── Categories ──
   if (method === 'GET' && path === '/api/v1/categories/') {
-    json(res, { results: categories });
+    json(res, { results: categories, count: categories.length });
     return;
   }
 
