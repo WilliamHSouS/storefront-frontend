@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { getClient } from '@/lib/api';
 import { clearCart } from '@/stores/cart';
 import { clearStoredCheckoutId } from '@/stores/checkout';

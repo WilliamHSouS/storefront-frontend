@@ -5,7 +5,7 @@ import { $selectedProduct } from '@/stores/ui';
 import { getClient } from '@/lib/api';
 import { showToast } from '@/stores/toast';
 import { setCartItemQuantity, commitCartResponse } from '@/stores/cart-actions';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import * as log from '@/lib/logger';
 import QuantitySelector from './QuantitySelector';
 

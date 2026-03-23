@@ -6,7 +6,7 @@ import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { optimizedImageUrl } from '@/lib/image';
 import * as log from '@/lib/logger';
 import QuantitySelector from './QuantitySelector';

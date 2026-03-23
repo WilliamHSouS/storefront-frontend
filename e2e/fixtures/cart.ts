@@ -50,6 +50,7 @@ export interface CartFixture {
     ships_in_parts: boolean;
   } | null;
   discount?: Record<string, unknown> | null;
+  estimated_total?: string;
   discount_amount?: string;
   promotion_discount_amount?: string;
   promotion?: { id: number; name: string; discount_amount: string } | null;
@@ -71,6 +72,7 @@ function cartDefaults(): Pick<
   | 'status'
   | 'subtotal'
   | 'tax_total'
+  | 'estimated_total'
   | 'shipping_estimate'
   | 'discount'
   | 'promotion'
@@ -83,6 +85,7 @@ function cartDefaults(): Pick<
     status: 'active',
     subtotal: '0.00',
     tax_total: '0.00',
+    estimated_total: '0.00',
     shipping_estimate: null,
     discount: null,
     promotion: null,

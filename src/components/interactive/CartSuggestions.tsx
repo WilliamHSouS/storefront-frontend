@@ -5,7 +5,7 @@ import { $merchant } from '@/stores/merchant';
 import { $selectedProduct, $isCartOpen } from '@/stores/ui';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { optimizedImageUrl } from '@/lib/image';
 
 interface Props {

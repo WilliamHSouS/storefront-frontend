@@ -27,7 +27,7 @@ vi.mock('@/lib/logger', () => ({
   debug: vi.fn(),
 }));
 
-vi.mock('@/i18n', () => ({
+vi.mock('@/i18n/client', () => ({
   t: (key: string) => key,
 }));
 

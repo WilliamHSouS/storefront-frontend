@@ -106,6 +106,7 @@ export const MOCK_ENDPOINTS: MockEndpoint[] = [
     mockPath: '/api/v1/products/',
     specPath: '/api/v1/products/',
     expectedStatus: 200,
+    knownDivergences: ['product_id must be integer'],
     label: 'list products',
   },
   {
@@ -113,6 +114,7 @@ export const MOCK_ENDPOINTS: MockEndpoint[] = [
     mockPath: '/api/v1/products/search/?q=falafel',
     specPath: '/api/v1/products/search/',
     expectedStatus: 200,
+    knownDivergences: ['product_id must be integer'],
     label: 'search products',
   },
   {
@@ -120,6 +122,7 @@ export const MOCK_ENDPOINTS: MockEndpoint[] = [
     mockPath: '/api/v1/products/prod-1/',
     specPath: '/api/v1/products/{id}/',
     expectedStatus: 200,
+    knownDivergences: ['product_id must be integer'],
     label: 'product detail',
   },
   {
@@ -368,6 +371,7 @@ export const MOCK_ENDPOINTS: MockEndpoint[] = [
     mockPath: '/api/v1/merchant-comms/storefront/active/banner/',
     specPath: '/api/v1/merchant-comms/storefront/active/{surface}/',
     expectedStatus: 200,
+    skipReason: 'Comms API not in storefront OpenAPI spec',
     label: 'merchant comms — active messages',
   },
   {

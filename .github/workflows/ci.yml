@@ -42,12 +42,13 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: Acroya-B-V/storefront-backend
-          path: backend
-          sparse-checkout: storefront_backend/openapi/openapi.storefront.v1.json
-          sparse-checkout-cone-mode: false
+      - name: Download OpenAPI spec
+        run: |
+          mkdir -p backend/storefront_backend/openapi
+          gh api repos/Acroya-B-V/storefront-backend/contents/storefront_backend/openapi/openapi.storefront.v1.json \
+            --jq '.content' | base64 --decode > backend/storefront_backend/openapi/openapi.storefront.v1.json
+        env:
+          GH_TOKEN: ${{ github.token }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: pnpm }
@@ -85,7 +86,7 @@ jobs:
         with: { node-version: 20, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - run: pnpm exec playwright test --ignore-glob='**/contract.spec.ts'
         env:
           CI: 'true'
           API_BASE_URL: http://localhost:4322

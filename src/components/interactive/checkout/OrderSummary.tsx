@@ -5,7 +5,7 @@ import type { CartLineItem } from '@/stores/cart';
 import { $checkout, $checkoutTotals } from '@/stores/checkout';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { optimizedImageUrl } from '@/lib/image';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { PricingBreakdown } from '../cart/PricingBreakdown';
 
 interface Props {

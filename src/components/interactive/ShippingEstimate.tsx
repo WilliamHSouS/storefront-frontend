@@ -3,7 +3,7 @@ import { useStore } from '@nanostores/preact';
 import { $addressCoords } from '@/stores/address';
 import type { ShippingEstimate as ShippingEstimateType } from '@/stores/cart';
 import { formatPrice, langToLocale } from '@/lib/currency';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Props {
   lang: string;

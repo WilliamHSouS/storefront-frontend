@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Props {
   lang: string;

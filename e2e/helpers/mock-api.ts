@@ -170,6 +170,7 @@ function recalcCart(cart: CartFixture) {
     2,
   );
   cart.item_count = count;
+  cart.estimated_total = cart.cart_total;
 
   // Auto-apply promotions: Buy 2 Falafel Wraps get 1 free
   const falafelItem = cart.line_items.find((li) => li.product_id === 'prod-1');
@@ -310,11 +311,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
           pickup_only: false,
         };
       });
-      json(res, { results: enriched, next: null });
+      json(res, { results: enriched, count: enriched.length, next: null });
       return;
     }
 
-    json(res, { results: filtered, next: null });
+    json(res, { results: filtered, count: filtered.length, next: null });
     return;
   }
 
@@ -325,7 +326,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     const results = products.filter(
       (p) => p.title.toLowerCase().includes(q) || (p.description ?? '').toLowerCase().includes(q),
     );
-    json(res, { results });
+    json(res, { results, count: results.length });
     return;
   }
 
@@ -358,7 +359,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
   // ── Collections (empty — triggers category fallback) ──
   if (method === 'GET' && path === '/api/v1/collections/') {
-    json(res, { results: [], next: null });
+    json(res, { results: [], count: 0, next: null });
     return;
   }
 
@@ -546,7 +547,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
         name: 'Buy 2 Falafel Wraps, get 1 free!',
         promotion_type: 'bogo',
         benefit_type: 'free',
-        benefit_product_ids: ['prod-1'],
+        benefit_product_ids: [1],
         benefit_quantity: 1,
         discount_amount: falafelItem.price,
         is_best_deal: true,
@@ -631,6 +632,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
           postal_code: '1012LG',
         },
         pickup_instructions: 'Collect at the counter',
+        lead_time_minutes: 15,
+        max_advance_days: 7,
+        time_slots: [],
       },
     ]);
     return;

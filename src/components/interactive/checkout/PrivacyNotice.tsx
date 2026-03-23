@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface PrivacyNoticeProps {
   lang: 'nl' | 'en' | 'de';

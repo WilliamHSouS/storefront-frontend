@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, memo } from 'preact/compat';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe } from '@/lib/stripe-loader';
 import type { Stripe, StripeElements, Appearance } from '@stripe/stripe-js';
 
 interface StripePaymentFormProps {

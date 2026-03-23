@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import type { Cart, EligiblePromotion } from '@/stores/cart';
 
 interface Props {

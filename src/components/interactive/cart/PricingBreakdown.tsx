@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { formatPrice } from '@/lib/currency';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 export interface PricingBreakdownProps {
   lang: 'nl' | 'en' | 'de';

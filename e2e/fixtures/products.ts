@@ -6,6 +6,22 @@ export const categories = [
   { id: 'cat-3', name: 'Drinks', slug: 'drinks' },
 ];
 
+/** Default values for OpenAPI-required product fields. */
+function productDefaults() {
+  return {
+    address_fulfillment_types: ['local_delivery', 'pickup'],
+    availability_state: 'available',
+    created_at: '2025-01-01T00:00:00Z',
+    images: [] as Array<{ id: number; url: string; alt: string; position: number }>,
+    merchant_id: 1,
+    pickup_only: false,
+    product_type: 'physical',
+    tags: [] as string[],
+    updated_at: '2025-01-01T00:00:00Z',
+    vat_rate: '0.09',
+  };
+}
+
 export const products = [
   {
     id: 'prod-1',
@@ -16,6 +32,15 @@ export const products = [
     image: 'https://images.example.com/falafel-wrap.jpg',
     category_id: 'cat-1',
     sold_out: false,
+    ...productDefaults(),
+    images: [
+      {
+        id: 1,
+        url: 'https://images.example.com/falafel-wrap.jpg',
+        alt: 'Falafel Wrap',
+        position: 0,
+      },
+    ],
   },
   {
     id: 'prod-2',
@@ -27,6 +52,15 @@ export const products = [
     category_id: 'cat-2',
     sold_out: false,
     modifier_groups: [{ id: '100' }, { id: '101' }],
+    ...productDefaults(),
+    images: [
+      {
+        id: 2,
+        url: 'https://images.example.com/shawarma-bowl.jpg',
+        alt: 'Shawarma Bowl',
+        position: 0,
+      },
+    ],
   },
   {
     id: 'prod-3',
@@ -37,6 +71,7 @@ export const products = [
     image: null,
     category_id: 'cat-3',
     sold_out: false,
+    ...productDefaults(),
   },
   {
     id: 'prod-4',
@@ -48,6 +83,9 @@ export const products = [
     category_id: 'cat-1',
     sold_out: true,
     discount: { type: 'percentage', value: 15 },
+    ...productDefaults(),
+    availability_state: 'sold_out',
+    images: [{ id: 4, url: 'https://images.example.com/baklava.jpg', alt: 'Baklava', position: 0 }],
   },
 ];
 

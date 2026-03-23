@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
 import { $checkoutLoading, $checkoutTotals } from '@/stores/checkout';
 import { formatPrice, langToLocale } from '@/lib/currency';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Props {
   lang: 'nl' | 'en' | 'de';

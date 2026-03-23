@@ -10,7 +10,7 @@ import type { CheckoutFormState } from '@/types/checkout';
 /* ------------------------------------------------------------------ */
 
 const mockLoadStripe = vi.fn().mockResolvedValue({ fake: 'stripe' });
-vi.mock('@stripe/stripe-js', () => ({
+vi.mock('@/lib/stripe-loader', () => ({
   loadStripe: (...args: unknown[]) => mockLoadStripe(...args),
 }));
 

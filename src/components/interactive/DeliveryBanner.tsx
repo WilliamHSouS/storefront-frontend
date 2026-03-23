@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/preact';
 import { $addressCoords, $addressEligibility } from '@/stores/address';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Props {
   lang: string;

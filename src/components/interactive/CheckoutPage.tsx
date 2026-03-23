@@ -13,7 +13,7 @@ import { createCheckout, patchDelivery } from '@/stores/checkout-actions';
 import { showToast } from '@/stores/toast';
 import { $addressCoords } from '@/stores/address';
 import { getClient } from '@/lib/api';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import * as log from '@/lib/logger';
 import type { CheckoutFormState } from '@/types/checkout';
 import { CheckoutHeader } from './checkout/CheckoutHeader';

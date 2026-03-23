@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import {
   applyDiscountCode,
   removeDiscountCode,

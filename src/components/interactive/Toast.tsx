@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/preact';
 import { $toasts, dismissToast } from '@/stores/toast';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Props {
   lang: string;

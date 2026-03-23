@@ -1,6 +1,7 @@
 ---
 import { themeToCSS } from '@/lib/theme';
 import type { MerchantConfig } from '@/types/merchant';
+import { getMessages } from '@/i18n';
 import '@/styles/global.css';
 
 // Shared interactive islands — available on every page
@@ -29,6 +30,7 @@ const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
 // hmacSecret is included client-side — it's a vendor-specific HMAC key (not a user secret)
 // needed for client-side write requests (add to cart, checkout mutations) to pass backend signature validation
 const merchantJSON = merchant ? JSON.stringify(merchant) : '';
+const messagesJSON = lang ? JSON.stringify(getMessages(lang)) : '';
 
 // Build Google Fonts URL from merchant theme fonts
 const fontFamilies = new Set<string>();
@@ -117,9 +119,9 @@ for (const msg of commsMessages) {
   <body>
     {
       merchantJSON && (
-        <script define:vars={{ merchantJSON, langValue }}>
+        <script define:vars={{ merchantJSON, langValue, messagesJSON }}>
           window.__MERCHANT__ = Object.freeze(JSON.parse(merchantJSON)); window.__LANG__ =
-          langValue;
+          langValue; if (messagesJSON) window.__MESSAGES__ = JSON.parse(messagesJSON);
         </script>
       )
     }

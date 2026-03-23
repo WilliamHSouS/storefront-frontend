@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import type { FormAction } from '../CheckoutPage';
 import type { CheckoutFormState } from '@/types/checkout';
 

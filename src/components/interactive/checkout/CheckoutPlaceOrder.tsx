@@ -5,7 +5,7 @@ import { $checkout, $checkoutLoading, $checkoutError, persistFormState } from '@
 import { completeCheckout, ensurePaymentAndComplete } from '@/stores/checkout-actions';
 import { $stripePayment } from '@/stores/checkout-payment';
 import { formatPrice, langToLocale } from '@/lib/currency';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import * as log from '@/lib/logger';
 import type { CheckoutFormState } from '@/types/checkout';
 import { PlaceOrderButton } from './PlaceOrderButton';

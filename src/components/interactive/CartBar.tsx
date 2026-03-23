@@ -4,7 +4,7 @@ import { $cart, $itemCount, $cartTotal, getStoredCartId, cartCoordsQuery } from 
 import { $addressCoords } from '@/stores/address';
 import { $isCartOpen, $isCategoryDrawerOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
 import { normalizeCart } from '@/lib/normalize';

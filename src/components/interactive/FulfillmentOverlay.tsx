@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
 import { $addressCoords } from '@/stores/address';
 import { getClient } from '@/lib/api';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import * as log from '@/lib/logger';
 import type { AddressCoords, ProductFulfillment } from '@/types/address';
 

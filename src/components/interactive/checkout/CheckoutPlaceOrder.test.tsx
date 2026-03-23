@@ -45,7 +45,7 @@ vi.mock('@/lib/currency', () => ({
   langToLocale: () => 'nl-NL',
 }));
 
-vi.mock('@/i18n', () => ({
+vi.mock('@/i18n/client', () => ({
   t: (key: string) => key,
 }));
 

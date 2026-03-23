@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- checkout endpoints not in OpenAPI spec */
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe } from '@/lib/stripe-loader';
 import type { Stripe, PaymentRequest, PaymentRequestPaymentMethodEvent } from '@stripe/stripe-js';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { createCheckout, initiatePayment } from '@/stores/checkout-actions';
 import { $checkout } from '@/stores/checkout';
 import { getClient } from '@/lib/api';

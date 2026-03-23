@@ -4,7 +4,7 @@ import { $bottomBannerMessages } from '@/stores/comms';
 import { BANNER_THEME_CLASSES, colorStyle } from '@/lib/comms-theme';
 import { safeUrl } from '@/lib/safe-url';
 import { dismissMessage } from '@/lib/comms';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Props {
   lang: string;
