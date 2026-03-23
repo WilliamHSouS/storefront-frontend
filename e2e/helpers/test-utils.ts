@@ -156,7 +156,15 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   const card = page.locator(`[data-product-id="${productId}"]`).first();
   await card.scrollIntoViewIfNeeded();
 
-  const addButton = card.getByRole('button', { name: 'Toevoegen' });
+  // Detect language from URL to match the correct button text
+  const url = page.url();
+  const lang = url.includes('/en/') ? 'en' : url.includes('/de/') ? 'de' : 'nl';
+  const addToCartLabel: Record<string, string> = {
+    nl: 'Toevoegen',
+    en: 'Add to cart',
+    de: 'In den Warenkorb',
+  };
+  const addButton = card.getByRole('button', { name: addToCartLabel[lang] });
 
   // Wait for the client:visible island to hydrate. After scrolling into view,
   // the IntersectionObserver fires, then Preact JS is downloaded and executed.
@@ -179,7 +187,10 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   // Dismiss the upsell dialog if it appears (added by upsells feature).
   // The dialog has "Klaar" and "Bekijk winkelwagen" buttons; pressing Escape
   // is the most reliable way to close it without side effects.
-  const upsellDialog = page.getByRole('dialog').filter({ hasText: 'Toegevoegd' });
+  const upsellLabel: Record<string, string> = { nl: 'Toegevoegd', en: 'Added', de: 'Hinzugefügt' };
+  const upsellDialog = page
+    .getByRole('dialog')
+    .filter({ hasText: upsellLabel[lang] ?? 'Toegevoegd' });
   await upsellDialog.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
   if (await upsellDialog.isVisible()) {
     await page.keyboard.press('Escape');
