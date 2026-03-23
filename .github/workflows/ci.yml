@@ -35,6 +35,44 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: coverage-report, path: coverage/, retention-days: 7 }
 
+  contract:
+    name: Contract Tests
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Acroya-B-V/storefront-backend
+          path: backend
+          sparse-checkout: storefront_backend/openapi/openapi.storefront.v1.json
+          sparse-checkout-cone-mode: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Start mock API server
+        run: npx tsx e2e/helpers/mock-api.ts &
+        env:
+          PORT: '4322'
+      - name: Wait for mock API server
+        run: sleep 3
+      - name: Run contract tests
+        run: pnpm exec playwright test e2e/contract.spec.ts --project=desktop --reporter=list
+        env:
+          CI: 'true'
+          BASE_URL: http://localhost:4321
+          OPENAPI_SPEC_PATH: ${{ github.workspace }}/backend/storefront_backend/openapi/openapi.storefront.v1.json
+          API_BASE_URL: http://localhost:4322
+          PUBLIC_API_BASE_URL: http://localhost:4322
+          DEFAULT_MERCHANT: bar-sumac
+          CUSTOM_DOMAINS: '{}'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: contract-report, path: e2e/.report/, retention-days: 7 }
+
   e2e:
     name: E2E Tests
     needs: unit-test
