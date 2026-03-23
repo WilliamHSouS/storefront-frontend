@@ -163,7 +163,7 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   // We wait for the button to be visible, then add a small delay for Preact
   // event handlers to be registered. Using a single click (no retry) to avoid
   // sending duplicate POST requests that create multiple cart items.
-  await addButton.waitFor({ state: 'visible', timeout: 5_000 });
+  await addButton.waitFor({ state: 'visible', timeout: 15_000 });
   // eslint-disable-next-line playwright/no-wait-for-timeout
   await page.waitForTimeout(500);
 

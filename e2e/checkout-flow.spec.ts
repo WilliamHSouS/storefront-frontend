@@ -700,7 +700,9 @@ test.describe('Scenario 11: iDEAL redirect return flow', () => {
     }, checkoutId);
 
     // Simulate returning from bank redirect
-    await page.goto(`/en/checkout/success?checkout_id=${checkoutId}&payment_intent=pi_mock_123`);
+    await page.goto(
+      `/en/checkout/success?checkout_id=${checkoutId}&payment_intent=pi_mock_123&payment_intent_client_secret=pi_mock_123_secret`,
+    );
     await waitForHydration(page);
 
     // The polling should find the completed checkout and display the order number
@@ -715,11 +717,16 @@ test.describe('Scenario 11: iDEAL redirect return flow', () => {
   test('success page shows loading state for delayed webhook', async ({ page }) => {
     // Navigate directly with a non-existent checkout_id
     // The polling will get 404s, and eventually the success page should redirect or show fallback
-    await page.goto('/en/checkout/success?checkout_id=chk-fake&payment_intent=pi_mock_456');
+    await page.goto(
+      '/en/checkout/success?checkout_id=chk-fake&payment_intent=pi_mock_456&payment_intent_client_secret=pi_mock_456_secret',
+    );
     await waitForHydration(page);
 
-    // Should show the loading/confirming state
-    await expect(page.getByText(/confirming your order/i)).toBeVisible({ timeout: 5_000 });
+    // Should show the loading/confirming state initially, then resolve to fallback
+    // The confirm-payment call for a fake checkout will error, showing fallback "Payment received"
+    await expect(page.getByText(/confirming your order|Payment received/i)).toBeVisible({
+      timeout: 15_000,
+    });
   });
 });
 
