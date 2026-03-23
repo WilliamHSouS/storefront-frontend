@@ -17,6 +17,23 @@ interface CheckoutPlaceOrderProps {
   setFormErrors: (errors: Record<string, string>) => void;
 }
 
+const shakeStyles = `
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.animate-shake { animation: shake 0.3s ease-in-out; }
+`;
+
+function shakeButton() {
+  const btn = document.querySelector('[data-place-order]');
+  if (btn) {
+    btn.classList.add('animate-shake');
+    setTimeout(() => btn.classList.remove('animate-shake'), 300);
+  }
+}
+
 export default function CheckoutPlaceOrder({
   lang,
   currency,
@@ -72,7 +89,12 @@ export default function CheckoutPlaceOrder({
   // Flow: validate → confirm with Stripe → complete checkout
   const handlePlaceOrder = useCallback(async () => {
     if (isSubmitting) return;
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      const errorEl = document.querySelector('[role="alert"]');
+      errorEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      shakeButton();
+      return;
+    }
     if (!checkout) return;
 
     setIsSubmitting(true);
@@ -92,6 +114,9 @@ export default function CheckoutPlaceOrder({
 
         if (error) {
           $checkoutError.set(error.message ?? t('paymentDeclined', lang));
+          const errorEl = document.querySelector('[role="alert"]');
+          errorEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          shakeButton();
           return;
         }
 
@@ -115,6 +140,9 @@ export default function CheckoutPlaceOrder({
       const msg = err instanceof Error ? err.message : String(err);
       $checkoutError.set(msg);
       log.error('checkout', 'Place order error:', msg);
+      const errorEl = document.querySelector('[role="alert"]');
+      errorEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      shakeButton();
     } finally {
       setIsSubmitting(false);
     }
@@ -122,10 +150,12 @@ export default function CheckoutPlaceOrder({
 
   return (
     <>
+      <style>{shakeStyles}</style>
       {/* Desktop place order button */}
       <div class="hidden md:block px-4 py-6">
         <button
           type="button"
+          data-place-order
           onClick={handlePlaceOrder}
           disabled={loading || isSubmitting}
           class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading || isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
@@ -161,12 +191,14 @@ export default function CheckoutPlaceOrder({
       <div class="h-24 md:hidden" />
 
       {/* Mobile sticky CTA */}
-      <PlaceOrderButton
-        lang={lang}
-        currency={currency}
-        onPlace={handlePlaceOrder}
-        disabled={isSubmitting}
-      />
+      <div data-place-order>
+        <PlaceOrderButton
+          lang={lang}
+          currency={currency}
+          onPlace={handlePlaceOrder}
+          disabled={isSubmitting}
+        />
+      </div>
     </>
   );
 }

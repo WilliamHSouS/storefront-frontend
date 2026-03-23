@@ -53,6 +53,7 @@ export default function CheckoutPaymentSection({
   const mountedRef = useRef(false);
 
   const [expressAvailable, setExpressAvailable] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [stripeConfig, setStripeConfig] = useState<{
     clientSecret: string;
     publishableKey: string;
@@ -120,8 +121,18 @@ export default function CheckoutPaymentSection({
         const msg = err instanceof Error ? err.message : String(err);
         $checkoutError.set(`Payment initialization failed: ${msg}`);
         log.error('checkout', 'Failed to initiate payment:', err);
+        if (mountedRef.current) {
+          setPaymentError(t('paymentRetry', lang));
+          onError?.(`Payment initialization failed: ${msg}`);
+        }
       });
   }, [checkout?.id, checkout?.available_payment_gateways, stripeConfig]);
+
+  // ── Retry: clear error + stripeConfig so the initiation effect re-runs ──
+  const retryPayment = () => {
+    setPaymentError(null);
+    setStripeConfig(null);
+  };
 
   return (
     <>
@@ -148,8 +159,22 @@ export default function CheckoutPaymentSection({
 
       <FormDivider lang={lang} visible={expressAvailable} />
 
+      {/* Payment init / Stripe load error with retry */}
+      {paymentError && (
+        <div class="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive flex items-center justify-between">
+          <span>{paymentError}</span>
+          <button
+            type="button"
+            onClick={retryPayment}
+            class="ml-3 text-xs font-medium underline hover:no-underline"
+          >
+            {t('retry', lang)}
+          </button>
+        </div>
+      )}
+
       {/* Stripe Payment Element */}
-      {stripeConfig?.clientSecret && (
+      {!paymentError && stripeConfig?.clientSecret && (
         <div class="px-4 py-4">
           <h2 class="text-base font-semibold mb-3">{t('payment', lang)}</h2>
           <Suspense fallback={<div class="animate-pulse rounded-lg bg-muted h-[200px]" />}>
@@ -170,6 +195,7 @@ export default function CheckoutPaymentSection({
               }}
               onError={(msg) => {
                 log.error('checkout', 'Stripe payment form error:', msg);
+                setPaymentError(t('paymentRetry', lang));
                 onError?.(msg);
               }}
             />
