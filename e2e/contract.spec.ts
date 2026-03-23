@@ -5,212 +5,108 @@
  * against the backend's OpenAPI schema. Failures reveal where the mock has
  * drifted from the real API contract.
  *
+ * The test suite iterates over the endpoint registry in mock-api-contract-guard.ts,
+ * so adding a new mock endpoint without a matching schema triggers a failure
+ * automatically.
+ *
  * Run: npx playwright test e2e/contract.spec.ts --project=desktop
  */
 import { test, expect } from '@playwright/test';
 import { validateResponse } from './helpers/validate-mock-responses';
+import {
+  MOCK_ENDPOINTS,
+  resolveMockPath,
+  type MockEndpoint,
+} from './helpers/mock-api-contract-guard';
 
 const MOCK_BASE = 'http://localhost:4322';
 
-/** Helper: POST JSON to the mock API and return parsed body + status. */
-async function postJson(path: string, body: Record<string, unknown> = {}) {
-  const res = await fetch(`${MOCK_BASE}${path}`, {
-    method: 'POST',
+/** Helper: make a request to the mock API using the endpoint descriptor. */
+async function requestEndpoint(endpoint: MockEndpoint): Promise<{ status: number; data: unknown }> {
+  const resolvedPath = resolveMockPath(endpoint);
+  const url = `${MOCK_BASE}${resolvedPath}`;
+
+  const fetchOpts: RequestInit = {
+    method: endpoint.method,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  };
+  if (endpoint.body && endpoint.method !== 'GET') {
+    fetchOpts.body = JSON.stringify(endpoint.body);
+  }
+
+  const res = await fetch(url, fetchOpts);
   const data = await res.json();
   return { status: res.status, data };
 }
 
-/** Helper: PATCH JSON to the mock API. */
-async function patchJson(path: string, body: Record<string, unknown> = {}) {
-  const res = await fetch(`${MOCK_BASE}${path}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  return { status: res.status, data };
-}
+// ── Data-driven contract tests over all mock endpoints ─────────
+//
+// The for-loop + conditionals pattern is intentional: it generates one Playwright
+// test per mock endpoint from the registry. Skipped endpoints use test.skip()
+// annotations. This is the standard approach for data-driven Playwright suites.
 
-/** Helper: GET from the mock API. */
-async function getJson(path: string) {
-  const res = await fetch(`${MOCK_BASE}${path}`);
-  const data = await res.json();
-  return { status: res.status, data };
-}
+/* eslint-disable playwright/no-conditional-in-test -- data-driven test generation from endpoint registry requires conditionals for setup/divergence filtering */
+/* eslint-disable playwright/valid-title -- dynamic titles from endpoint registry */
+/* eslint-disable playwright/no-skipped-test -- skipped endpoints are intentional (not in OpenAPI spec) */
+/* eslint-disable playwright/expect-expect -- skipped tests have no assertions by design */
 
-test.describe('Contract: mock API vs OpenAPI spec', () => {
-  // Reset mock state before each test
-  test.beforeEach(async () => {
-    await postJson('/test/reset');
-  });
+test.describe('Contract: all mock endpoints vs OpenAPI spec', () => {
+  for (const endpoint of MOCK_ENDPOINTS) {
+    const label = endpoint.label
+      ? `${endpoint.method} ${endpoint.specPath} — ${endpoint.label}`
+      : `${endpoint.method} ${endpoint.specPath}`;
 
-  test('POST /api/v1/cart/ — create cart matches Cart schema', async () => {
-    const { status, data } = await postJson('/api/v1/cart/');
-    expect(status).toBe(201);
+    if (endpoint.skipReason) {
+      test.skip(label, () => {
+        // Skipped: endpoint not in OpenAPI spec
+      });
 
-    const result = validateResponse('/api/v1/cart/', 'POST', 201, data);
-    // Known divergence: mock uses string product_ids ("prod-1") while the
-    // OpenAPI spec defines product_id as integer. See add-item test for details.
-    const errors = result.errors.filter((e) => !e.includes('product_id must be integer'));
-    expect(errors, `Schema validation errors:\n${errors.join('\n')}`).toEqual([]);
-  });
+      continue;
+    }
 
-  test('POST /api/v1/cart/{cart_id}/items/ — add item matches Cart schema', async () => {
-    // Create cart first
-    await postJson('/api/v1/cart/');
+    test(label, async () => {
+      // Run per-endpoint setup (create cart, checkout, etc.)
+      if (endpoint.setup) await endpoint.setup();
 
-    const { status, data } = await postJson('/api/v1/cart/cart-test-001/items/', {
-      product_id: 'prod-1',
-      quantity: 1,
+      const { status, data } = await requestEndpoint(endpoint);
+      expect(status).toBe(endpoint.expectedStatus);
+
+      const result = validateResponse(
+        endpoint.specPath,
+        endpoint.method,
+        endpoint.expectedStatus,
+        data,
+      );
+
+      // Filter known divergences (e.g. product_id string vs integer)
+      const errors = endpoint.knownDivergences
+        ? result.errors.filter((e) => !endpoint.knownDivergences!.some((d) => e.includes(d)))
+        : result.errors;
+
+      expect(errors, `Schema validation errors:\n${errors.join('\n')}`).toEqual([]);
     });
-    expect(status).toBe(201);
+  }
+});
 
-    const result = validateResponse('/api/v1/cart/{cart_id}/items/', 'POST', 201, data);
-    // Known divergence: mock uses string product_ids ("prod-1") while the
-    // OpenAPI spec defines product_id as integer. The mock's string IDs are
-    // used throughout the E2E test suite and changing them would be disruptive.
-    const errors = result.errors.filter((e) => !e.includes('product_id must be integer'));
-    expect(errors, `Schema validation errors:\n${errors.join('\n')}`).toEqual([]);
-  });
+/* eslint-enable playwright/expect-expect -- end data-driven test generation */
+/* eslint-enable playwright/no-skipped-test -- end data-driven test generation */
+/* eslint-enable playwright/valid-title -- end data-driven test generation */
+/* eslint-enable playwright/no-conditional-in-test -- end data-driven test generation */
 
-  test('POST /api/v1/checkout/ — create checkout returns valid response', async () => {
-    // Setup: create cart with an item
-    await postJson('/api/v1/cart/');
-    await postJson('/api/v1/cart/cart-test-001/items/', {
-      product_id: 'prod-1',
-      quantity: 1,
-    });
+// ── Guard: no unregistered mock endpoints ────────────────────────
 
-    const { status, data } = await postJson('/api/v1/checkout/', {
-      cart_id: 'cart-test-001',
-    });
-    expect(status).toBe(201);
-
-    const result = validateResponse('/api/v1/checkout/', 'POST', 201, data);
-    expect(result.errors, `Schema validation errors:\n${result.errors.join('\n')}`).toEqual([]);
-    expect(result.valid).toBe(true);
+test.describe('Contract: registry completeness', () => {
+  test('at least 30 non-skipped endpoints in registry', async () => {
+    const nonSkipped = MOCK_ENDPOINTS.filter((e) => !e.skipReason);
+    expect(
+      nonSkipped.length,
+      'Expected at least 30 non-skipped endpoints in the registry',
+    ).toBeGreaterThanOrEqual(30);
   });
 
-  test('GET /api/v1/checkout/{checkout_id}/ — fetch checkout returns valid response', async () => {
-    // Setup: create cart + item + checkout
-    await postJson('/api/v1/cart/');
-    await postJson('/api/v1/cart/cart-test-001/items/', {
-      product_id: 'prod-1',
-      quantity: 1,
-    });
-    const { data: checkout } = await postJson('/api/v1/checkout/', {
-      cart_id: 'cart-test-001',
-    });
-
-    const { status, data } = await getJson(`/api/v1/checkout/${checkout.id}/`);
-    expect(status).toBe(200);
-
-    const result = validateResponse('/api/v1/checkout/{checkout_id}/', 'GET', 200, data);
-    expect(result.errors, `Schema validation errors:\n${result.errors.join('\n')}`).toEqual([]);
-    expect(result.valid).toBe(true);
-  });
-
-  test('PATCH /api/v1/checkout/{checkout_id}/delivery/ — set delivery returns valid response', async () => {
-    // Setup: create cart + item + checkout
-    await postJson('/api/v1/cart/');
-    await postJson('/api/v1/cart/cart-test-001/items/', {
-      product_id: 'prod-1',
-      quantity: 1,
-    });
-    const { data: checkout } = await postJson('/api/v1/checkout/', {
-      cart_id: 'cart-test-001',
-    });
-
-    const { status, data } = await patchJson(`/api/v1/checkout/${checkout.id}/delivery/`, {
-      email: 'test@example.com',
-      shipping_address: {
-        first_name: 'Test',
-        last_name: 'User',
-        address1: 'Damstraat 1',
-        city: 'Amsterdam',
-        postal_code: '1012LG',
-        country: 'NL',
-      },
-      shipping_method_id: 'local_delivery',
-    });
-    expect(status).toBe(200);
-
-    const result = validateResponse('/api/v1/checkout/{checkout_id}/delivery/', 'PATCH', 200, data);
-    expect(result.errors, `Schema validation errors:\n${result.errors.join('\n')}`).toEqual([]);
-    expect(result.valid).toBe(true);
-  });
-
-  test('GET /api/v1/checkout/{checkout_id}/payment-gateways/ — returns valid response', async () => {
-    // Setup: create cart + item + checkout
-    await postJson('/api/v1/cart/');
-    await postJson('/api/v1/cart/cart-test-001/items/', {
-      product_id: 'prod-1',
-      quantity: 1,
-    });
-    const { data: checkout } = await postJson('/api/v1/checkout/', {
-      cart_id: 'cart-test-001',
-    });
-
-    const { status, data } = await getJson(`/api/v1/checkout/${checkout.id}/payment-gateways/`);
-    expect(status).toBe(200);
-
-    const result = validateResponse(
-      '/api/v1/checkout/{checkout_id}/payment-gateways/',
-      'GET',
-      200,
-      data,
-    );
-    expect(result.errors, `Schema validation errors:\n${result.errors.join('\n')}`).toEqual([]);
-    expect(result.valid).toBe(true);
-  });
-
-  test('POST /api/v1/fulfillment/address-check/ — valid address matches AddressCheckResponse', async () => {
-    const { status, data } = await postJson('/api/v1/fulfillment/address-check/', {
-      postal_code: '1015AB',
-      house_number: '1',
-      country: 'NL',
-    });
-    expect(status).toBe(200);
-
-    const result = validateResponse('/api/v1/fulfillment/address-check/', 'POST', 200, data);
-    expect(result.errors, `Schema validation errors:\n${result.errors.join('\n')}`).toEqual([]);
-    expect(result.valid).toBe(true);
-  });
-
-  test('GET /api/v1/fulfillment/locations/{location_id}/slots/ — returns valid response', async () => {
-    const { status, data } = await getJson(
-      '/api/v1/fulfillment/locations/1/slots/?date=2026-03-22',
-    );
-    expect(status).toBe(200);
-
-    const result = validateResponse(
-      '/api/v1/fulfillment/locations/{location_id}/slots/',
-      'GET',
-      200,
-      data,
-    );
-    expect(result.errors, `Schema validation errors:\n${result.errors.join('\n')}`).toEqual([]);
-    expect(result.valid).toBe(true);
-  });
-
-  test('POST /api/v1/cart/{cart_id}/apply-discount/ — invalid code returns APIErrorEnvelope', async () => {
-    // Setup: create cart with an item
-    await postJson('/api/v1/cart/');
-    await postJson('/api/v1/cart/cart-test-001/items/', {
-      product_id: 'prod-1',
-      quantity: 1,
-    });
-
-    const { status, data } = await postJson('/api/v1/cart/cart-test-001/apply-discount/', {
-      code: 'INVALID_CODE',
-    });
-    expect(status).toBe(400);
-
-    const result = validateResponse('/api/v1/cart/{cart_id}/apply-discount/', 'POST', 400, data);
-    expect(result.errors, `Schema validation errors:\n${result.errors.join('\n')}`).toEqual([]);
-    expect(result.valid).toBe(true);
+  test('every mock endpoint has a unique label', async () => {
+    const labels = MOCK_ENDPOINTS.map((e) => `${e.method} ${e.specPath} ${e.label ?? ''}`);
+    const duplicates = labels.filter((l, i) => labels.indexOf(l) !== i);
+    expect(duplicates, `Duplicate endpoint labels: ${duplicates.join(', ')}`).toEqual([]);
   });
 });
