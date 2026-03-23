@@ -11,6 +11,31 @@ import { products } from './fixtures/products';
 
 const falafel = products[0]; // simple, no modifiers
 
+/**
+ * Navigate to Dutch menu, add falafel, then navigate to English checkout.
+ * Waits for the checkout POST (201) to complete before returning.
+ */
+async function goToCheckoutWithItem(page: Parameters<typeof waitForHydration>[0], lang = 'en') {
+  await page.goto(menuPage('nl'));
+  await waitForHydration(page);
+  await addSimpleProductToCart(page, falafel.id);
+
+  const checkoutCreated = page.waitForResponse(
+    (resp) =>
+      resp.url().includes('/api/v1/checkout/') &&
+      resp.request().method() === 'POST' &&
+      resp.status() === 201 &&
+      !resp.url().includes('/delivery/') &&
+      !resp.url().includes('/payment/') &&
+      !resp.url().includes('/complete/'),
+    { timeout: 15_000 },
+  );
+
+  await page.goto(`/${lang}/checkout`);
+  await waitForHydration(page);
+  await checkoutCreated;
+}
+
 test.describe('Checkout error recovery', () => {
   test.beforeEach(async ({ page }) => {
     await resetMockApi(page);
@@ -41,5 +66,115 @@ test.describe('Checkout error recovery', () => {
     await expect(page.getByText("Your browser doesn't support saving form progress")).toBeVisible({
       timeout: 10000,
     });
+  });
+
+  // ── Payment init failure + retry ──────────────────────────────────────────
+
+  test('shows retry button when payment initialization fails', async ({ page }) => {
+    await goToCheckoutWithItem(page);
+
+    // Intercept the payment init endpoint — fail on first call, succeed on second.
+    let paymentCallCount = 0;
+    await page.route('**/api/v1/checkout/*/payment/', async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.continue();
+        return;
+      }
+      paymentCallCount++;
+      if (paymentCallCount === 1) {
+        // First call: return a 500 to trigger the error UI
+        await route.fulfill({
+          status: 500,
+          body: JSON.stringify({ detail: 'Internal Server Error' }),
+        });
+      } else {
+        // Subsequent calls: let through to the mock API
+        await route.continue();
+      }
+    });
+
+    // Fill contact + delivery to trigger the delivery PATCH → delivery_set → payment init chain
+    await page.getByLabel('Email').fill('test@example.com');
+    await page.getByLabel('Phone number').fill('+31612345678');
+    await page.getByLabel('First name').fill('Jan');
+    await page.getByLabel('Last name').fill('de Vries');
+    await page.getByLabel('Street and number').fill('Damstraat 1');
+    await page.getByLabel('City').fill('Amsterdam');
+    await page.getByLabel('Postal code').fill('1015AB');
+
+    // Blur to fire the debounced PATCH
+    await page.getByLabel('Postal code').blur();
+
+    // Wait for the delivery PATCH to complete (transitions checkout to delivery_set)
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/delivery/') &&
+        resp.request().method() === 'PATCH' &&
+        resp.status() === 200,
+      { timeout: 15_000 },
+    );
+
+    // The payment error message and "Try again" button should appear
+    await expect(page.getByText('Payment failed. Please try again.')).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+
+    // Click retry — the second payment call should succeed and mount the payment form
+    await page.getByRole('button', { name: 'Try again' }).click();
+
+    // Payment form (stripe mock) should now be visible
+    await page.getByTestId('stripe-mock').waitFor({ state: 'visible', timeout: 20_000 });
+
+    // Error message should be gone after successful retry
+    await expect(page.getByText('Payment failed. Please try again.')).toBeHidden();
+  });
+
+  // ── Fulfillment toggle without contact info ───────────────────────────────
+
+  test('fulfillment toggle without contact info does not trigger PATCH', async ({ page }) => {
+    await goToCheckoutWithItem(page);
+
+    // Track any PATCH requests to the delivery endpoint
+    let patchCount = 0;
+    page.on('request', (req) => {
+      if (
+        req.url().includes('/api/v1/checkout/') &&
+        req.url().includes('/delivery/') &&
+        req.method() === 'PATCH'
+      ) {
+        patchCount++;
+      }
+    });
+
+    // Contact fields are deliberately left empty.
+    // Click the Pickup toggle — fulfillment type change alone must not fire a PATCH.
+    await page.getByText('Pickup').click();
+
+    // Wait long enough for any debounced PATCH (debounce is 500ms) to have fired.
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- deliberate pause to confirm no debounced PATCH fires
+    await page.waitForTimeout(1_500);
+
+    expect(patchCount).toBe(0);
+  });
+
+  // ── Form validation on empty submit ──────────────────────────────────────
+
+  test('form validation shows errors on empty submit', async ({ page }) => {
+    await goToCheckoutWithItem(page);
+
+    // Attempt to place the order without filling any fields
+    const placeOrderButton = page
+      .getByRole('button', { name: /Place order/ })
+      .locator('visible=true')
+      .first();
+    await placeOrderButton.click();
+
+    // Required-field validation errors should appear for the contact fields.
+    // The error messages follow the pattern "{Field} is required" (i18n key: fieldRequired).
+    await expect(page.getByText('Email is required')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText('Phone number is required')).toBeVisible();
+    await expect(page.getByText('First name is required')).toBeVisible();
+    await expect(page.getByText('Last name is required')).toBeVisible();
   });
 });
