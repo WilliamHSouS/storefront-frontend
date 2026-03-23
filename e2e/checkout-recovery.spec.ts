@@ -71,9 +71,8 @@ test.describe('Checkout error recovery', () => {
   // ── Payment init failure + retry ──────────────────────────────────────────
 
   test('shows retry button when payment initialization fails', async ({ page }) => {
-    await goToCheckoutWithItem(page);
-
-    // Intercept the payment init endpoint — fail on first call, succeed on second.
+    // Intercept the payment init endpoint BEFORE navigating — with eager gateway
+    // config, CheckoutPaymentSection may initiate payment immediately after delivery_set.
     let paymentCallCount = 0;
     await page.route('**/api/v1/checkout/*/payment/', async (route) => {
       if (route.request().method() !== 'POST') {
@@ -92,6 +91,8 @@ test.describe('Checkout error recovery', () => {
         await route.continue();
       }
     });
+
+    await goToCheckoutWithItem(page);
 
     // Fill contact + delivery to trigger the delivery PATCH → delivery_set → payment init chain
     await page.getByLabel('Email').fill('test@example.com');

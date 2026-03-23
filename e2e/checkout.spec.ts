@@ -27,8 +27,8 @@ test.describe('Checkout page', () => {
     await waitForHydration(page);
 
     // Verify order summary shows price breakdown
-    await expect(page.getByText('Subtotal')).toBeVisible();
-    await expect(page.getByText('Total', { exact: true })).toBeVisible();
+    await expect(page.getByText('Subtotal').first()).toBeVisible();
+    await expect(page.getByText('Total', { exact: true }).first()).toBeVisible();
   });
 
   test('shows fulfillment toggle with delivery and pickup options', async ({ page }) => {
@@ -39,9 +39,9 @@ test.describe('Checkout page', () => {
     await page.goto('/en/checkout');
     await waitForHydration(page);
 
-    await expect(page.locator('role=radiogroup')).toBeVisible();
-    await expect(page.getByText('Delivery')).toBeVisible();
-    await expect(page.getByText('Pickup')).toBeVisible();
+    await expect(page.locator('role=radiogroup').first()).toBeVisible();
+    await expect(page.getByLabel('Delivery')).toBeVisible();
+    await expect(page.getByLabel('Pickup')).toBeVisible();
   });
 
   test('shows contact form fields', async ({ page }) => {

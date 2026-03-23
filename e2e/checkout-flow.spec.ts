@@ -714,17 +714,16 @@ test.describe('Scenario 11: iDEAL redirect return flow', () => {
     await expect(page).not.toHaveURL(/payment_intent/);
   });
 
-  test('success page shows loading state for delayed webhook', async ({ page }) => {
+  test('success page shows error state for unknown checkout', async ({ page }) => {
     // Navigate directly with a non-existent checkout_id
-    // The polling will get 404s, and eventually the success page should redirect or show fallback
+    // The mock confirm-payment will return an error for unknown IDs
     await page.goto(
       '/en/checkout/success?checkout_id=chk-fake&payment_intent=pi_mock_456&payment_intent_client_secret=pi_mock_456_secret',
     );
     await waitForHydration(page);
 
-    // Should show the loading/confirming state initially, then resolve to fallback
-    // The confirm-payment call for a fake checkout will error, showing fallback "Payment received"
-    await expect(page.getByText(/confirming your order|Payment received/i)).toBeVisible({
+    // Should show an error state (declined/fallback) or redirect back to checkout
+    await expect(page.getByText(/declined|Payment received|Back to cart/i).first()).toBeVisible({
       timeout: 15_000,
     });
   });
@@ -817,18 +816,19 @@ test.describe('Scenario 12: Backend data verification', () => {
   });
 
   test('payment initiation sends stripe gateway_id', async ({ page }) => {
-    await goToCheckoutWithItem(page);
-
-    // Set up payment request listener before triggering the form flow
+    // Set up payment request listener BEFORE navigation — with eager gateways,
+    // payment init fires as soon as delivery_set is reached.
     const paymentPromise = page.waitForRequest(
       (req) =>
         req.url().includes('/payment/') &&
         req.method() === 'POST' &&
         !req.url().includes('/confirm/'),
-      { timeout: 20_000 },
+      { timeout: 30_000 },
     );
 
-    // Fill form and trigger PATCH (which triggers gateway fetch → payment init)
+    await goToCheckoutWithItem(page);
+
+    // Fill form and trigger PATCH (which triggers delivery_set → payment init)
     const patchPromise = fillFormAndTriggerPatch(page);
     await patchPromise;
 
