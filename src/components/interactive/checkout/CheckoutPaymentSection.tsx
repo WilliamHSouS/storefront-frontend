@@ -88,13 +88,15 @@ export default function CheckoutPaymentSection({
     }
   }, [checkout?.available_payment_gateways]);
 
-  // ── Initiate payment when gateway config is available ────────────
-  // Gateway config comes from the checkout response (after delivery_set).
-  // We only need to initiate payment to get a client_secret for the Stripe Element.
+  // ── Initiate payment when delivery is set ───────────────────────
+  // Gateway config is available eagerly (on checkout creation), but we must
+  // wait for delivery_set before initiating payment — the backend rejects
+  // payment initiation on 'created' status.
   useEffect(() => {
     if (!mountedRef.current) return;
     if (!checkout?.id) return;
     if (stripeConfig) return;
+    if (checkout.status !== 'delivery_set' && checkout.status !== 'shipping_pending') return;
 
     const gateways = checkout.available_payment_gateways;
     if (!gateways) return;
@@ -126,7 +128,7 @@ export default function CheckoutPaymentSection({
           onError?.(`Payment initialization failed: ${msg}`);
         }
       });
-  }, [checkout?.id, checkout?.available_payment_gateways, stripeConfig]);
+  }, [checkout?.id, checkout?.status, checkout?.available_payment_gateways, stripeConfig]);
 
   // ── Retry: clear error + stripeConfig so the initiation effect re-runs ──
   const retryPayment = () => {

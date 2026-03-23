@@ -207,6 +207,16 @@ export default function CheckoutPage({ lang }: Props) {
             </div>
           )}
 
+          <CheckoutFormOrchestrator
+            lang={typedLang}
+            form={form}
+            dispatch={dispatch}
+            formErrors={formErrors}
+            setFormErrors={setFormErrors}
+            checkoutId={checkout?.id}
+            merchantSlug={merchant?.slug}
+          />
+
           <CheckoutPaymentSection
             lang={typedLang}
             form={form}
@@ -223,16 +233,6 @@ export default function CheckoutPage({ lang }: Props) {
             onError={(msg) => {
               log.error('checkout', 'Payment section error:', msg);
             }}
-          />
-
-          <CheckoutFormOrchestrator
-            lang={typedLang}
-            form={form}
-            dispatch={dispatch}
-            formErrors={formErrors}
-            setFormErrors={setFormErrors}
-            checkoutId={checkout?.id}
-            merchantSlug={merchant?.slug}
           />
 
           {/* Privacy notice */}
