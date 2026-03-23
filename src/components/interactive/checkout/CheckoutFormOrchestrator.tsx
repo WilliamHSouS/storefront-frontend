@@ -3,6 +3,8 @@ import { useStore } from '@nanostores/preact';
 import { $checkout } from '@/stores/checkout';
 import { patchDelivery, cancelPendingPatch } from '@/stores/checkout-actions';
 import { persistFormState } from '@/stores/checkout';
+import { onAddressChange } from '@/stores/address-actions';
+import { $addressCoords } from '@/stores/address';
 import { getClient } from '@/lib/api';
 import { t } from '@/i18n/client';
 import * as log from '@/lib/logger';
@@ -241,6 +243,15 @@ export default function CheckoutFormOrchestrator({
         postal_code: form.postalCode,
         country_code: form.countryCode,
       };
+
+      // Persist address to localStorage + hydrate $addressCoords so the cart
+      // shows shipping estimates and the home page remembers the postal code.
+      if (
+        !$addressCoords.get()?.postalCode ||
+        $addressCoords.get()?.postalCode !== form.postalCode
+      ) {
+        onAddressChange({ postalCode: form.postalCode, country: form.countryCode }).catch(() => {});
+      }
     }
 
     if (form.fulfillmentMethod === 'pickup' && form.pickupLocationId) {
