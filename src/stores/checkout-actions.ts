@@ -96,8 +96,8 @@ export function patchDelivery(
     const controller = new AbortController();
     patchAbort = controller;
 
+    const sdk = client ?? getClient();
     try {
-      const sdk = client ?? getClient();
       const { data: responseData, error } = await sdk.PATCH(
         '/api/v1/checkout/{checkout_id}/delivery/',
 
@@ -128,6 +128,34 @@ export function patchDelivery(
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
       if (generation !== patchGeneration) return;
+
+      // Auto-retry once for network errors (TypeError = fetch failed)
+      if (err instanceof TypeError) {
+        log.warn('checkout', 'patchDelivery network error, retrying once');
+        try {
+          const retryResult = await sdk.PATCH('/api/v1/checkout/{checkout_id}/delivery/', {
+            params: { path: { checkout_id: checkoutId } },
+            body: data,
+            signal: controller.signal,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opts shape bridges local RequestOptions to SDK per-path type
+          } as any);
+          if (generation !== patchGeneration) return;
+          if (retryResult.error || !retryResult.data) {
+            const detail = errorDetail(retryResult.error);
+            $checkoutError.set(detail);
+            log.error('checkout', 'patchDelivery retry failed:', detail);
+            return;
+          }
+          $checkout.set(retryResult.data as unknown as Checkout);
+          $checkoutError.set(null);
+          return;
+        } catch (retryErr) {
+          if ((retryErr as Error).name === 'AbortError') return;
+          if (generation !== patchGeneration) return;
+          // Fall through to set error
+        }
+      }
+
       const detail = errorDetail(err);
       $checkoutError.set(detail);
       log.error('checkout', 'patchDelivery failed:', detail);

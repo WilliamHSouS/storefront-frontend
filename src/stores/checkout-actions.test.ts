@@ -387,6 +387,37 @@ describe('ensurePaymentAndComplete', () => {
   });
 });
 
+describe('patchDelivery network retry', () => {
+  beforeEach(() => {
+    $checkoutError.set(null);
+  });
+
+  it('retries once on network error then succeeds', async () => {
+    const failThenSucceed = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({ data: { id: 'co_1', status: 'delivery_set' }, error: null });
+    const retryClient = { PATCH: failThenSucceed } as any;
+
+    patchDelivery('co_1', { email: 'test@test.com' }, retryClient);
+    await new Promise((r) => setTimeout(r, 700));
+
+    expect(failThenSucceed).toHaveBeenCalledTimes(2);
+    expect($checkoutError.get()).toBeNull();
+  });
+
+  it('sets error after retry also fails', async () => {
+    const alwaysFail = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    const failClient = { PATCH: alwaysFail } as any;
+
+    patchDelivery('co_1', { email: 'test@test.com' }, failClient);
+    await new Promise((r) => setTimeout(r, 700));
+
+    expect(alwaysFail).toHaveBeenCalledTimes(2);
+    expect($checkoutError.get()).not.toBeNull();
+  });
+});
+
 describe('cancelPendingPatch', () => {
   it('is exported as a function', () => {
     expect(typeof cancelPendingPatch).toBe('function');
