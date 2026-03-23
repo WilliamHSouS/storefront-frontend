@@ -13,31 +13,11 @@ This spec covers a coordinated frontend + backend optimization. The backend agen
 
 ## 1. API Optimizations
 
-### 1a. New endpoint: `POST /checkout/{id}/prepare-payment/`
+### ~~1a. New endpoint: `POST /checkout/{id}/prepare-payment/`~~ — DROPPED
 
-Merge the current two-step flow:
+**Dropped per backend feedback.** The existing `POST /checkout/{id}/payment/` already returns `client_secret`, `payment_intent_id`, and gateway config in one response. Combined with 1c (eager gateway config on create), the frontend gets gateway config on checkout creation → preloads Stripe.js → calls `POST /payment/` after `delivery_set` → mounts Payment Element. Same round-trip reduction, zero new endpoints.
 
-- Step A: Read `available_payment_gateways` from checkout GET response (only available after `delivery_set`)
-- Step B: `POST /checkout/{id}/payment/` to create PaymentIntent and get `client_secret`
-
-Into a single call returning:
-
-```json
-{
-  "client_secret": "pi_xxx_secret_xxx",
-  "payment_intent_id": "pi_xxx",
-  "gateway_config": {
-    "publishable_key": "pk_live_xxx",
-    "stripe_account": "acct_xxx"
-  }
-}
-```
-
-**Impact:** Eliminates one sequential round-trip on the critical path (delivery_set → payment form visible).
-
-**Payment method configuration:** The `prepare-payment` endpoint must create the PaymentIntent with the same `payment_method_types` as the current `POST /payment/` endpoint (iDEAL + card). The frontend relies on Stripe auto-detection from the PaymentIntent — no explicit `paymentMethodTypes` is passed to `elements()`. The backend must preserve this behavior when merging the two steps.
-
-**Frontend change:** Replace `initiatePayment()` in `checkout-actions.ts` with `preparePayment()` that calls this endpoint. `CheckoutPaymentSection` watches for `delivery_set` and calls `preparePayment()` to get both gateway config and client_secret in one shot.
+**Frontend change:** Keep `initiatePayment()` as-is. `CheckoutPaymentSection` preloads `loadStripe()` using gateway config from checkout creation, then calls `initiatePayment()` after `delivery_set` to get `client_secret`.
 
 ### 1b. Add `POST /checkout/{id}/confirm-payment/` to OpenAPI spec
 
@@ -65,7 +45,7 @@ Currently `available_payment_gateways` only appears after `delivery_set` status.
 
 **Impact:** Frontend can call `loadStripe(publishableKey, { stripeAccount })` immediately on checkout creation, preloading Stripe.js while the user fills out the form. Saves ~1-2s of perceived latency.
 
-**Dependency:** Requires backend confirmation that gateway config doesn't vary by delivery details (e.g., different gateways per country). Discussion #1 on the agent bus.
+**Status:** Backend confirmed — gateway config is merchant-level, no delivery dependency. **Already implemented** on backend (guard removed in `serialization.py`).
 
 ## 2. Frontend Architecture — Component Decomposition
 
@@ -80,7 +60,7 @@ Split the 749-line `CheckoutPage.tsx` into focused components:
 ### CheckoutPaymentSection.tsx (new, ~120 lines)
 
 - Extracts Stripe payment mounting logic (the `delivery_set` watcher + Payment Element render block)
-- Watches for `delivery_set` status → calls `preparePayment()` (new merged endpoint)
+- Watches for `delivery_set` status → calls `initiatePayment()` to get `client_secret`
 - Manages `stripeConfig` state locally — parent doesn't need to know about `client_secret`
 - Sets a `$stripePayment` nanostore atom (`{ stripe, elements, clientSecret }`) so `CheckoutPlaceOrder` can read it without prop drilling
 - Handles Stripe preload if gateway config available from checkout creation (proposal 1c)
@@ -113,14 +93,16 @@ XState adds ~12KB min-gzipped, significant against the 65KB bundle budget. The e
 
 ### 3a. Eliminate `as any` SDK path casts
 
-| Location               | Cast                      | Fix                                                                      |
-| ---------------------- | ------------------------- | ------------------------------------------------------------------------ |
-| `CheckoutSuccess:67`   | `confirmUrl as any`       | Backend adds `confirm-payment` to OpenAPI spec (1b) → SDK regeneration   |
-| `checkout-actions:207` | `initiatePayment` body    | Replaced by `preparePayment` using new endpoint (1a)                     |
-| `checkout-actions:239` | `completeCheckout` params | Verify SDK types — likely fixable with correct path literal              |
-| `checkout-actions:94`  | `patchDelivery` opts      | Keep — `opts` shape bridging, not a path cast (acceptable per CLAUDE.md) |
-| `CheckoutPage:177`     | pickup-locations URL      | Use SDK path literal if in spec, else request backend add to spec        |
-| `CheckoutPage:265`     | time-slots URL            | Use SDK path literal with params, else request backend add to spec       |
+**Root cause:** Most casts exist because the SDK types are stale, not because endpoints are missing. Backend confirmed `pickup-locations`, `time-slots`, and `confirm-payment` are all in the OpenAPI spec. A single SDK regeneration will fix the majority.
+
+| Location               | Cast                      | Fix                                                                                  |
+| ---------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `CheckoutSuccess:67`   | `confirmUrl as any`       | SDK regen — `confirm-payment` is in spec (backend's current branch)                  |
+| `checkout-actions:207` | `initiatePayment` body    | SDK regen — verify `POST /payment/` body type matches `{ gateway_id }` shape         |
+| `checkout-actions:239` | `completeCheckout` params | SDK regen — verify path param name (`checkout_id` vs `id`). Pending backend response |
+| `checkout-actions:94`  | `patchDelivery` opts      | Keep — `opts` shape bridging, not a path cast (acceptable per CLAUDE.md)             |
+| `CheckoutPage:177`     | pickup-locations URL      | SDK regen — endpoint is in spec, use SDK path literal                                |
+| `CheckoutPage:265`     | time-slots URL            | SDK regen — endpoint is in spec, use SDK path literal with params                    |
 
 ### 3b. SessionStorage resilience
 
@@ -154,7 +136,7 @@ The local interface becomes a type alias, not a separate shape.
 | Error type                     | Current UX                    | Proposed UX                                                      |
 | ------------------------------ | ----------------------------- | ---------------------------------------------------------------- |
 | Validation error (field-level) | Red banner + field highlights | Same (already good)                                              |
-| Payment init failed            | Red banner                    | Banner + "Retry" button that re-calls `preparePayment`           |
+| Payment init failed            | Red banner                    | Banner + "Retry" button that re-calls `initiatePayment`          |
 | Stripe load error              | Logged, no user feedback      | Inline message in payment section + "Retry" button               |
 | Network error during PATCH     | Red banner                    | Auto-retry once (silent), then banner + "Retry"                  |
 | Stale checkout (cart changed)  | Page reload                   | Toast "Your cart was updated" + re-create checkout automatically |
@@ -171,30 +153,29 @@ On error: briefly shake the button and scroll to the error banner. Prevents mobi
 
 ### 5a. Unit tests (Vitest)
 
-- **`checkout-actions.test.ts`** — Update for `preparePayment` endpoint, add `cancelPendingPatch()` test, test auto-retry logic
+- **`checkout-actions.test.ts`** — Add `cancelPendingPatch()` test, test auto-retry logic for network errors
 - **`checkout.test.ts`** — Add `$storageAvailable` atom test
-- **`CheckoutPaymentSection.test.tsx`** (new) — Stripe config lifecycle: mounts on `delivery_set`, handles `preparePayment` failure with retry, cleanup on unmount
+- **`CheckoutPaymentSection.test.tsx`** (new) — Stripe preload on creation, `initiatePayment` on `delivery_set`, failure retry, cleanup on unmount
 - **`CheckoutFormOrchestrator.test.tsx`** (new) — Blur → validate → PATCH cycle, debounce cancellation on unmount, fulfillment method change triggers PATCH
 - **`CheckoutPlaceOrder.test.tsx`** (new) — Form validation, submit flow, error scroll behavior
 
 ### 5b. E2E tests (Playwright)
 
-- **`checkout-flow.spec.ts`** — Update mock API to serve `prepare-payment` instead of separate `payment-gateways` + `payment` calls
+- **`checkout-flow.spec.ts`** — Update mock API: `POST /checkout/` now returns eager gateway config, verify Stripe preload timing
 - **`checkout.spec.ts`** — Add test for storage-unavailable toast
 - **`checkout-recovery.spec.ts`** (new) — Payment retry after failure, stale cart re-creation, network error auto-retry
 
 ### 5c. Contract tests
 
-- **`contract.spec.ts`** — Add schemas for `prepare-payment` request/response and `confirm-payment` request/response once backend updates the OpenAPI spec
+- **`contract.spec.ts`** — Add schema for `confirm-payment` request/response once backend updates the OpenAPI spec. Verify `POST /checkout/` response includes `available_payment_gateways`
 
 ### 5d. Mock API updates
 
 `e2e/helpers/mock-api.ts` changes:
 
-- New `POST /checkout/{id}/prepare-payment/` handler returning `client_secret` + `gateway_config`
-- Updated `POST /checkout/` to include `available_payment_gateways` in response
+- Updated `POST /checkout/` to include `available_payment_gateways` in response (matches backend change)
 - `POST /checkout/{id}/confirm-payment/` handler (typed, replacing ad-hoc mock)
-- Remove old `GET /checkout/{id}/payment-gateways/` handler once fully migrated
+- Verify `POST /checkout/{id}/payment/` response includes gateway config fields
 
 ## 6. Migration & Deployment
 
@@ -204,7 +185,7 @@ No backwards compatibility layer needed. Both frontend and backend deploy togeth
 
 ### Deployment order
 
-1. Backend merges: new `prepare-payment` endpoint, `confirm-payment` in spec, eager gateway config
+1. Backend merges: `confirm-payment` in spec, eager gateway config (already done), OpenAPI regen
 2. Backend CI publishes updated `openapi.storefront.v1.json` → triggers SDK regeneration → new `@poweredbysous/storefront-sdk` version published to registry
 3. Frontend PR updates SDK dep (`pnpm update @poweredbysous/storefront-sdk`). **CI gate:** `pnpm check` must pass with the new SDK, confirming all new endpoints are typed. Do not merge until the SDK version includes the new endpoints.
 4. Coordinated deploy: backend + frontend deploy together (same release window)
@@ -220,13 +201,18 @@ Revert frontend to previous version — the old endpoints still exist on the bac
 
 Component decomposition adds no new dependencies. Splitting CheckoutPage into smaller files may slightly improve tree-shaking. `pnpm size:check` must pass before merging (65KB gzipped budget).
 
-## Open Questions (pending backend response)
+## Resolved Questions
 
-1. Does gateway config depend on delivery details? (Affects proposal 1c feasibility)
-2. Can `pickup-locations` and `fulfillment/locations/{id}/slots/` be added to the OpenAPI spec? (Affects `as any` cast elimination)
-3. Backend timeline for these changes?
+1. ~~Does gateway config depend on delivery details?~~ **No** — merchant-level only. Backend already shipped eager gateways.
+2. ~~Can `pickup-locations` and `fulfillment/locations/{id}/slots/` be added to the OpenAPI spec?~~ **Already in spec** — stale SDK is the issue, not missing endpoints.
+3. ~~Backend timeline?~~ **#3 already done.** #2 ships with backend branch merge + OpenAPI regen.
+
+## Open Questions
+
+1. `POST /checkout/{id}/complete/` — path param name mismatch (`checkout_id` vs `id`?). Awaiting backend confirmation.
 
 ## Artifacts
 
 - Agent bus discussion #1: `#sous-agents` Slack thread
 - Artifact key: `storefront-frontend:checkout-api-proposal-2026-03-22`
+- Updated artifact: `storefront-frontend:checkout-optimization-spec-2026-03-23`
