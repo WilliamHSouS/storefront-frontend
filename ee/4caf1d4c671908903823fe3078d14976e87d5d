@@ -1,0 +1,44 @@
+e2e/helpers/mock-api.ts
+  57c31d0e63a623c2 368
+src/lib/stripe-loader.ts
+  57c31d0e63a623c2 1-62
+e2e/helpers/mock-api-contract-guard.ts
+  57c31d0e63a623c2 109,117-118,126-127,151,196,206,386
+src/i18n/client.ts
+  57c31d0e63a623c2 1-41
+e2e/fixtures/products.ts
+  57c31d0e63a623c2 4-6,15,18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "ee4caf1d4c671908903823fe3078d14976e87d5d",
+  "prompts": {
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 726,
+      "overriden_lines": 0
+    },
+    "57c31d0e63a623c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4817f5e9-c1d6-4a62-b7f7-951c7fe5fd57",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 121,
+      "overriden_lines": 0
+    }
+  }
+}
