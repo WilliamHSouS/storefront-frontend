@@ -56,6 +56,21 @@ let patchGeneration = 0;
 const PATCH_DEBOUNCE_MS = 500;
 
 /**
+ * Cancel any pending debounced PATCH and abort any in-flight request.
+ * Call this in component cleanup effects to prevent detached timers.
+ */
+export function cancelPendingPatch(): void {
+  if (patchTimer != null) {
+    clearTimeout(patchTimer);
+    patchTimer = null;
+  }
+  if (patchAbort) {
+    patchAbort.abort();
+    patchAbort = null;
+  }
+}
+
+/**
  * Debounced PATCH to update checkout delivery details.
  * Rapid calls within 500ms are collapsed — only the last executes.
  * Uses a generation counter to discard stale responses.

@@ -16,6 +16,7 @@ import {
   createCheckout,
   fetchCheckout,
   patchDelivery,
+  cancelPendingPatch,
   completeCheckout,
   ensurePaymentAndComplete,
   initiatePayment,
@@ -383,5 +384,24 @@ describe('ensurePaymentAndComplete', () => {
     );
 
     expect(result.status).toBe('error');
+  });
+});
+
+describe('cancelPendingPatch', () => {
+  it('is exported as a function', () => {
+    expect(typeof cancelPendingPatch).toBe('function');
+  });
+
+  it('cancels a pending debounced PATCH', async () => {
+    const mockPatch = vi
+      .fn()
+      .mockResolvedValue({ data: { id: 'co_1', status: 'delivery_set' }, error: null });
+    const client = { PATCH: mockPatch } as any;
+
+    patchDelivery('test-checkout-id', { email: 'test@test.com' }, client);
+    cancelPendingPatch();
+    await new Promise((r) => setTimeout(r, 600));
+
+    expect(mockPatch).not.toHaveBeenCalled();
   });
 });
