@@ -77,20 +77,17 @@ function checkoutToResponse(checkout: CheckoutState) {
     display_discount_amount: checkout.discount_amount,
     display_promotion_discount_amount: '0.00',
     display_total: checkout.total,
-    available_payment_gateways:
-      checkout.status !== 'created'
-        ? [
-            {
-              id: 'stripe',
-              name: 'Card Payment',
-              type: 'card',
-              config: {
-                publishable_key: 'pk_test_mock',
-                stripe_account: 'acct_mock',
-              },
-            },
-          ]
-        : null,
+    available_payment_gateways: [
+      {
+        id: 'stripe',
+        name: 'Stripe',
+        type: 'stripe',
+        config: {
+          publishable_key: 'pk_test_mock',
+          stripe_account: 'acct_mock',
+        },
+      },
+    ],
     gift_card_details: null,
     purpose: 'default',
     created_at: new Date().toISOString(),
