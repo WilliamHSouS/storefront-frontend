@@ -206,10 +206,11 @@ Component decomposition adds no new dependencies. Splitting CheckoutPage into sm
 1. ~~Does gateway config depend on delivery details?~~ **No** — merchant-level only. Backend already shipped eager gateways.
 2. ~~Can `pickup-locations` and `fulfillment/locations/{id}/slots/` be added to the OpenAPI spec?~~ **Already in spec** — stale SDK is the issue, not missing endpoints.
 3. ~~Backend timeline?~~ **#3 already done.** #2 ships with backend branch merge + OpenAPI regen.
+4. ~~`POST /checkout/{id}/complete/` param name?~~ **`checkout_id`** — matches our usage. Stale SDK confirmed.
 
 ## Open Questions
 
-1. `POST /checkout/{id}/complete/` — path param name mismatch (`checkout_id` vs `id`?). Awaiting backend confirmation.
+None — all resolved. See "Resolved Questions" above.
 
 ## Artifacts
 
