@@ -6,10 +6,11 @@ import {
   $checkout,
   $checkoutError,
   clearStoredCheckoutId,
+  getStoredCheckoutId,
   restoreFormState,
 } from '@/stores/checkout';
 import { checkStorageAvailable, $storageAvailable } from '@/stores/checkout-payment';
-import { createCheckout, patchDelivery } from '@/stores/checkout-actions';
+import { createCheckout, fetchCheckout, patchDelivery } from '@/stores/checkout-actions';
 import { showToast } from '@/stores/toast';
 import { $addressCoords } from '@/stores/address';
 import { onAddressChange } from '@/stores/address-actions';
@@ -148,6 +149,20 @@ export default function CheckoutPage({ lang }: Props) {
     if (!$storageAvailable.get()) {
       showToast(t('storageUnavailable', typedLang), 'error');
     }
+  }, []);
+
+  // ── Restore existing checkout from sessionStorage on mount ──────
+  // If a checkout ID is stored, fetch it before creating a new one.
+  // This preserves saved address/contact data from a previous session.
+  useEffect(() => {
+    const storedId = getStoredCheckoutId();
+    if (!storedId || $checkout.get()) return; // no stored ID, or already loaded
+
+    fetchCheckout(storedId).catch((err) => {
+      // Checkout expired or invalid — clear and let create-checkout handle it
+      log.warn('checkout', 'Failed to restore checkout, will create new:', err);
+      clearStoredCheckoutId();
+    });
   }, []);
 
   // ── Create checkout from cart when cart is ready ──────────────────
