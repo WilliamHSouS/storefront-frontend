@@ -1,4 +1,3 @@
-// Checkout/location endpoints use dynamic URLs not in the OpenAPI spec — targeted `as any` casts below.
 import { useEffect, useCallback, useState } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
 import { $checkout } from '@/stores/checkout';
@@ -82,11 +81,9 @@ export default function CheckoutFormOrchestrator({
   useEffect(() => {
     if (!merchantSlug) return;
     const client = getClient();
-    const locationsUrl = '/api/v1/pickup-locations/';
 
     client
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic endpoint not in SDK
-      .GET(locationsUrl as any)
+      .GET('/api/v1/pickup-locations/')
       .then(({ data }) => {
         if (!data || !Array.isArray(data)) return;
         const locs = (
@@ -135,11 +132,14 @@ export default function CheckoutFormOrchestrator({
           : 'default';
       setTimeSlotsLoading(true);
       const client = getClient();
-      const slotsUrl = `/api/v1/fulfillment/locations/${locationId}/slots/?date=${date}`;
 
       client
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic endpoint not in SDK
-        .GET(slotsUrl as any)
+        .GET('/api/v1/fulfillment/locations/{location_id}/slots/', {
+          params: {
+            path: { location_id: String(locationId) },
+            query: { date },
+          },
+        })
         .then(({ data }) => {
           if (!data) {
             setTimeSlots([]);

@@ -244,11 +244,10 @@ export async function initiatePayment(
   $checkoutLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.POST(
-      '/api/v1/checkout/{checkout_id}/payment/',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- body shape not in SDK types
-      { params: { path: { checkout_id: checkoutId } }, body: { gateway_id: 'stripe' } } as any,
-    );
+    const { data, error } = await sdk.POST('/api/v1/checkout/{checkout_id}/payment/', {
+      params: { path: { checkout_id: checkoutId } },
+      body: { gateway_id: 'stripe' },
+    });
 
     if (error || !data) {
       throw new Error(`Failed to initiate payment: ${errorDetail(error)}`);
@@ -276,11 +275,9 @@ export async function completeCheckout(
   $checkoutLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.POST(
-      '/api/v1/checkout/{checkout_id}/complete/',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- params shape not matching SDK
-      { params: { path: { checkout_id: checkoutId } } } as any,
-    );
+    const { data, error } = await sdk.POST('/api/v1/checkout/{checkout_id}/complete/', {
+      params: { path: { checkout_id: checkoutId } },
+    });
 
     if (error || !data) {
       throw new Error(`Failed to complete checkout: ${errorDetail(error)}`);
