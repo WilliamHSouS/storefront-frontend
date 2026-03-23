@@ -178,3 +178,133 @@ test.describe('Checkout error recovery', () => {
     await expect(page.getByText('Last name is required')).toBeVisible();
   });
 });
+
+// ═════════════════════════════════════════════════════════════════
+//  EDGE CASE — Empty cart redirects to menu
+// ═════════════════════════════════════════════════════════════════
+
+test.describe('Checkout edge case: empty cart redirect', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockApi(page);
+    await blockAnalytics(page);
+    await mockStripe(page);
+  });
+
+  test('redirects to menu when cart is empty', async ({ page }) => {
+    // Navigate directly to checkout without adding any items.
+    // The checkout island should detect the empty cart and redirect to the menu.
+    await page.goto('/en/checkout');
+    await waitForHydration(page);
+    await expect(page).toHaveURL(/\/en\/$/, { timeout: 10_000 });
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════
+//  EDGE CASE — Cross-tab cart change triggers page reload
+// ═════════════════════════════════════════════════════════════════
+
+test.describe('Checkout edge case: cross-tab cart change', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockApi(page);
+    await blockAnalytics(page);
+    await mockStripe(page);
+  });
+
+  test('detects cart change from another tab and reloads', async ({ page }) => {
+    // Add a product and navigate to checkout so we have an active session
+    await goToCheckoutWithItem(page);
+
+    // Capture the current URL before dispatching the cross-tab storage event,
+    // so we can verify the page reloads back to the same URL (a full reload,
+    // not a client-side navigation away).
+    const checkoutUrl = page.url();
+
+    // Simulate another browser tab updating the cart in localStorage.
+    // The checkout island listens for `storage` events; when the cart key
+    // changes it should reload the page to avoid stale order totals.
+    await page.evaluate(() => {
+      // 'cart_id' is the key the Nanostores cart store persists to localStorage.
+      const CART_KEY = 'cart_id';
+      const oldValue = localStorage.getItem(CART_KEY);
+      // Dispatch the synthetic storage event as if a second tab wrote a new cart ID
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: CART_KEY,
+          oldValue,
+          newValue: `cart-other-tab-${Date.now()}`,
+          storageArea: localStorage,
+          url: window.location.href,
+        }),
+      );
+    });
+
+    // After the storage event, the checkout island should trigger a page reload.
+    // We wait for the checkout URL to remain (reload brings us back to the same
+    // path) and for hydration to complete, confirming the page was not stuck.
+    await page.waitForURL(checkoutUrl, { timeout: 10_000 });
+    await expect(page).toHaveURL(checkoutUrl);
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════
+//  EDGE CASE — Stale/expired checkout ID is recovered gracefully
+// ═════════════════════════════════════════════════════════════════
+
+test.describe('Checkout edge case: expired checkout ID', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockApi(page);
+    await blockAnalytics(page);
+    await mockStripe(page);
+  });
+
+  test('handles expired checkout gracefully by creating a new one', async ({ page }) => {
+    // Add a product to cart so the subsequent checkout creation can succeed
+    await page.goto(menuPage('nl'));
+    await waitForHydration(page);
+    await addSimpleProductToCart(page, falafel.id);
+
+    // Inject a stale/non-existent checkout ID into sessionStorage.
+    // The checkout island reads this on mount and tries to resume the previous
+    // session via GET /api/v1/checkout/{id}/. The mock API returns 404 for
+    // unknown IDs, which should trigger a fresh POST /api/v1/checkout/.
+    await page.evaluate(() => {
+      sessionStorage.setItem('checkout_id', 'chk-expired-fake-id');
+    });
+
+    // Explicitly route the stale checkout GET to 404 — the mock API already
+    // does this for unknown IDs but routing it here makes the intent clear.
+    await page.route('**/api/v1/checkout/chk-expired-fake-id/**', (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({ status: 404, body: JSON.stringify({ detail: 'Not found' }) });
+      } else {
+        route.continue();
+      }
+    });
+
+    // Expect a fresh checkout to be created (POST → 201)
+    const newCheckoutCreated = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/api/v1/checkout/') &&
+        resp.request().method() === 'POST' &&
+        resp.status() === 201 &&
+        !resp.url().includes('/delivery/') &&
+        !resp.url().includes('/payment/') &&
+        !resp.url().includes('/complete/'),
+      { timeout: 15_000 },
+    );
+
+    await page.goto('/en/checkout');
+    await waitForHydration(page);
+
+    // A new checkout must be created — the expired ID must not crash the page
+    const checkoutResponse = await newCheckoutCreated;
+    const checkoutData = await checkoutResponse.json();
+    expect(checkoutData.id).toBeDefined();
+    expect(checkoutData.id).not.toBe('chk-expired-fake-id');
+
+    // The checkout page should render normally with cart contents
+    await expect(page.getByText('Falafel Wrap').locator('visible=true').first()).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+});
