@@ -1,0 +1,49 @@
+docs/superpowers/plans/2026-03-23-checkout-optimization.md
+  e2bab03e229e7b6f 1-1012
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "19e10f600d3e38a1191ee452ae38b0337a10afdd",
+  "prompts": {
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 726,
+      "overriden_lines": 0
+    },
+    "5c8b5e1a51036ef3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4859595d-769f-4532-ac45-4c6c95aa37ad",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "e2bab03e229e7b6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2010a912-0343-40a6-95ea-2c984d0f8159",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1066,
+      "total_deletions": 54,
+      "accepted_lines": 1012,
+      "overriden_lines": 0
+    }
+  }
+}
