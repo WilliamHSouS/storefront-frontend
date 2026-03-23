@@ -1,0 +1,70 @@
+src/components/interactive/checkout/ExpressCheckout.tsx
+  57c31d0e63a623c2 3
+e2e/fixtures/cart.ts
+  57c31d0e63a623c2 53,75,88
+src/components/interactive/checkout/CheckoutPlaceOrder.test.tsx
+  57c31d0e63a623c2 48
+src/components/interactive/checkout/CheckoutPaymentSection.tsx
+  57c31d0e63a623c2 9
+.github/workflows/ci.yml
+  57c31d0e63a623c2 45-51,89
+src/components/interactive/checkout/StripePaymentForm.tsx
+  57c31d0e63a623c2 2
+e2e/helpers/mock-api-contract-guard.ts
+  57c31d0e63a623c2 109,117,125,374
+e2e/helpers/test-utils.ts
+  57c31d0e63a623c2 87-96,99,102-114,174-180,243-246,251-254,261-267
+src/components/interactive/checkout/CheckoutPaymentSection.test.tsx
+  57c31d0e63a623c2 13
+src/analytics/posthog.ts
+  57c31d0e63a623c2 2,5-9,12-24,27-42,44-52,64,66-69
+src/test-setup.ts
+  57c31d0e63a623c2 5-9
+src/types/global.d.ts
+  57c31d0e63a623c2 6
+e2e/fixtures/products.ts
+  57c31d0e63a623c2 9-24,35-36,60,74
+src/components/interactive/checkout/CheckoutFormOrchestrator.test.tsx
+  57c31d0e63a623c2 30
+e2e/helpers/mock-api.ts
+  57c31d0e63a623c2 173,314,318,329,362,550,635-637
+src/layouts/BaseLayout.astro
+  57c31d0e63a623c2 4,33,122,124
+src/i18n/index.ts
+  57c31d0e63a623c2 8-14,21-22,25,37-41,45,48
+src/components/interactive/CategoryDrawer.test.tsx
+  57c31d0e63a623c2 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "5c42fd558ac3a5c6937135295956284ebcf27891",
+  "prompts": {
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 726,
+      "overriden_lines": 0
+    },
+    "57c31d0e63a623c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4817f5e9-c1d6-4a62-b7f7-951c7fe5fd57",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 339,
+      "total_deletions": 99,
+      "accepted_lines": 288,
+      "overriden_lines": 0
+    }
+  }
+}
