@@ -255,5 +255,10 @@ const cart = useStore($cart);
 - **Falsy value checks on API data.** Use `== null` or `=== undefined` instead of `!value` when checking API string values that could be `"0"` or `"0.00"`. JavaScript truthiness conflates "missing" with "zero", hiding valid data like free shipping.
 - **Island DOM stability.** Preact islands mounted before `<slot/>` in BaseLayout must never return `null`. Always render a stable wrapper element to prevent Astro from re-evaluating sibling islands on state changes.
 - **Checkout delivery PATCH is opt-in partial update.** The backend's `set_delivery()` guards each field with `if field is not None` — only fields present in the request body get updated. The backend auto-resolves `shipping_method_id` from `fulfillment_type`, so the frontend only needs to send `fulfillment_type` (not the shipping method). However, other fields like `email`, `shipping_address`, etc. are still silently skipped if omitted.
+- **`eslint-disable` blocks must have justification on both open and close.** Every `eslint-disable` comment needs a `--` reason. Every `eslint-enable` must also include a justification explaining what workaround is ending (e.g. `/* eslint-enable @typescript-eslint/no-explicit-any -- end confirm-payment SDK workaround */`). Bare `eslint-enable` without context is not allowed.
 - **Never `as any` SDK paths.** The SDK types ARE the API contract. If TypeScript rejects a path literal, the path is wrong or the SDK needs updating — don't cast it away. See "API Contract & Type Safety" above.
 - **Mock API drift.** The hand-maintained `e2e/helpers/mock-api.ts` can silently diverge from the real backend. Always run `npx playwright test e2e/contract.spec.ts` after modifying mock endpoints.
+
+## Agent Bus
+
+See sous-bus://instructions for cross-repo coordination protocol.

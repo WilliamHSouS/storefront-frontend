@@ -59,7 +59,7 @@ function StripePaymentFormInner({
 
         elements = stripe.elements({ clientSecret, appearance });
 
-        /* eslint-disable @typescript-eslint/no-explicit-any -- paymentMethodOrder + layout not yet in @stripe/stripe-js types */
+        /* eslint-disable @typescript-eslint/no-explicit-any -- paymentMethodOrder + accordion layout not yet in @stripe/stripe-js types; remove after stripe-js update */
         const paymentElement = elements.create('payment', {
           defaultValues: {
             billingDetails: {
@@ -74,7 +74,7 @@ function StripePaymentFormInner({
             spacedAccordionItems: true,
           },
         } as any);
-        /* eslint-enable @typescript-eslint/no-explicit-any */
+        /* eslint-enable @typescript-eslint/no-explicit-any -- end stripe-js type workaround */
 
         if (!containerRef.current) {
           onError?.('Payment form container not found.');

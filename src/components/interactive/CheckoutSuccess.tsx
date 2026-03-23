@@ -62,7 +62,7 @@ export default function CheckoutSuccess({ lang }: Props) {
       const sdk = getClient();
       const confirmUrl = `/api/v1/checkout/${checkoutId}/confirm-payment/`;
 
-      /* eslint-disable @typescript-eslint/no-explicit-any -- new endpoint not yet in SDK types */
+      /* eslint-disable @typescript-eslint/no-explicit-any -- confirm-payment endpoint not yet in SDK types; remove after SDK regeneration */
       const { data, error } = await sdk.POST(
         confirmUrl as any,
         {
@@ -73,7 +73,7 @@ export default function CheckoutSuccess({ lang }: Props) {
           },
         } as any,
       );
-      /* eslint-enable @typescript-eslint/no-explicit-any */
+      /* eslint-enable @typescript-eslint/no-explicit-any -- end confirm-payment SDK workaround */
 
       if (error) {
         const err = error as unknown as ConfirmPaymentError;
