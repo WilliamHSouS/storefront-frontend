@@ -27,8 +27,10 @@ test.describe('Checkout page', () => {
     await waitForHydration(page);
 
     // Verify order summary shows price breakdown
-    await expect(page.getByText('Subtotal').first()).toBeVisible();
-    await expect(page.getByText('Total', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Subtotal').locator('visible=true').first()).toBeVisible();
+    await expect(
+      page.getByText('Total', { exact: true }).locator('visible=true').first(),
+    ).toBeVisible();
   });
 
   test('shows fulfillment toggle with delivery and pickup options', async ({ page }) => {
