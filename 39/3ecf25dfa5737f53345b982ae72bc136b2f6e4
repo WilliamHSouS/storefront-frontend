@@ -1,0 +1,48 @@
+src/i18n/client.ts
+  57c31d0e63a623c2 16-32,37-39
+e2e/helpers/mock-api.ts
+  57c31d0e63a623c2 586,590
+playwright.contract.config.ts
+  57c31d0e63a623c2 1-31
+src/components/interactive/checkout/CheckoutPaymentSection.tsx
+  57c31d0e63a623c2 57,132,138
+src/components/interactive/DiscountCodeInput.tsx
+  57c31d0e63a623c2 40-42,44-45
+.github/workflows/ci.yml
+  57c31d0e63a623c2 77
+src/layouts/BaseLayout.astro
+  57c31d0e63a623c2 5,34-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "393ecf25dfa5737f53345b982ae72bc136b2f6e4",
+  "prompts": {
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 726,
+      "overriden_lines": 0
+    },
+    "57c31d0e63a623c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4817f5e9-c1d6-4a62-b7f7-951c7fe5fd57",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 75,
+      "total_deletions": 10,
+      "accepted_lines": 75,
+      "overriden_lines": 0
+    }
+  }
+}
