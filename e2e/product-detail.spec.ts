@@ -95,12 +95,14 @@ test.describe('Product detail modal — open and close', () => {
 
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible({ timeout: 5_000 });
-    expect(page.url()).toContain('/product/');
+    // Wait for URL push — the history.pushState happens async after modal opens
+    await page.waitForURL(/\/product\//, { timeout: 3_000 });
 
     // Press browser back button
     await page.goBack();
 
     await expect(modal).toBeHidden();
+    await page.waitForURL(/\/(?:nl|en)\/$/, { timeout: 3_000 }).catch(() => {});
     expect(page.url()).not.toContain('/product/');
   });
 
