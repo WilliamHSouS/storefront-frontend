@@ -54,6 +54,7 @@ export default function CheckoutPaymentSection({
 
   const [expressAvailable, setExpressAvailable] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [stripeConfig, setStripeConfig] = useState<{
     clientSecret: string;
     publishableKey: string;
@@ -128,12 +129,19 @@ export default function CheckoutPaymentSection({
           onError?.(`Payment initialization failed: ${msg}`);
         }
       });
-  }, [checkout?.id, checkout?.status, checkout?.available_payment_gateways, stripeConfig]);
+  }, [
+    checkout?.id,
+    checkout?.status,
+    checkout?.available_payment_gateways,
+    stripeConfig,
+    retryCount,
+  ]);
 
   // ── Retry: clear error + stripeConfig so the initiation effect re-runs ──
   const retryPayment = () => {
     setPaymentError(null);
     setStripeConfig(null);
+    setRetryCount((c) => c + 1);
   };
 
   return (

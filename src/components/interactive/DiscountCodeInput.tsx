@@ -37,12 +37,12 @@ export default function DiscountCodeInput({ cart, lang }: Props) {
       showToast(t('discountApplied', lang), 'success');
     } catch (err) {
       if (err instanceof DiscountError) {
-        // Always prefer the backend message — it contains specifics like the
-        // minimum order amount. Fall back to an i18n-mapped message only when
-        // the backend didn't provide a useful message.
-        const backendMsg = err.apiDetail && err.apiDetail !== 'Unknown error' ? err.apiDetail : '';
+        // Prefer the i18n-mapped message (localized) when the error code maps
+        // to a known key. Fall back to the backend's detail string for codes
+        // we don't have translations for (e.g. min order specifics).
         const i18nKey = err.apiCode ? DISCOUNT_ERROR_MAP[err.apiCode] : undefined;
-        showToast(backendMsg || (i18nKey ? t(i18nKey, lang) : t('discountInvalid', lang)));
+        const backendMsg = err.apiDetail && err.apiDetail !== 'Unknown error' ? err.apiDetail : '';
+        showToast(i18nKey ? t(i18nKey, lang) : backendMsg || t('discountInvalid', lang));
       } else {
         showToast(t('discountInvalid', lang));
       }

@@ -583,11 +583,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
     const discount = testDiscounts[code];
     if (!discount) {
-      json(res, { error: { code: 'VALIDATION_ERROR', message: 'Invalid discount code' } }, 400);
+      json(res, { error: { code: 'DISCOUNT_INVALID', message: 'Invalid discount code' } }, 400);
       return;
     }
     if (code === 'EXPIRED') {
-      json(res, { error: { code: 'VALIDATION_ERROR', message: 'Discount code expired' } }, 400);
+      json(res, { error: { code: 'DISCOUNT_EXPIRED', message: 'Discount code expired' } }, 400);
       return;
     }
 

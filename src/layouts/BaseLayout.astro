@@ -2,6 +2,7 @@
 import { themeToCSS } from '@/lib/theme';
 import type { MerchantConfig } from '@/types/merchant';
 import { getMessages } from '@/i18n';
+import { setSSRMessages } from '@/i18n/client';
 import '@/styles/global.css';
 
 // Shared interactive islands — available on every page
@@ -30,7 +31,14 @@ const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
 // hmacSecret is included client-side — it's a vendor-specific HMAC key (not a user secret)
 // needed for client-side write requests (add to cart, checkout mutations) to pass backend signature validation
 const merchantJSON = merchant ? JSON.stringify(merchant) : '';
-const messagesJSON = lang ? JSON.stringify(getMessages(lang)) : '';
+const messages = lang ? getMessages(lang) : null;
+const messagesJSON = messages ? JSON.stringify(messages) : '';
+
+// Populate the client i18n module's SSR store so Preact islands render
+// with real translations instead of raw message keys. Without this,
+// attributes like aria-label would contain keys (e.g. "enterPostcode")
+// and Preact's hydration won't update them, causing E2E mismatches.
+if (messages) setSSRMessages(messages);
 
 // Build Google Fonts URL from merchant theme fonts
 const fontFamilies = new Set<string>();

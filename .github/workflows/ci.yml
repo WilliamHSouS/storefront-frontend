@@ -74,7 +74,7 @@ jobs:
         run: sleep 3
       - name: Run contract tests
         if: steps.spec-checkout.outcome == 'success'
-        run: pnpm exec playwright test e2e/contract.spec.ts --project=desktop --reporter=list
+        run: pnpm exec playwright test --config=playwright.contract.config.ts --project=desktop --reporter=list
         env:
           CI: 'true'
           BASE_URL: http://localhost:4321
