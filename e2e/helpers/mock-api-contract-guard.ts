@@ -356,6 +356,7 @@ export const MOCK_ENDPOINTS: MockEndpoint[] = [
     expectedStatus: 200,
     setup: createCheckoutWithDelivery,
     body: { payment_intent_id: 'pi_mock_123' },
+    skipReason: 'confirm-payment is a frontend-specific endpoint, not in storefront OpenAPI spec',
     label: 'confirm payment',
   },
   {
