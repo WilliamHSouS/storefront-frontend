@@ -195,12 +195,14 @@ export default function CheckoutFormOrchestrator({
     [checkoutId],
   );
 
-  // ── Auto-fetch time slots when switching to "scheduled" mode ─────
-  // The SchedulingPicker only calls onDateChange on explicit date clicks.
-  // When the user first toggles to "Schedule for later", the default date
-  // (today) is selected but no onDateChange fires — so we fetch here.
+  // ── Auto-fetch time slots when in "scheduled" mode ──────────────
+  // Fires when: (1) user toggles to "Schedule for later", or (2) page loads
+  // with schedulingMode restored as 'scheduled' and checkoutId becomes available.
+  // fetchTimeSlots requires checkoutId to get the merchant_shipping_provider_id,
+  // so we also depend on checkoutId to retry once it's set.
   useEffect(() => {
     if (form.schedulingMode !== 'scheduled') return;
+    if (!checkoutId) return; // checkout not ready yet — will retry when it is
     if (timeSlots.length > 0) return; // already have slots
 
     const today = new Date();
@@ -210,7 +212,7 @@ export default function CheckoutFormOrchestrator({
     const defaultDate = form.scheduledDate ?? `${yyyy}-${mm}-${dd}`;
 
     fetchTimeSlots(defaultDate);
-  }, [form.schedulingMode]);
+  }, [form.schedulingMode, checkoutId]);
 
   // ── Field-level validation (on blur) ─────────────────────────────
   const validateFieldsForPatch = useCallback((): boolean => {
