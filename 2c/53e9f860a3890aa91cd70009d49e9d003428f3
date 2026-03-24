@@ -1,0 +1,38 @@
+e2e/helpers/mock-api-contract-guard.ts
+  57c31d0e63a623c2 359
+e2e/contract.spec.ts
+  57c31d0e63a623c2 99,103-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "2c53e9f860a3890aa91cd70009d49e9d003428f3",
+  "prompts": {
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 726,
+      "overriden_lines": 0
+    },
+    "57c31d0e63a623c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4817f5e9-c1d6-4a62-b7f7-951c7fe5fd57",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 3,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
