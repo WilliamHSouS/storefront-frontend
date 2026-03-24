@@ -1,0 +1,38 @@
+src/components/interactive/CartDrawer.tsx
+  e2bab03e229e7b6f 121-124,147
+src/components/interactive/checkout/OrderSummary.tsx
+  e2bab03e229e7b6f 75-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "7b854366eec70f74d8a4f9c0006cae8c98635b4d",
+  "prompts": {
+    "4060d237b54f5fd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "93f8ca1b-eb54-4b0b-9049-5d62c8c14d96",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 726,
+      "overriden_lines": 0
+    },
+    "e2bab03e229e7b6f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2010a912-0343-40a6-95ea-2c984d0f8159",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 8,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
