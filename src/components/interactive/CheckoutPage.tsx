@@ -5,6 +5,7 @@ import { $merchant } from '@/stores/merchant';
 import {
   $checkout,
   $checkoutError,
+  $checkoutLoading,
   clearStoredCheckoutId,
   getStoredCheckoutId,
   restoreFormState,
@@ -13,7 +14,7 @@ import { checkStorageAvailable, $storageAvailable } from '@/stores/checkout-paym
 import { createCheckout, fetchCheckout, patchDelivery } from '@/stores/checkout-actions';
 import { showToast } from '@/stores/toast';
 import { $addressCoords } from '@/stores/address';
-import { onAddressChange } from '@/stores/address-actions';
+import { onAddressChange, hydrateAddressFromStorage } from '@/stores/address-actions';
 import { getClient } from '@/lib/api';
 import { t } from '@/i18n/client';
 import * as log from '@/lib/logger';
@@ -80,6 +81,7 @@ export default function CheckoutPage({ lang }: Props) {
   const cart = useStore($cart);
   const cartTotal = useStore($cartTotal);
   const checkout = useStore($checkout);
+  const checkoutLoading = useStore($checkoutLoading);
   const checkoutError = useStore($checkoutError);
 
   const [form, dispatch] = useReducer(formReducer, INITIAL_FORM_STATE);
@@ -90,7 +92,7 @@ export default function CheckoutPage({ lang }: Props) {
   const typedLang = lang as 'nl' | 'en' | 'de';
   const currency = merchant?.currency ?? 'EUR';
 
-  // ── Restore form state from sessionStorage on mount ──────────────
+  // ── Restore form state + hydrate address on mount ───────────────
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
@@ -100,11 +102,16 @@ export default function CheckoutPage({ lang }: Props) {
       dispatch({ type: 'RESTORE', state: saved });
     }
 
-    // Pre-populate postal code from address store if available
-    const coords = $addressCoords.get();
-    if (coords?.postalCode && !saved?.postalCode) {
-      dispatch({ type: 'SET_FIELD', field: 'postalCode', value: coords.postalCode });
-    }
+    // Hydrate $addressCoords from localStorage — AddressBar does this on the
+    // home page, but the checkout page hides shared islands (hideSharedIslands=true)
+    // so we need to do it here. This also refreshes the cart's shipping estimate.
+    hydrateAddressFromStorage().then(() => {
+      const coords = $addressCoords.get();
+      if (coords?.postalCode && !saved?.postalCode) {
+        dispatch({ type: 'SET_FIELD', field: 'postalCode', value: coords.postalCode });
+        dispatch({ type: 'SET_FIELD', field: 'countryCode', value: coords.country || 'NL' });
+      }
+    });
   }, []);
 
   // ── Pre-populate form from checkout's saved address ─────────────
@@ -168,6 +175,8 @@ export default function CheckoutPage({ lang }: Props) {
   // ── Create checkout from cart when cart is ready ──────────────────
   useEffect(() => {
     if (!cart?.id || cart.line_items.length === 0) return;
+    // Wait for any in-flight fetchCheckout to complete before creating new
+    if (checkoutLoading) return;
 
     // If existing checkout is for this cart and in a usable status, keep it
     if (checkout?.cart_id === cart.id) {
@@ -198,7 +207,7 @@ export default function CheckoutPage({ lang }: Props) {
       .catch((err) => {
         log.error('checkout', 'Failed to create checkout:', err);
       });
-  }, [cart?.id, cart?.line_items.length, checkout?.cart_id, checkout?.status]);
+  }, [cart?.id, cart?.line_items.length, checkout?.cart_id, checkout?.status, checkoutLoading]);
 
   // ── Hydrate address store from checkout's shipping_address ──────
   // If the checkout already has address data (e.g. from a previous session)
