@@ -35,8 +35,17 @@ describe('toast store', () => {
     expect(remaining[0].message).toBe('second');
   });
 
-  it('auto-dismisses after 4 seconds', () => {
-    showToast('auto-dismiss me');
+  it('auto-dismisses error toasts after 8 seconds', () => {
+    showToast('auto-dismiss me', 'error');
+    expect($toasts.get()).toHaveLength(1);
+    vi.advanceTimersByTime(4000);
+    expect($toasts.get()).toHaveLength(1); // Still visible at 4s
+    vi.advanceTimersByTime(4000);
+    expect($toasts.get()).toHaveLength(0); // Gone at 8s
+  });
+
+  it('auto-dismisses success toasts after 4 seconds', () => {
+    showToast('done!', 'success');
     expect($toasts.get()).toHaveLength(1);
     vi.advanceTimersByTime(4000);
     expect($toasts.get()).toHaveLength(0);

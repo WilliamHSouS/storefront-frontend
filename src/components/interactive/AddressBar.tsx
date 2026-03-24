@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
 import { $addressCoords } from '@/stores/address';
 import { onAddressChange, clearAddress, hydrateAddressFromStorage } from '@/stores/address-actions';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 // Decoupled from component lifecycle to avoid remount loops where store
 // updates trigger Astro island re-hydration. Deferred to avoid competing

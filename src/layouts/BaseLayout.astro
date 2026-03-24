@@ -1,6 +1,8 @@
 ---
 import { themeToCSS } from '@/lib/theme';
 import type { MerchantConfig } from '@/types/merchant';
+import { getMessages } from '@/i18n';
+import { setSSRMessages } from '@/i18n/client';
 import '@/styles/global.css';
 
 // Shared interactive islands — available on every page
@@ -26,13 +28,17 @@ const { title, description, hideSharedIslands = false } = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
-// Strip secrets before serializing to client — hmacSecret must stay server-side only
-const merchantJSON = merchant
-  ? (() => {
-      const { hmacSecret: _, ...safe } = merchant;
-      return JSON.stringify(safe);
-    })()
-  : '';
+// hmacSecret is included client-side — it's a vendor-specific HMAC key (not a user secret)
+// needed for client-side write requests (add to cart, checkout mutations) to pass backend signature validation
+const merchantJSON = merchant ? JSON.stringify(merchant) : '';
+const messages = lang ? getMessages(lang) : null;
+const messagesJSON = messages ? JSON.stringify(messages) : '';
+
+// Populate the client i18n module's SSR store so Preact islands render
+// with real translations instead of raw message keys. Without this,
+// attributes like aria-label would contain keys (e.g. "enterPostcode")
+// and Preact's hydration won't update them, causing E2E mismatches.
+if (messages) setSSRMessages(messages);
 
 // Build Google Fonts URL from merchant theme fonts
 const fontFamilies = new Set<string>();
@@ -59,11 +65,12 @@ let commsMessages: CommsMessage[] = [];
   const sdk = Astro.locals.sdk;
   if (sdk) {
     try {
-      const { data } = await sdk.GET('/api/v1/merchant-comms/storefront/active/');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- merchant-comms endpoint not in SDK
+      const { data } = await sdk.GET('/api/v1/merchant-comms/storefront/active/' as any);
       if (data) {
         commsMessages = Array.isArray(data)
-          ? data
-          : (((data as Record<string, unknown>).results as CommsMessage[]) ?? []);
+          ? (data as unknown as CommsMessage[])
+          : (((data as unknown as Record<string, unknown>).results as CommsMessage[]) ?? []);
       }
     } catch {
       // Silent degradation — no banners is better than a broken page
@@ -120,9 +127,9 @@ for (const msg of commsMessages) {
   <body>
     {
       merchantJSON && (
-        <script define:vars={{ merchantJSON, langValue }}>
+        <script define:vars={{ merchantJSON, langValue, messagesJSON }}>
           window.__MERCHANT__ = Object.freeze(JSON.parse(merchantJSON)); window.__LANG__ =
-          langValue;
+          langValue; if (messagesJSON) window.__MESSAGES__ = JSON.parse(messagesJSON);
         </script>
       )
     }
@@ -131,7 +138,7 @@ for (const msg of commsMessages) {
          Inline script checks localStorage for dismissals to prevent flash-then-hide. */
     }
     {
-      ssrTopBanner && (
+      ssrTopBanner && !hideSharedIslands && (
         <>
           <div
             data-ssr-top-banner
@@ -172,8 +179,8 @@ for (const msg of commsMessages) {
         /* best-effort */
       }
     </script>
-    <MerchantComms client:idle lang={langValue} messages={commsMessages} />
-    <DeliveryBanner client:idle lang={langValue} />
+    {!hideSharedIslands && <MerchantComms client:idle lang={langValue} messages={commsMessages} />}
+    {!hideSharedIslands && <DeliveryBanner client:idle lang={langValue} />}
 
     <slot />
 

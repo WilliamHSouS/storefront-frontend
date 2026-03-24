@@ -12,6 +12,7 @@ import {
   getStoredCartId,
   setStoredCartId,
   errorDetail,
+  errorCode,
   mergeShippingEstimate,
   cartCoordsQuery,
   backgroundRefreshShipping,
@@ -90,8 +91,8 @@ describe('ensureCart', () => {
     const cartId = await ensureCart(client);
 
     expect(cartId).toBe('stored-cart');
-    expect(client.GET).toHaveBeenCalledWith('/api/v1/cart/{id}/', {
-      params: { path: { id: 'stored-cart' }, query: undefined },
+    expect(client.GET).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/', {
+      params: { path: { cart_id: 'stored-cart' }, query: undefined },
     });
     expect($cart.get()).toEqual(storedCart);
   });
@@ -213,9 +214,54 @@ describe('errorDetail', () => {
     expect(errorDetail(new Error('Network failure'))).toBe('Network failure');
   });
 
+  it('extracts message from error envelope in body', () => {
+    expect(
+      errorDetail({
+        status: 400,
+        body: {
+          error: {
+            code: 'DISCOUNT_INVALID',
+            message: 'Minimum order amount of 20.00 EUR required.',
+          },
+        },
+      }),
+    ).toBe('Minimum order amount of 20.00 EUR required.');
+  });
+
+  it('extracts message from raw error envelope', () => {
+    expect(
+      errorDetail({
+        error: { code: 'DISCOUNT_INVALID', message: 'Minimum order amount of 20.00 EUR required.' },
+      }),
+    ).toBe('Minimum order amount of 20.00 EUR required.');
+  });
+
   it('returns Unknown error for null/undefined', () => {
     expect(errorDetail(null)).toBe('Unknown error');
     expect(errorDetail(undefined)).toBe('Unknown error');
+  });
+});
+
+describe('errorCode', () => {
+  it('extracts code from SDK ApiError body envelope', () => {
+    expect(
+      errorCode({ status: 400, body: { error: { code: 'DISCOUNT_INVALID', message: 'msg' } } }),
+    ).toBe('DISCOUNT_INVALID');
+  });
+
+  it('extracts code from raw error envelope', () => {
+    expect(errorCode({ error: { code: 'DISCOUNT_EXPIRED', message: 'msg' } })).toBe(
+      'DISCOUNT_EXPIRED',
+    );
+  });
+
+  it('returns undefined when no error envelope', () => {
+    expect(errorCode({ detail: 'some error' })).toBeUndefined();
+  });
+
+  it('returns undefined for null/undefined', () => {
+    expect(errorCode(null)).toBeUndefined();
+    expect(errorCode(undefined)).toBeUndefined();
   });
 });
 
@@ -387,9 +433,9 @@ describe('backgroundRefreshShipping', () => {
 
     await ensureCart(client);
 
-    expect(client.GET).toHaveBeenCalledWith('/api/v1/cart/{id}/', {
+    expect(client.GET).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/', {
       params: {
-        path: { id: 'stored-cart' },
+        path: { cart_id: 'stored-cart' },
         query: { latitude: 52.3738, longitude: 4.884, postal_code: '1015 BS' },
       },
     });

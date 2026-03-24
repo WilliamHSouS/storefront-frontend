@@ -35,6 +35,58 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: coverage-report, path: coverage/, retention-days: 7 }
 
+  contract:
+    name: Contract Tests
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout backend OpenAPI spec
+        uses: actions/checkout@v4
+        with:
+          repository: Acroya-B-V/storefront-backend
+          token: ${{ secrets.BACKEND_REPO_TOKEN || github.token }}
+          path: backend
+          sparse-checkout: storefront_backend/openapi/openapi.storefront.v1.json
+          sparse-checkout-cone-mode: false
+        continue-on-error: true
+        id: spec-checkout
+      - name: Skip if spec unavailable
+        if: steps.spec-checkout.outcome == 'failure'
+        run: echo "::warning::Backend OpenAPI spec not available — skipping contract tests. Configure BACKEND_REPO_TOKEN secret for cross-repo access."
+      - uses: pnpm/action-setup@v4
+        if: steps.spec-checkout.outcome == 'success'
+      - uses: actions/setup-node@v4
+        if: steps.spec-checkout.outcome == 'success'
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+        if: steps.spec-checkout.outcome == 'success'
+      - run: pnpm exec playwright install --with-deps chromium
+        if: steps.spec-checkout.outcome == 'success'
+      - name: Start mock API server
+        if: steps.spec-checkout.outcome == 'success'
+        run: npx tsx e2e/helpers/mock-api.ts &
+        env:
+          PORT: '4322'
+      - name: Wait for mock API server
+        if: steps.spec-checkout.outcome == 'success'
+        run: sleep 3
+      - name: Run contract tests
+        if: steps.spec-checkout.outcome == 'success'
+        run: pnpm exec playwright test --config=playwright.contract.config.ts --project=desktop --reporter=list
+        env:
+          CI: 'true'
+          BASE_URL: http://localhost:4321
+          OPENAPI_SPEC_PATH: ${{ github.workspace }}/backend/storefront_backend/openapi/openapi.storefront.v1.json
+          API_BASE_URL: http://localhost:4322
+          PUBLIC_API_BASE_URL: http://localhost:4322
+          DEFAULT_MERCHANT: bar-sumac
+          CUSTOM_DOMAINS: '{}'
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.spec-checkout.outcome == 'success'
+        with: { name: contract-report, path: e2e/.report/, retention-days: 7 }
+
   e2e:
     name: E2E Tests
     needs: unit-test

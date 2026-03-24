@@ -29,6 +29,72 @@ interface CartState {
 
 const carts = new Map<string, CartState>();
 
+interface CheckoutState {
+  id: string;
+  cart_id: string;
+  status: string;
+  email: string | null;
+  shipping_address: Record<string, string> | null;
+  shipping_method_id: string | null;
+  fulfillment_slot_id: string | null;
+  line_items: Array<{
+    product_id: string;
+    title: string;
+    quantity: number;
+    unit_price: string;
+    total_price: string;
+  }>;
+  subtotal: string;
+  tax_total: string;
+  shipping_cost: string;
+  discount_amount: string;
+  total: string;
+  order_number: string | null;
+}
+
+const checkoutStates = new Map<string, CheckoutState>();
+
+function checkoutToResponse(checkout: CheckoutState) {
+  return {
+    ...checkout,
+    merchant_id: 1,
+    channel_id: null,
+    currency: 'EUR',
+    display_currency: 'EUR',
+    fx_rate_to_display: '1.00',
+    billing_address: checkout.shipping_address,
+    shipping_method: checkout.shipping_method_id ? { id: checkout.shipping_method_id } : null,
+    payment_method: checkout.status === 'paid' || checkout.status === 'completed' ? 'stripe' : null,
+    payment_status: checkout.status === 'paid' || checkout.status === 'completed' ? 'paid' : null,
+    surcharge_total: '0.00',
+    display_surcharge_total: '0.00',
+    discount_code: null,
+    applied_promotion_id: null,
+    promotion_discount_amount: '0.00',
+    display_subtotal: checkout.subtotal,
+    display_tax_total: checkout.tax_total,
+    display_shipping_cost: checkout.shipping_cost,
+    display_discount_amount: checkout.discount_amount,
+    display_promotion_discount_amount: '0.00',
+    display_total: checkout.total,
+    available_payment_gateways: [
+      {
+        id: 'stripe',
+        name: 'Stripe',
+        type: 'stripe',
+        config: {
+          publishable_key: 'pk_test_mock',
+          stripe_account: 'acct_mock',
+        },
+      },
+    ],
+    gift_card_details: null,
+    purpose: 'default',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
 function getCartId(req: IncomingMessage): string {
   return (req.headers['x-test-cart-id'] as string) ?? 'default';
 }
@@ -43,6 +109,7 @@ function getCartState(req: IncomingMessage): CartState {
 
 function resetState() {
   carts.clear();
+  checkoutStates.clear();
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -103,6 +170,7 @@ function recalcCart(cart: CartFixture) {
     2,
   );
   cart.item_count = count;
+  cart.estimated_total = cart.cart_total;
 
   // Auto-apply promotions: Buy 2 Falafel Wraps get 1 free
   const falafelItem = cart.line_items.find((li) => li.product_id === 'prod-1');
@@ -157,10 +225,18 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     // Valid: starts with "1015" → in delivery zone
     if (postalCode.startsWith('1015')) {
       json(res, {
-        latitude: 52.3702,
-        longitude: 4.8952,
+        latitude: '52.3702',
+        longitude: '4.8952',
         available_fulfillment_types: ['local_delivery', 'pickup'],
-        available_shipping_providers: [{ id: 1, name: 'PostNL', type: 'postal' }],
+        available_shipping_providers: [
+          {
+            id: 1,
+            name: 'PostNL',
+            delivery_model: 'postal',
+            base_delivery_fee: '4.95',
+            free_delivery_threshold: null,
+          },
+        ],
         pickup_locations: [{ id: 1, name: 'Amsterdam Centraal', distance_km: 1.2 }],
         delivery_unavailable: false,
         near_delivery_zone: false,
@@ -171,10 +247,18 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     // Valid, in delivery zone with free shipping: starts with "2000"
     if (postalCode.startsWith('2000')) {
       json(res, {
-        latitude: 52.16,
-        longitude: 4.49,
+        latitude: '52.16',
+        longitude: '4.49',
         available_fulfillment_types: ['local_delivery', 'pickup'],
-        available_shipping_providers: [{ id: 1, name: 'PostNL', type: 'postal' }],
+        available_shipping_providers: [
+          {
+            id: 1,
+            name: 'PostNL',
+            delivery_model: 'postal',
+            base_delivery_fee: '0.00',
+            free_delivery_threshold: '25.00',
+          },
+        ],
         pickup_locations: [{ id: 3, name: 'Leiden Centraal', distance_km: 0.8 }],
         delivery_unavailable: false,
         near_delivery_zone: false,
@@ -185,8 +269,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     // Valid but out of area: starts with "9999"
     if (postalCode.startsWith('9999')) {
       json(res, {
-        latitude: 53.2,
-        longitude: 6.5,
+        latitude: '53.2',
+        longitude: '6.5',
         available_fulfillment_types: ['pickup'],
         available_shipping_providers: [],
         pickup_locations: [{ id: 2, name: 'Groningen Station', distance_km: 45.0 }],
@@ -227,11 +311,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
           pickup_only: false,
         };
       });
-      json(res, { results: enriched, next: null });
+      json(res, { results: enriched, count: enriched.length, next: null });
       return;
     }
 
-    json(res, { results: filtered, next: null });
+    json(res, { results: filtered, count: filtered.length, next: null });
     return;
   }
 
@@ -242,7 +326,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     const results = products.filter(
       (p) => p.title.toLowerCase().includes(q) || (p.description ?? '').toLowerCase().includes(q),
     );
-    json(res, { results });
+    json(res, { results, count: results.length });
     return;
   }
 
@@ -275,13 +359,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
   // ── Collections (empty — triggers category fallback) ──
   if (method === 'GET' && path === '/api/v1/collections/') {
-    json(res, { results: [], next: null });
+    json(res, { results: [], count: 0, next: null });
     return;
   }
 
   // ── Categories ──
   if (method === 'GET' && path === '/api/v1/categories/') {
-    json(res, { results: categories });
+    json(res, { results: categories, count: categories.length });
     return;
   }
 
@@ -399,6 +483,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       line_total: '0.00', // recalculated below
       options: options,
       notes: body.notes,
+      fulfillment_type: 'local_delivery',
+      fulfillment_date: new Date().toISOString().slice(0, 10),
+      tax_rate: '0.09',
+      tax_amount: '0.00',
+      product_type: 'physical',
+      surcharges: [] as unknown[],
+      gift_card_details: null as Record<string, unknown> | null,
     };
 
     state.cart.line_items.push(lineItem);
@@ -456,7 +547,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
         name: 'Buy 2 Falafel Wraps, get 1 free!',
         promotion_type: 'bogo',
         benefit_type: 'free',
-        benefit_product_ids: ['prod-1'],
+        benefit_product_ids: [1],
         benefit_quantity: 1,
         discount_amount: falafelItem.price,
         is_best_deal: true,
@@ -492,11 +583,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
     const discount = testDiscounts[code];
     if (!discount) {
-      json(res, { detail: 'Invalid discount code' }, 400);
+      json(res, { error: { code: 'DISCOUNT_INVALID', message: 'Invalid discount code' } }, 400);
       return;
     }
     if (code === 'EXPIRED') {
-      json(res, { detail: 'Discount code expired' }, 400);
+      json(res, { error: { code: 'DISCOUNT_EXPIRED', message: 'Discount code expired' } }, 400);
       return;
     }
 
@@ -529,6 +620,26 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // ── Pickup locations ──
+  if (method === 'GET' && path === '/api/v1/pickup-locations/') {
+    json(res, [
+      {
+        id: 1,
+        name: 'Poke Perfect Amsterdam',
+        address: {
+          street: 'Damstraat 1',
+          city: 'Amsterdam',
+          postal_code: '1012LG',
+        },
+        pickup_instructions: 'Collect at the counter',
+        lead_time_minutes: 15,
+        max_advance_days: 7,
+        time_slots: [],
+      },
+    ]);
+    return;
+  }
+
   // ── Comms: active messages ──
   if (method === 'GET' && path.startsWith('/api/v1/merchant-comms/storefront/active/')) {
     json(res, allSurfaceMessages());
@@ -539,6 +650,244 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   if (method === 'POST' && path === '/api/v1/merchant-comms/storefront/events/') {
     await readBody(req); // consume body
     json(res, { status: 'ok' }, 202);
+    return;
+  }
+
+  // ── Checkout: create ──
+  if (method === 'POST' && path === '/api/v1/checkout/') {
+    const state = getCartState(req);
+    const body = JSON.parse(await readBody(req));
+    const cartId = body.cart_id ?? state.cart.id;
+
+    const lineItems = state.cart.line_items.map((li) => ({
+      product_id: li.product_id,
+      title: li.product_title,
+      quantity: li.quantity,
+      unit_price: li.unit_price,
+      total_price: li.line_total,
+    }));
+
+    const subtotal = parseFloat(state.cart.subtotal ?? state.cart.cart_total);
+    const taxRate = 0.09;
+    const taxTotal = (subtotal * taxRate) / (1 + taxRate);
+    const discount = parseFloat(state.cart.discount_amount ?? '0');
+
+    const checkout: CheckoutState = {
+      id: `chk-${Date.now()}`,
+      cart_id: cartId,
+      status: 'created',
+      email: null,
+      shipping_address: null,
+      shipping_method_id: null,
+      fulfillment_slot_id: null,
+      line_items: lineItems,
+      subtotal: subtotal.toFixed(2),
+      tax_total: taxTotal.toFixed(2),
+      shipping_cost: '0.00',
+      discount_amount: discount.toFixed(2),
+      total: (subtotal - discount).toFixed(2),
+      order_number: null,
+    };
+
+    checkoutStates.set(checkout.id, checkout);
+    json(res, checkoutToResponse(checkout), 201);
+    return;
+  }
+
+  // ── Checkout: delivery update ──
+  const checkoutDeliveryMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/delivery\/$/);
+  if (method === 'PATCH' && checkoutDeliveryMatch) {
+    const id = checkoutDeliveryMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    const body = JSON.parse(await readBody(req));
+    if (body.email != null) checkout.email = body.email;
+    if (body.shipping_address != null) checkout.shipping_address = body.shipping_address;
+    if (body.shipping_method_id != null) checkout.shipping_method_id = body.shipping_method_id;
+    if (body.fulfillment_slot_id != null) checkout.fulfillment_slot_id = body.fulfillment_slot_id;
+
+    checkout.status = 'delivery_set';
+
+    // Recalculate shipping cost based on fulfillment method
+    const isPickup =
+      checkout.shipping_method_id === 'pickup' || checkout.shipping_method_id === 'store_pickup';
+    checkout.shipping_cost = isPickup ? '0.00' : '5.00';
+    const subtotal = parseFloat(checkout.subtotal);
+    const discount = parseFloat(checkout.discount_amount);
+    checkout.total = (subtotal + parseFloat(checkout.shipping_cost) - discount).toFixed(2);
+
+    json(res, checkoutToResponse(checkout));
+    return;
+  }
+
+  // ── Checkout: shipping groups ──
+  const checkoutShippingMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/shipping\/$/);
+  if (method === 'GET' && checkoutShippingMatch) {
+    const id = checkoutShippingMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    json(res, [
+      {
+        id: 'grp-1',
+        shipping_cost: '5.00',
+        selected_rate_id: 'local_delivery',
+        is_digital: false,
+        available_rates: [
+          {
+            id: 'local_delivery',
+            name: 'Local Delivery',
+            cost: '5.00',
+            original_cost: '5.00',
+            rate_id: 'local_delivery',
+            expires_at: null,
+          },
+        ],
+        line_items: [],
+      },
+    ]);
+    return;
+  }
+
+  // ── Checkout: payment gateways ──
+  const checkoutGatewaysMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/payment-gateways\/$/);
+  if (method === 'GET' && checkoutGatewaysMatch) {
+    const id = checkoutGatewaysMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    json(res, [
+      {
+        id: 'stripe',
+        name: 'Stripe',
+        config: [
+          { key: 'publishable_key', value: 'pk_test_mock' },
+          { key: 'stripe_account', value: 'acct_mock' },
+        ],
+      },
+    ]);
+    return;
+  }
+
+  // ── Checkout: initiate payment ──
+  const checkoutPaymentMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/payment\/$/);
+  if (method === 'POST' && checkoutPaymentMatch) {
+    const id = checkoutPaymentMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    checkout.status = 'paid';
+    json(res, {
+      ...checkoutToResponse(checkout),
+      client_secret: 'pi_mock_secret',
+      payment_intent_id: 'pi_mock_123',
+    });
+    return;
+  }
+
+  // ── Checkout: confirm payment (replaces polling) ──
+  const checkoutConfirmMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/confirm-payment\/$/);
+  if (method === 'POST' && checkoutConfirmMatch) {
+    const id = checkoutConfirmMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    if (checkout.status !== 'completed') {
+      checkout.status = 'completed';
+      checkout.order_number = `ORD-${Date.now()}`;
+    }
+    json(res, checkoutToResponse(checkout));
+    return;
+  }
+
+  // ── Checkout: complete ──
+  const checkoutCompleteMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/complete\/$/);
+  if (method === 'POST' && checkoutCompleteMatch) {
+    const id = checkoutCompleteMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    if (checkout.status !== 'completed') {
+      checkout.status = 'completed';
+      checkout.order_number = `ORD-${Date.now()}`;
+    }
+    json(res, checkoutToResponse(checkout));
+    return;
+  }
+
+  // ── Checkout: get by ID (must come after sub-routes) ──
+  const checkoutGetMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/$/);
+  if (method === 'GET' && checkoutGetMatch) {
+    const id = checkoutGetMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    json(res, checkoutToResponse(checkout));
+    return;
+  }
+
+  // ── Fulfillment: time slots ──
+  const fulfillmentSlotsMatch = path.match(/^\/api\/v1\/fulfillment\/locations\/([^/]+)\/slots\/$/);
+  if (method === 'GET' && fulfillmentSlotsMatch) {
+    const locationId = fulfillmentSlotsMatch[1];
+    const date = url.searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
+    json(res, {
+      location_id: parseInt(locationId, 10) || 1,
+      date,
+      time_slots: [
+        {
+          id: 'slot-1',
+          start_time: '12:00',
+          end_time: '12:30',
+          capacity: 10,
+          reserved_count: 3,
+          available: true,
+          remaining_capacity: 7,
+        },
+        {
+          id: 'slot-2',
+          start_time: '12:30',
+          end_time: '13:00',
+          capacity: 10,
+          reserved_count: 5,
+          available: true,
+          remaining_capacity: 5,
+        },
+        {
+          id: 'slot-3',
+          start_time: '13:00',
+          end_time: '13:30',
+          capacity: 10,
+          reserved_count: 10,
+          available: false,
+          remaining_capacity: 0,
+        },
+        {
+          id: 'slot-4',
+          start_time: '13:30',
+          end_time: '14:00',
+          capacity: 10,
+          reserved_count: 2,
+          available: true,
+          remaining_capacity: 8,
+        },
+      ],
+    });
     return;
   }
 

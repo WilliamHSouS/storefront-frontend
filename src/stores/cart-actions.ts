@@ -4,6 +4,7 @@ import {
   $cartLoading,
   $eligiblePromotions,
   errorDetail,
+  errorCode,
   mergeShippingEstimate,
   backgroundRefreshShipping,
   cartCoordsQuery,
@@ -47,8 +48,8 @@ export async function updateCartItemQuantity(
   $cartLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.PATCH(`/api/v1/cart/{cart_id}/items/{id}/`, {
-      params: { path: { cart_id: cartId, id: lineItemId }, query: cartCoordsQuery() },
+    const { data, error } = await sdk.PATCH('/api/v1/cart/{cart_id}/items/{item_id}/', {
+      params: { path: { cart_id: cartId, item_id: lineItemId }, query: cartCoordsQuery() },
       body: { quantity },
     });
     if (error || !data) {
@@ -99,25 +100,28 @@ export async function checkPromotionEligibility(
     return [];
   }
 
-  const promos = (data as { eligible_promotions: EligiblePromotion[] }).eligible_promotions;
+  const promos = (data as unknown as { eligible_promotions: EligiblePromotion[] })
+    .eligible_promotions;
   $eligiblePromotions.set(promos);
   return promos;
 }
 
-/** Map backend error detail strings to i18n keys. */
+/** Map backend error codes to i18n keys. */
 export const DISCOUNT_ERROR_MAP: Record<string, MessageKey> = {
-  'Invalid discount code': 'discountInvalid',
-  'Discount code expired': 'discountExpired',
-  'Minimum order amount not met': 'discountMinOrder',
+  DISCOUNT_INVALID: 'discountInvalid',
+  DISCOUNT_EXPIRED: 'discountExpired',
+  DISCOUNT_MIN_ORDER: 'discountMinOrder',
 };
 
 /** Error thrown when a discount code is rejected by the API. */
 export class DiscountError extends Error {
   readonly apiDetail: string;
-  constructor(apiDetail: string) {
+  readonly apiCode: string | undefined;
+  constructor(apiDetail: string, apiCode?: string) {
     super(apiDetail);
     this.name = 'DiscountError';
     this.apiDetail = apiDetail;
+    this.apiCode = apiCode;
   }
 }
 
@@ -129,12 +133,13 @@ export async function applyDiscountCode(
   $cartLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.POST(`/api/v1/cart/{cart_id}/apply-discount/`, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK missing this endpoint
+    const { data, error } = await sdk.POST('/api/v1/cart/{cart_id}/apply-discount/' as any, {
       params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
       body: { code },
     });
     if (error || !data) {
-      throw new DiscountError(errorDetail(error));
+      throw new DiscountError(errorDetail(error), errorCode(error));
     }
     return commitCartResponse(data);
   } finally {
@@ -146,7 +151,8 @@ export async function removeDiscountCode(cartId: string, client?: StorefrontClie
   $cartLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.DELETE(`/api/v1/cart/{cart_id}/remove-discount/`, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK missing this endpoint
+    const { data, error } = await sdk.DELETE('/api/v1/cart/{cart_id}/remove-discount/' as any, {
       params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
     });
     if (error || !data) {
@@ -166,8 +172,8 @@ export async function removeCartItem(
   $cartLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.DELETE(`/api/v1/cart/{cart_id}/items/{id}/`, {
-      params: { path: { cart_id: cartId, id: lineItemId }, query: cartCoordsQuery() },
+    const { data, error } = await sdk.DELETE('/api/v1/cart/{cart_id}/items/{item_id}/', {
+      params: { path: { cart_id: cartId, item_id: lineItemId }, query: cartCoordsQuery() },
     });
     if (error || !data) {
       throw new Error(`Failed to remove cart item: ${errorDetail(error)}`);

@@ -84,16 +84,34 @@ export async function waitForHydration(page: Page, { dismissModal = true } = {})
   }
 }
 
-/** Dismiss the comms modal if it appears. Safe to call even if no modal shows. */
-async function dismissCommsModal(page: Page) {
+/**
+ * Dismiss the comms modal if it appears. Safe to call even if no modal shows.
+ *
+ * The CommsModal uses requestIdleCallback with a 2 000 ms timeout before
+ * opening, so on slow CI the overlay can appear well after hydration completes.
+ * The default wait is 4 s to cover that delay. Pass a shorter timeout for
+ * follow-up calls where the modal would already be visible if it was going to
+ * appear at all.
+ */
+async function dismissCommsModal(page: Page, { timeout = 4_000 } = {}) {
   const modal = page.locator('[data-comms-modal]');
   try {
-    await modal.waitFor({ state: 'visible', timeout: 2_500 });
-    // Press Escape — works reliably across all viewports
-    await page.keyboard.press('Escape');
-    await modal.waitFor({ state: 'hidden', timeout: 2_500 });
+    await modal.waitFor({ state: 'visible', timeout });
   } catch {
     // Modal didn't appear — that's fine
+    return;
+  }
+
+  // Press Escape and wait for the overlay to disappear. Retry once if the
+  // first keypress was consumed by a different handler (e.g. search overlay).
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await page.keyboard.press('Escape');
+    try {
+      await modal.waitFor({ state: 'hidden', timeout: 3_000 });
+      return;
+    } catch {
+      // Retry
+    }
   }
 }
 
@@ -153,17 +171,32 @@ export function collectPageErrors(page: Page): string[] {
  * then waits for the Preact island to mount before clicking.
  */
 export async function addSimpleProductToCart(page: Page, productId: string) {
+  // Dismiss the comms modal overlay if it appeared after initial hydration.
+  const commsOverlay = page.locator('[data-comms-modal]');
+  if (await commsOverlay.isVisible().catch(() => false)) {
+    await page.keyboard.press('Escape');
+    await commsOverlay.waitFor({ state: 'hidden', timeout: 2_000 }).catch(() => {});
+  }
+
   const card = page.locator(`[data-product-id="${productId}"]`).first();
   await card.scrollIntoViewIfNeeded();
 
-  const addButton = card.getByRole('button', { name: 'Toevoegen' });
+  // Detect language from URL to match the correct button text
+  const url = page.url();
+  const lang = url.includes('/en/') ? 'en' : url.includes('/de/') ? 'de' : 'nl';
+  const addToCartLabel: Record<string, string> = {
+    nl: 'Toevoegen',
+    en: 'Add to cart',
+    de: 'In den Warenkorb',
+  };
+  const addButton = card.getByRole('button', { name: addToCartLabel[lang] });
 
   // Wait for the client:visible island to hydrate. After scrolling into view,
   // the IntersectionObserver fires, then Preact JS is downloaded and executed.
   // We wait for the button to be visible, then add a small delay for Preact
   // event handlers to be registered. Using a single click (no retry) to avoid
   // sending duplicate POST requests that create multiple cart items.
-  await addButton.waitFor({ state: 'visible', timeout: 5_000 });
+  await addButton.waitFor({ state: 'visible', timeout: 15_000 });
   // eslint-disable-next-line playwright/no-wait-for-timeout
   await page.waitForTimeout(500);
 
@@ -179,7 +212,10 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   // Dismiss the upsell dialog if it appears (added by upsells feature).
   // The dialog has "Klaar" and "Bekijk winkelwagen" buttons; pressing Escape
   // is the most reliable way to close it without side effects.
-  const upsellDialog = page.getByRole('dialog').filter({ hasText: 'Toegevoegd' });
+  const upsellLabel: Record<string, string> = { nl: 'Toegevoegd', en: 'Added', de: 'Hinzugefügt' };
+  const upsellDialog = page
+    .getByRole('dialog')
+    .filter({ hasText: upsellLabel[lang] ?? 'Toegevoegd' });
   await upsellDialog.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
   if (await upsellDialog.isVisible()) {
     await page.keyboard.press('Escape');
@@ -204,16 +240,31 @@ export async function openCartDrawer(page: Page) {
  * Open the product detail modal for a product with modifiers.
  * Scrolls the card into view and clicks its "Toevoegen" button.
  *
+ * Dismisses the MerchantComms modal first if it's blocking interactions —
+ * on CI the comms modal can appear after waitForHydration has already run,
+ * because CommsModal defers opening via requestIdleCallback.
+ *
  * Retries clicking up to 3 times because the AddToCartButton island uses
  * client:visible — hydration may not be complete on the first click.
  */
 export async function openProductDetailModal(page: Page, productId: string) {
+  // Dismiss the comms modal overlay if it appeared after initial hydration.
+  // Short timeout — waitForHydration already waited the full 4 s window.
+  await dismissCommsModal(page, { timeout: 1_000 });
+
   const card = page.locator(`[data-product-id="${productId}"]`).first();
   await card.scrollIntoViewIfNeeded();
 
   const modal = page.getByRole('dialog');
 
   for (let attempt = 0; attempt < 3; attempt++) {
+    // Check again before each click — the modal can appear between retries
+    const commsOverlay = page.locator('[data-comms-modal]');
+    if (await commsOverlay.isVisible().catch(() => false)) {
+      await page.keyboard.press('Escape');
+      await commsOverlay.waitFor({ state: 'hidden', timeout: 2_000 }).catch(() => {});
+    }
+
     await card.getByRole('button', { name: 'Toevoegen' }).click();
     try {
       await modal.waitFor({ state: 'visible', timeout: 2_000 });

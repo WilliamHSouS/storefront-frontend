@@ -15,3 +15,7 @@ export function formatPrice(amount: string, currency: string, locale: string): s
   }
   return fmt.format(Number(amount));
 }
+
+export function toCents(decimalString: string): number {
+  return Math.round(parseFloat(decimalString) * 100);
+}

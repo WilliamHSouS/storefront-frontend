@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { $isCategoryDrawerOpen, $activeCategory } from '@/stores/ui';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Category {
   id: string | number;

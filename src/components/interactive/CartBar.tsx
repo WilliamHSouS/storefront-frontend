@@ -4,7 +4,7 @@ import { $cart, $itemCount, $cartTotal, getStoredCartId, cartCoordsQuery } from 
 import { $addressCoords } from '@/stores/address';
 import { $isCartOpen, $isCategoryDrawerOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
 import { normalizeCart } from '@/lib/normalize';
@@ -26,8 +26,8 @@ export default function CartBar({ lang }: Props) {
     if ($addressCoords.get()) return;
     const client = getClient();
     client
-      .GET(`/api/v1/cart/{id}/`, {
-        params: { path: { id: cartId }, query: cartCoordsQuery() },
+      .GET(`/api/v1/cart/{cart_id}/`, {
+        params: { path: { cart_id: cartId }, query: cartCoordsQuery() },
       })
       .then(({ data }) => {
         if (data) $cart.set(normalizeCart(data as Record<string, unknown>));
@@ -45,9 +45,17 @@ export default function CartBar({ lang }: Props) {
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
 
+  // Always render a stable wrapper for DOM stability (CLAUDE.md gotcha)
+  const emptyWrapper = <div class="fixed bottom-0 left-0 right-0 z-40 md:hidden" />;
+
+  // Suppress on checkout pages
+  if (typeof window !== 'undefined' && window.location.pathname.includes('/checkout')) {
+    return emptyWrapper;
+  }
+
   // Hide when: no items, cart drawer open, or category drawer open
   if (itemCount === 0 || isCartOpen || isCategoryDrawerOpen) {
-    return null;
+    return emptyWrapper;
   }
 
   const itemLabel =

@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import {
   applyDiscountCode,
   removeDiscountCode,
@@ -36,9 +36,16 @@ export default function DiscountCodeInput({ cart, lang }: Props) {
       setCode('');
       showToast(t('discountApplied', lang), 'success');
     } catch (err) {
-      const detail = err instanceof DiscountError ? err.apiDetail : '';
-      const i18nKey = DISCOUNT_ERROR_MAP[detail] ?? 'discountInvalid';
-      showToast(t(i18nKey, lang));
+      if (err instanceof DiscountError) {
+        // Prefer the i18n-mapped message (localized) when the error code maps
+        // to a known key. Fall back to the backend's detail string for codes
+        // we don't have translations for (e.g. min order specifics).
+        const i18nKey = err.apiCode ? DISCOUNT_ERROR_MAP[err.apiCode] : undefined;
+        const backendMsg = err.apiDetail && err.apiDetail !== 'Unknown error' ? err.apiDetail : '';
+        showToast(i18nKey ? t(i18nKey, lang) : backendMsg || t('discountInvalid', lang));
+      } else {
+        showToast(t('discountInvalid', lang));
+      }
     } finally {
       setLoading(false);
     }

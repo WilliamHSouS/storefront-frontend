@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import AnimatedNumber from './AnimatedNumber';
 import ConfirmRemoveDialog from './ConfirmRemoveDialog';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Props {
   quantity: number;

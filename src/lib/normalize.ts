@@ -342,6 +342,7 @@ export function normalizeCart(raw: Record<string, unknown>): Cart {
       };
     }),
     cart_total: cartTotal,
+    estimated_total: r.estimated_total as string | undefined,
     cart_savings: r.cart_savings as string | undefined,
     item_count: itemCount,
     subtotal: (r.subtotal ??

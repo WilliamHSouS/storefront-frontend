@@ -105,6 +105,13 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   const response = await next();
 
   // 6. Add cache headers with auth/personalization guards
+
+  // Checkout routes must never be cached (contain PII after form submission)
+  if (url.pathname.match(/^\/[a-z]{2}\/checkout/)) {
+    response.headers.set('Cache-Control', 'private, no-store, no-cache, must-revalidate');
+    return response;
+  }
+
   const isCacheable = CACHEABLE_PATTERNS.some((p) => p.test(url.pathname));
   const hasAuthCookie = context.cookies.has('auth_token');
   const responseSetsCookie = response.headers.has('set-cookie');

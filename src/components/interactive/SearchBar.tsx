@@ -3,7 +3,7 @@ import { useStore } from '@nanostores/preact';
 import { $merchant } from '@/stores/merchant';
 import { $selectedProduct } from '@/stores/ui';
 import { formatPrice, langToLocale } from '@/lib/currency';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { getClient } from '@/lib/api';
 import { normalizeProduct, type NormalizedProduct } from '@/lib/normalize';
 import { optimizedImageUrl } from '@/lib/image';
@@ -63,7 +63,7 @@ export default function SearchBar({ lang }: Props) {
         signal: controller.signal,
       });
       if (data) {
-        const page = data as { results: Array<Record<string, unknown>> };
+        const page = data as unknown as { results: Array<Record<string, unknown>> };
         const items = page.results ?? [];
         if (items.length > 0) {
           setResults(items.map(normalizeProduct));

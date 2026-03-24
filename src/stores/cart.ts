@@ -3,6 +3,7 @@ import type { StorefrontClient } from '@/lib/sdk-stub';
 import { normalizeCart } from '@/lib/normalize';
 import { getClient } from '@/lib/api';
 import { $addressCoords } from '@/stores/address';
+import { validateStorageId } from '@/lib/validate-id';
 import * as log from '@/lib/logger';
 
 export interface Suggestion {
@@ -41,6 +42,7 @@ export interface Cart {
   id: string;
   line_items: CartLineItem[];
   cart_total: string;
+  estimated_total?: string;
   cart_savings?: string;
   item_count: number;
   subtotal?: string;
@@ -83,7 +85,10 @@ export const $cartLoading = atom(false);
 
 export const $itemCount = computed($cart, (cart) => cart?.item_count ?? 0);
 
-export const $cartTotal = computed($cart, (cart) => cart?.cart_total ?? '0.00');
+export const $cartTotal = computed(
+  $cart,
+  (cart) => cart?.estimated_total ?? cart?.cart_total ?? '0.00',
+);
 
 export interface EligiblePromotion {
   id: number;
@@ -106,9 +111,19 @@ export function errorDetail(error: unknown): string {
   if (e.body && typeof e.body === 'object') {
     const body = e.body as Record<string, unknown>;
     if (typeof body.detail === 'string') return body.detail;
+    // Backend error envelope: body: { error: { code, message } }
+    if (body.error && typeof body.error === 'object') {
+      const nested = body.error as Record<string, unknown>;
+      if (typeof nested.message === 'string') return nested.message;
+    }
   }
   // Raw DRF-style response body: { detail: "..." }
   if (typeof e.detail === 'string') return e.detail;
+  // Raw error envelope: { error: { code, message } }
+  if (e.error && typeof e.error === 'object') {
+    const nested = e.error as Record<string, unknown>;
+    if (typeof nested.message === 'string') return nested.message;
+  }
   if ('message' in error && typeof (error as Error).message === 'string')
     return (error as Error).message;
   if ('statusText' in error) {
@@ -116,6 +131,26 @@ export function errorDetail(error: unknown): string {
     return `${err.status} ${err.statusText}`;
   }
   return 'Unknown error';
+}
+
+/** Extract the `code` field from a backend error envelope, if present. */
+export function errorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined;
+  const e = error as Record<string, unknown>;
+  // SDK ApiError: body.error.code
+  if (e.body && typeof e.body === 'object') {
+    const body = e.body as Record<string, unknown>;
+    if (body.error && typeof body.error === 'object') {
+      const nested = body.error as Record<string, unknown>;
+      if (typeof nested.code === 'string') return nested.code;
+    }
+  }
+  // Raw envelope: error.code
+  if (e.error && typeof e.error === 'object') {
+    const nested = e.error as Record<string, unknown>;
+    if (typeof nested.code === 'string') return nested.code;
+  }
+  return undefined;
 }
 
 /** Carry forward the previous shipping_estimate when a mutation response lacks one. */
@@ -136,14 +171,12 @@ export function cartCoordsQuery(): Record<string, string | number> | undefined {
 }
 
 const CART_ID_KEY = 'sous_cart_id';
-/** Cart IDs must be alphanumeric, hyphens, or underscores — prevents path traversal. */
-const CART_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export function getStoredCartId(): string | null {
   if (typeof window === 'undefined') return null;
   try {
     const id = localStorage.getItem(CART_ID_KEY);
-    if (id && !CART_ID_PATTERN.test(id)) {
+    if (id && !validateStorageId(id)) {
       log.warn('cart', 'Invalid cart ID format in localStorage, clearing');
       clearStoredCartId();
       return null;
@@ -173,6 +206,12 @@ export function clearStoredCartId(): void {
   }
 }
 
+/** Reset cart state and clear persisted cart ID (e.g. after successful order). */
+export function clearCart(): void {
+  $cart.set(null);
+  clearStoredCartId();
+}
+
 let pendingEnsure: Promise<string> | null = null;
 
 /**
@@ -195,8 +234,8 @@ async function _doEnsureCart(client: StorefrontClient): Promise<string> {
 
   const storedId = getStoredCartId();
   if (storedId) {
-    const { data, error } = await client.GET(`/api/v1/cart/{id}/`, {
-      params: { path: { id: storedId }, query: cartCoordsQuery() },
+    const { data, error } = await client.GET('/api/v1/cart/{cart_id}/', {
+      params: { path: { cart_id: storedId }, query: cartCoordsQuery() },
     });
     if (data) {
       const cart = normalizeCart(data as Record<string, unknown>);

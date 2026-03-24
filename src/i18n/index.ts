@@ -5,19 +5,24 @@ import de from './messages/de.json';
 type MessageKey = keyof typeof nl;
 type Messages = Record<MessageKey, string>;
 
-const messages: Record<string, Messages> = { nl, en, de };
+/**
+ * All messages (all languages) — used server-side (Astro components).
+ * Client-side islands import from '@/i18n/client' instead, which reads
+ * from window.__MESSAGES__ (injected by BaseLayout) to avoid bundling
+ * all 3 language files.
+ */
+const allMessages: Record<string, Messages> = { nl, en, de };
 
 /**
  * Get a translated string for the given key and language.
  *
  * Supports simple interpolation: `t('items_other', 'nl', { count: 3 })` → "3 items"
  *
- * This is a lightweight helper for use in Astro components and Preact islands.
- * When Paraglide.js is fully integrated, this will be replaced by its
- * compiler-generated message functions.
+ * This is the server-side version used by Astro components.
+ * For Preact islands (client-side), use '@/i18n/client' instead.
  */
 export function t(key: MessageKey, lang: string, params?: Record<string, string | number>): string {
-  const dict = messages[lang] ?? messages['nl'];
+  const dict = allMessages[lang] ?? allMessages['nl'];
   let text = dict[key] ?? key;
 
   if (params) {
@@ -29,8 +34,15 @@ export function t(key: MessageKey, lang: string, params?: Record<string, string 
   return text;
 }
 
-export function getAvailableLanguages(): string[] {
-  return Object.keys(messages);
+/**
+ * Get all messages for a language — used by BaseLayout to inject into the page.
+ */
+export function getMessages(lang: string): Messages {
+  return allMessages[lang] ?? allMessages['nl'];
 }
 
-export type { MessageKey };
+export function getAvailableLanguages(): string[] {
+  return Object.keys(allMessages);
+}
+
+export type { MessageKey, Messages };

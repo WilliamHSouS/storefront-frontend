@@ -7,7 +7,7 @@ import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { getClient } from '@/lib/api';
 import { normalizeProduct, type ModifierGroup as RawModifierGroup } from '@/lib/normalize';
 import { optimizedImageUrl, responsiveImage } from '@/lib/image';

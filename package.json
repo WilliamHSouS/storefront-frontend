@@ -36,7 +36,7 @@
     {
       "name": "Total client JS (all chunks)",
       "path": "dist/client/**/*.js",
-      "limit": "65 KB",
+      "limit": "75 KB",
       "gzip": true
     }
   ],
@@ -46,6 +46,7 @@
     "@astrojs/vercel": "^9.0.4",
     "@nanostores/preact": "^1.0.0",
     "@poweredbysous/storefront-sdk": "^0.1.0",
+    "@stripe/stripe-js": "^8.10.0",
     "astro": "^5.18.0",
     "astro-seo": "^1.1.0",
     "isomorphic-dompurify": "^3.3.0",
@@ -67,7 +68,8 @@
       "path-to-regexp": ">=6.3.0",
       "devalue": ">=5.6.4",
       "undici": ">=7.24.0",
-      "h3": ">=1.15.6"
+      "h3": ">=1.15.10",
+      "flatted": ">=3.4.2"
     }
   },
   "devDependencies": {
@@ -78,6 +80,8 @@
     "@size-limit/file": "^12.0.1",
     "@testing-library/preact": "^3.2.4",
     "@vitest/coverage-v8": "^4.0.18",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-astro": "^1.6.0",
@@ -87,6 +91,7 @@
     "husky": "^9.1.7",
     "jsdom": "^28.1.0",
     "lint-staged": "^16.3.3",
+    "openapi-typescript-helpers": "^0.1.0",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
     "size-limit": "^12.0.1",

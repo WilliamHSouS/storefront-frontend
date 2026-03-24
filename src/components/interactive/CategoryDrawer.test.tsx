@@ -4,7 +4,7 @@ import CategoryDrawer from './CategoryDrawer';
 import { $isCategoryDrawerOpen, $activeCategory } from '@/stores/ui';
 
 // Mock the i18n module
-vi.mock('@/i18n', () => ({
+vi.mock('@/i18n/client', () => ({
   t: (key: string) => {
     const map: Record<string, string> = { menu: 'Menu', close: 'Close' };
     return map[key] ?? key;

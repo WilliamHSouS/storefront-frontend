@@ -65,8 +65,8 @@ describe('updateCartItemQuantity', () => {
 
     expect(result).toMatchObject(updatedCart);
     expect($cart.get()).toMatchObject(updatedCart);
-    expect(client.PATCH).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/items/{id}/', {
-      params: { path: { cart_id: 'cart-123', id: 'item-1' } },
+    expect(client.PATCH).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/items/{item_id}/', {
+      params: { path: { cart_id: 'cart-123', item_id: 'item-1' } },
       body: { quantity: 3 },
     });
   });
@@ -186,8 +186,8 @@ describe('removeCartItem', () => {
 
     expect(result).toMatchObject(emptyCart);
     expect($cart.get()).toMatchObject(emptyCart);
-    expect(client.DELETE).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/items/{id}/', {
-      params: { path: { cart_id: 'cart-123', id: 'item-1' } },
+    expect(client.DELETE).toHaveBeenCalledWith('/api/v1/cart/{cart_id}/items/{item_id}/', {
+      params: { path: { cart_id: 'cart-123', item_id: 'item-1' } },
     });
   });
 
@@ -298,7 +298,7 @@ describe('applyDiscountCode', () => {
     );
   });
 
-  it('throws DiscountError on API error', async () => {
+  it('throws DiscountError on API error with detail string', async () => {
     const client = makeClient({
       POST: vi.fn().mockResolvedValue({
         data: null,
@@ -310,6 +310,25 @@ describe('applyDiscountCode', () => {
     await expect(applyDiscountCode('cart-1', 'EXPIRED', client)).rejects.toThrow(
       'Discount code expired',
     );
+  });
+
+  it('throws DiscountError with apiCode from error envelope', async () => {
+    const client = makeClient({
+      POST: vi.fn().mockResolvedValue({
+        data: null,
+        error: {
+          error: {
+            code: 'DISCOUNT_INVALID',
+            message: 'Minimum order amount of 20.00 EUR required.',
+          },
+        },
+      }),
+    });
+
+    const err = await applyDiscountCode('cart-1', 'SAVE10', client).catch((e) => e);
+    expect(err).toBeInstanceOf(DiscountError);
+    expect(err.apiCode).toBe('DISCOUNT_INVALID');
+    expect(err.apiDetail).toBe('Minimum order amount of 20.00 EUR required.');
   });
 
   it('sets $cartLoading during the request', async () => {
@@ -453,16 +472,16 @@ describe('addSuggestionToCart', () => {
 });
 
 describe('DISCOUNT_ERROR_MAP', () => {
-  it('maps "Invalid discount code" to discountInvalid', () => {
-    expect(DISCOUNT_ERROR_MAP['Invalid discount code']).toBe('discountInvalid');
+  it('maps DISCOUNT_INVALID to discountInvalid', () => {
+    expect(DISCOUNT_ERROR_MAP['DISCOUNT_INVALID']).toBe('discountInvalid');
   });
 
-  it('maps "Discount code expired" to discountExpired', () => {
-    expect(DISCOUNT_ERROR_MAP['Discount code expired']).toBe('discountExpired');
+  it('maps DISCOUNT_EXPIRED to discountExpired', () => {
+    expect(DISCOUNT_ERROR_MAP['DISCOUNT_EXPIRED']).toBe('discountExpired');
   });
 
-  it('maps "Minimum order amount not met" to discountMinOrder', () => {
-    expect(DISCOUNT_ERROR_MAP['Minimum order amount not met']).toBe('discountMinOrder');
+  it('maps DISCOUNT_MIN_ORDER to discountMinOrder', () => {
+    expect(DISCOUNT_ERROR_MAP['DISCOUNT_MIN_ORDER']).toBe('discountMinOrder');
   });
 
   it('has exactly 3 entries', () => {

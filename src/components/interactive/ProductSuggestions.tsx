@@ -6,7 +6,7 @@ import { $selectedProduct } from '@/stores/ui';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
 import { optimizedImageUrl } from '@/lib/image';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 
 interface Props {
   productId: string;

@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/preact';
 import { $itemCount, $cartTotal } from '@/stores/cart';
 import { $isCartOpen } from '@/stores/ui';
 import { $merchant } from '@/stores/merchant';
-import { t } from '@/i18n';
+import { t } from '@/i18n/client';
 import { formatPrice, langToLocale } from '@/lib/currency';
 
 interface Props {
