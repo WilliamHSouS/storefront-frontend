@@ -118,7 +118,10 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
       ? cart.cart_savings
       : null;
 
-  // Shipping: only use legacy fallback when no rich shipping_estimate exists
+  // Shipping: only use legacy fallback when no rich shipping_estimate exists.
+  // Only show "Free" when we have address data confirming free shipping —
+  // otherwise "0.00" just means "not calculated yet" and would mislead the user.
+  const hasAddress = !!$addressCoords.get();
   const legacyShipping = !cart.shipping_estimate && cart.shipping_cost ? cart.shipping_cost : null;
 
   return (
@@ -141,7 +144,7 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
         promotionDiscount={cart.promotion_discount_amount}
         productSavings={savings ?? undefined}
         taxIncluded={taxIncluded}
-        showShippingFree={true}
+        showShippingFree={hasAddress}
         shippingSlot={
           <ShippingEstimate
             lang={lang}

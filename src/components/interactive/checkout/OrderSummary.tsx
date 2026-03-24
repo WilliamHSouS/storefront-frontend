@@ -72,12 +72,12 @@ export function OrderSummary({ lang, currency }: Props) {
   const discount = checkout ? totals.discount : cart?.discount_amount;
   const surchargeTotal = checkout ? checkout.surcharge_total : cart?.surcharge_total;
 
-  // Shipping: prefer checkout's shipping (after delivery set), fall back to cart's estimate
-  const checkoutShipping = checkout ? totals.shipping : null;
-  const cartShipping = cart?.shipping_estimate?.total_shipping ?? cart?.shipping_cost;
-  const checkoutHasShipping = checkoutShipping != null && parseFloat(checkoutShipping) > 0;
-  const cartHasShipping = cartShipping != null && parseFloat(cartShipping) > 0;
-  const shipping = checkoutHasShipping ? checkoutShipping : cartHasShipping ? cartShipping : null;
+  // Shipping: use checkout's shipping after delivery_set (authoritative), otherwise cart estimate.
+  // Before delivery_set, checkout.display_shipping_cost is "0.00" which means "not calculated",
+  // not "free" — so we only trust it after the status advances.
+  const checkoutShippingKnown = checkout && checkout.status !== 'created' ? totals.shipping : null;
+  const cartShipping = cart?.shipping_estimate?.total_shipping ?? null;
+  const shipping = checkoutShippingKnown ?? cartShipping;
 
   // Total: use cartTotal (which prefers estimated_total including shipping)
   const total = checkout ? totals.total : cartTotal;
@@ -125,7 +125,7 @@ export function OrderSummary({ lang, currency }: Props) {
           surchargeTotal={surchargeTotal}
           total={total ?? '0.00'}
           taxIncluded={true}
-          showShippingFree={checkoutHasShipping || cartHasShipping}
+          showShippingFree={shipping != null}
         />
       </div>
     </div>
