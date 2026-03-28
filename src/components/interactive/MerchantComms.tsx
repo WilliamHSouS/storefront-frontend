@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'preact/hooks';
 import { $commsMessages, $dismissedMessages, $toastMessages } from '@/stores/comms';
 import type { CommsMessage } from '@/stores/comms';
 import { loadDismissedState, createCommsBatcher } from '@/lib/comms';
@@ -34,11 +34,14 @@ export default function MerchantComms({ lang, messages }: Props) {
   const impressionSet = useRef(new Set<string>());
   const batcherRef = useRef<ReturnType<typeof createCommsBatcher> | null>(null);
 
-  useEffect(() => {
-    // Hydrate stores from SSR props
+  // Hydrate comms stores before paint so TopBanner renders in the same
+  // frame that CSS hides the SSR placeholder — zero CLS.
+  useLayoutEffect(() => {
     $commsMessages.set(messages);
     $dismissedMessages.set(loadDismissedState());
+  }, []);
 
+  useEffect(() => {
     // Create analytics batcher
     const vendorId = $merchant.get()?.merchantId ?? '';
     const batcher = createCommsBatcher(import.meta.env.PUBLIC_API_BASE_URL || '', vendorId);

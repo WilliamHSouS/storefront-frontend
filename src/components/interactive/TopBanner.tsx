@@ -17,10 +17,9 @@ export default function TopBanner({ lang, onImpression, onClick, onDismiss }: Pr
   const entries = useStore($topBannerMessages);
   const entry = entries[0];
 
-  // Remove SSR placeholder on hydration to avoid duplicate banners
-  useEffect(() => {
-    document.querySelector('[data-ssr-top-banner]')?.remove();
-  }, []);
+  // SSR banner is hidden via CSS :has() selector in global.css when this
+  // component renders [data-comms-banner="top"]. Both changes land in the
+  // same layout computation, eliminating CLS.
 
   useEffect(() => {
     if (entry && onImpression) {
