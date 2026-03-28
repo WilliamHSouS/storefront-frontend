@@ -206,10 +206,10 @@ function displayHost(url: string): string {
   >
     {t('poweredBy', lang)}
     <a
-      href="https://poweredbysous.com"
+      href={`https://poweredbysous.com?utm_source=storefront&utm_medium=footer&utm_campaign=powered_by&utm_content=${merchant.slug}`}
       class="underline hover:text-foreground"
       target="_blank"
-      rel="noopener noreferrer">Sous</a
+      rel="noopener noreferrer">SOUS</a
     >
   </div>
 </footer>

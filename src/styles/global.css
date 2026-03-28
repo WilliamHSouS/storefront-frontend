@@ -9,6 +9,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Hide SSR top banner the instant the Preact banner renders — same layout
+     computation, zero CLS. The two banners occupy nearby DOM positions so
+     the flow-height swap is net-zero for content below. */
+  body:has([data-comms-banner='top']) [data-ssr-top-banner] {
+    display: none;
+  }
 }
 
 @layer utilities {
