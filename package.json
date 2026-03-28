@@ -43,15 +43,15 @@
   "dependencies": {
     "@astrojs/preact": "^4.1.3",
     "@astrojs/tailwind": "^6.0.2",
-    "@astrojs/vercel": "^9.0.4",
-    "@nanostores/preact": "^1.0.0",
+    "@astrojs/vercel": "^9.0.5",
+    "@nanostores/preact": "^1.1.0",
     "@poweredbysous/storefront-sdk": "^0.1.0",
     "@stripe/stripe-js": "^8.10.0",
-    "astro": "^5.18.0",
+    "astro": "^5.18.1",
     "astro-seo": "^1.1.0",
-    "isomorphic-dompurify": "^3.3.0",
-    "nanostores": "^1.1.1",
-    "posthog-js": "^1.360.1",
+    "isomorphic-dompurify": "^3.7.1",
+    "nanostores": "^1.2.0",
+    "posthog-js": "^1.364.1",
     "preact": "^10.29.0",
     "tailwindcss-animate": "^1.0.7"
   },
@@ -69,7 +69,11 @@
       "devalue": ">=5.6.4",
       "undici": ">=7.24.0",
       "h3": ">=1.15.10",
-      "flatted": ">=3.4.2"
+      "flatted": ">=3.4.2",
+      "picomatch": ">=4.0.4",
+      "brace-expansion": ">=5.0.5",
+      "smol-toml": ">=1.6.1",
+      "yaml": ">=2.8.3"
     }
   },
   "devDependencies": {
@@ -79,18 +83,18 @@
     "@playwright/test": "^1.58.2",
     "@size-limit/file": "^12.0.1",
     "@testing-library/preact": "^3.2.4",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.2",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
-    "eslint": "^10.0.3",
+    "eslint": "^10.1.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-astro": "^1.6.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-playwright": "^2.9.0",
-    "happy-dom": "^20.8.3",
+    "eslint-plugin-playwright": "^2.10.1",
+    "happy-dom": "^20.8.9",
     "husky": "^9.1.7",
     "jsdom": "^28.1.0",
-    "lint-staged": "^16.3.3",
+    "lint-staged": "^16.4.0",
     "openapi-typescript-helpers": "^0.1.0",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
@@ -98,7 +102,7 @@
     "tailwindcss": "^3.4.19",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.0",
-    "vitest": "^4.0.18"
+    "typescript-eslint": "^8.57.2",
+    "vitest": "^4.1.2"
   }
 }
