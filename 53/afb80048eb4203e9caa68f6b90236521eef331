@@ -1,0 +1,25 @@
+src/components/astro/Footer.astro
+  feab3c0418c3290e 209,212
+src/pages/404.astro
+  feab3c0418c3290e 58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "53afb80048eb4203e9caa68f6b90236521eef331",
+  "prompts": {
+    "feab3c0418c3290e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b97125e0-4ca5-4ed2-aa62-6742104ec68a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
