@@ -1,0 +1,36 @@
+src/components/interactive/CartDrawer.tsx
+  c629eeadd3d379db 133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "bd9515a37e41bf93f005ef629da690c1dd228048",
+  "prompts": {
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 807,
+      "total_deletions": 0,
+      "accepted_lines": 807,
+      "overriden_lines": 0
+    },
+    "c629eeadd3d379db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d84df27-b6df-4cf1-a63e-926c9b36d7a9",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 902,
+      "total_deletions": 3,
+      "accepted_lines": 900,
+      "overriden_lines": 0
+    }
+  }
+}
