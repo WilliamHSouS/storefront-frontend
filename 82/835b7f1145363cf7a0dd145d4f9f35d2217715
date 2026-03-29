@@ -1,0 +1,23 @@
+docs/superpowers/plans/2026-03-29-uber-direct-shipping-rates.md
+  bb9711b54e44f71c 1-1131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "82835b7f1145363cf7a0dd145d4f9f35d2217715",
+  "prompts": {
+    "bb9711b54e44f71c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f05e68f2-f699-40d3-9d19-5bc0869561b3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1131,
+      "total_deletions": 0,
+      "accepted_lines": 1131,
+      "overriden_lines": 0
+    }
+  }
+}
