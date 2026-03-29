@@ -23,9 +23,11 @@ export default function SearchBar({ lang }: Props) {
   const [loading, setLoading] = useState(false);
   const [featured, setFeatured] = useState<NormalizedProduct[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const abortRef = useRef<AbortController>();
+  const listRef = useRef<HTMLUListElement>(null);
 
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
@@ -89,11 +91,13 @@ export default function SearchBar({ lang }: Props) {
       setResults([]);
     } finally {
       setLoading(false);
+      setActiveIndex(-1);
     }
   }, []);
 
   const handleInput = (value: string) => {
     setQuery(value);
+    setActiveIndex(-1);
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => search(value), 300);
   };
@@ -113,15 +117,42 @@ export default function SearchBar({ lang }: Props) {
     $selectedProduct.set({ id: String(result.id), name: result.name, slug: result.slug });
   };
 
-  // Close on escape
+  // Keyboard navigation: Escape, ArrowDown, ArrowUp, Enter
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeSearch();
+      if (e.key === 'Escape') {
+        closeSearch();
+        return;
+      }
+
+      // Determine the active list: search results when query >= 2, else featured products
+      const activeList = query.length >= 2 ? results : featured;
+      if (activeList.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((prev) => {
+          const next = prev < activeList.length - 1 ? prev + 1 : 0;
+          listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
+          return next;
+        });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((prev) => {
+          const next = prev > 0 ? prev - 1 : activeList.length - 1;
+          listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
+          return next;
+        });
+      } else if (e.key === 'Enter' && activeIndex >= 0 && activeIndex < activeList.length) {
+        e.preventDefault();
+        handleSelect(activeList[activeIndex]);
+      }
     };
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, results, featured, activeIndex, query]);
 
   // Listen for search trigger from Header button
   useEffect(() => {
@@ -223,16 +254,19 @@ export default function SearchBar({ lang }: Props) {
                 </div>
               )}
               <ul
+                ref={query.length >= 2 ? listRef : undefined}
                 class="max-h-64 overflow-y-auto py-1"
                 role="listbox"
                 aria-label={t('search', lang)}
               >
-                {results.map((result) => (
-                  <li key={result.id} role="option" aria-selected="false">
+                {results.map((result, idx) => (
+                  <li key={result.id} role="option" aria-selected={idx === activeIndex}>
                     <button
                       type="button"
                       onClick={() => handleSelect(result)}
-                      class="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent"
+                      class={`flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent ${
+                        query.length >= 2 && idx === activeIndex ? 'bg-accent' : ''
+                      }`}
                     >
                       {result.image && (
                         <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
@@ -307,13 +341,19 @@ export default function SearchBar({ lang }: Props) {
                   <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t('popularItems', lang)}
                   </h3>
-                  <ul role="listbox" aria-label={t('popularItems', lang)}>
-                    {featured.map((product) => (
-                      <li key={product.id} role="option" aria-selected="false">
+                  <ul
+                    ref={query.length < 2 ? listRef : undefined}
+                    role="listbox"
+                    aria-label={t('popularItems', lang)}
+                  >
+                    {featured.map((product, idx) => (
+                      <li key={product.id} role="option" aria-selected={idx === activeIndex}>
                         <button
                           type="button"
                           onClick={() => handleSelect(product)}
-                          class="flex w-full items-center gap-3 rounded px-1 py-2 text-left hover:bg-accent"
+                          class={`flex w-full items-center gap-3 rounded px-1 py-2 text-left hover:bg-accent ${
+                            query.length < 2 && idx === activeIndex ? 'bg-accent' : ''
+                          }`}
                         >
                           {product.image && (
                             <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
