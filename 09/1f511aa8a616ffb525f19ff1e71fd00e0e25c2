@@ -1,0 +1,41 @@
+src/i18n/messages/nl.json
+  7ce9aa811ed3044c 168-169
+src/layouts/BaseLayout.astro
+  7ce9aa811ed3044c 81,84-87
+src/i18n/messages/de.json
+  7ce9aa811ed3044c 168-169
+src/components/astro/Footer.astro
+  7ce9aa811ed3044c 35-36,205
+src/pages/[lang]/index.astro
+  7ce9aa811ed3044c 12,64,68-82
+src/components/interactive/TopBanner.tsx
+  7ce9aa811ed3044c 33-34
+src/components/astro/MenuSection.astro
+  7ce9aa811ed3044c 20,24
+src/components/astro/ProductCard.astro
+  7ce9aa811ed3044c 18,38,111,116,130-132
+src/components/interactive/BottomBanner.tsx
+  7ce9aa811ed3044c 29-30
+src/i18n/messages/en.json
+  7ce9aa811ed3044c 168-169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "091f511aa8a616ffb525f19ff1e71fd00e0e25c2",
+  "prompts": {
+    "7ce9aa811ed3044c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c1a5757f-7d1f-4ded-b7d0-a44e8a42651a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 27,
+      "accepted_lines": 44,
+      "overriden_lines": 0
+    }
+  }
+}
