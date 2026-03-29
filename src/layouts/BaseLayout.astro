@@ -14,6 +14,7 @@ import Toast from '@/components/interactive/Toast';
 import MerchantComms from '@/components/interactive/MerchantComms';
 import { FulfillmentOverlay } from '@/components/interactive/FulfillmentOverlay';
 import { DeliveryBanner } from '@/components/interactive/DeliveryBanner';
+import { ErrorBoundary } from '@/components/interactive/ErrorBoundary';
 import type { CommsMessage, CommsTheme } from '@/stores/comms';
 import { BANNER_THEME_CLASSES } from '@/lib/comms-theme';
 import { safeUrl } from '@/lib/safe-url';
@@ -182,18 +183,50 @@ for (const msg of commsMessages) {
         /* best-effort */
       }
     </script>
-    {!hideSharedIslands && <MerchantComms client:idle lang={langValue} messages={commsMessages} />}
-    {!hideSharedIslands && <DeliveryBanner client:idle lang={langValue} />}
+    {
+      !hideSharedIslands && (
+        <ErrorBoundary client:idle name="MerchantComms">
+          <MerchantComms lang={langValue} messages={commsMessages} />
+        </ErrorBoundary>
+      )
+    }
+    {
+      !hideSharedIslands && (
+        <ErrorBoundary client:idle name="DeliveryBanner">
+          <DeliveryBanner lang={langValue} />
+        </ErrorBoundary>
+      )
+    }
 
     <slot />
 
     {/* Shared islands: cart, product detail modal, search */}
-    <CartBar client:idle lang={langValue} />
-    {!hideSharedIslands && <CartDrawer client:idle lang={langValue} />}
-    {!hideSharedIslands && <ProductDetail client:idle lang={langValue} />}
-    <SearchBar client:idle lang={langValue} />
-    <Toast client:idle lang={langValue} />
-    <FulfillmentOverlay client:idle lang={langValue} />
+    <ErrorBoundary client:idle name="CartBar">
+      <CartBar lang={langValue} />
+    </ErrorBoundary>
+    {
+      !hideSharedIslands && (
+        <ErrorBoundary client:idle name="CartDrawer">
+          <CartDrawer lang={langValue} />
+        </ErrorBoundary>
+      )
+    }
+    {
+      !hideSharedIslands && (
+        <ErrorBoundary client:idle name="ProductDetail">
+          <ProductDetail lang={langValue} />
+        </ErrorBoundary>
+      )
+    }
+    <ErrorBoundary client:idle name="SearchBar">
+      <SearchBar lang={langValue} />
+    </ErrorBoundary>
+    <ErrorBoundary client:idle name="Toast">
+      <Toast lang={langValue} />
+    </ErrorBoundary>
+    <ErrorBoundary client:idle name="FulfillmentOverlay">
+      <FulfillmentOverlay lang={langValue} />
+    </ErrorBoundary>
 
     <script is:inline>
       document.addEventListener('click', function (e) {
