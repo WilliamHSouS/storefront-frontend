@@ -60,6 +60,7 @@ export const products = [
     category_id: 'cat-1',
     sold_out: false,
     ...productDefaults(),
+    tags: ['popular'],
     images: [
       {
         id: 1,

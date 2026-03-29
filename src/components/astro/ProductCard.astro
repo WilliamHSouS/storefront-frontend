@@ -8,6 +8,7 @@ import {
 } from '@/lib/pricing';
 import { responsiveImage } from '@/lib/image';
 import PromoBadge from './PromoBadge.astro';
+import PopularBadge from './PopularBadge.astro';
 import AddToCartButton from '@/components/interactive/AddToCartButton';
 interface Props {
   product: {
@@ -22,6 +23,7 @@ interface Props {
     sold_out?: boolean;
     discount?: PricedItem['discount'];
     modifier_groups?: unknown[];
+    tags?: string[];
   };
   lang: string;
   currency: string;
@@ -101,6 +103,7 @@ const imgAttrs = product.image
         <PromoBadge item={pricedItem} currency={currency} locale={locale} lang={lang} overlay />
       )
     }
+    <PopularBadge tags={product.tags ?? []} lang={lang} overlay />
   </div>
   <span data-fulfillment-badge class="empty:hidden"></span>
 
