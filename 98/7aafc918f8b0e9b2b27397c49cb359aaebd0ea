@@ -1,0 +1,25 @@
+src/pages/[lang]/pages/terms.astro
+  7ce9aa811ed3044c 23-51,53-58,60-65,67-77
+src/pages/[lang]/pages/privacy-policy.astro
+  7ce9aa811ed3044c 23-44,46-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "987aafc918f8b0e9b2b27397c49cb359aaebd0ea",
+  "prompts": {
+    "7ce9aa811ed3044c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c1a5757f-7d1f-4ded-b7d0-a44e8a42651a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 103,
+      "total_deletions": 55,
+      "accepted_lines": 99,
+      "overriden_lines": 0
+    }
+  }
+}
