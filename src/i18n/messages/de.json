@@ -165,5 +165,6 @@
   "viewDetails": "Details ansehen",
   "storageUnavailable": "Ihr Browser unterstützt das Speichern des Formularverlaufs nicht. Bitte schließen Sie den Checkout in einer Sitzung ab.",
   "paymentRetry": "Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.",
-  "cartUpdated": "Ihr Warenkorb wurde aktualisiert."
+  "cartUpdated": "Ihr Warenkorb wurde aktualisiert.",
+  "noProducts": "Derzeit sind keine Produkte verfügbar."
 }

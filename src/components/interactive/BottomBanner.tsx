@@ -26,6 +26,8 @@ export default function BottomBanner({ lang, onImpression, onClick, onDismiss }:
   if (!entry) return null;
 
   const { message, content } = entry;
+  const hasContent = content.headline || content.body || (content.cta_label && content.cta_url);
+  if (!hasContent) return null;
 
   return (
     <div

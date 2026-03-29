@@ -165,5 +165,6 @@
   "viewDetails": "Bekijk details",
   "storageUnavailable": "Je browser ondersteunt het opslaan van formuliervoortgang niet. Rond de bestelling af in één sessie.",
   "paymentRetry": "Betaling mislukt. Probeer het opnieuw.",
-  "cartUpdated": "Je winkelwagen is bijgewerkt."
+  "cartUpdated": "Je winkelwagen is bijgewerkt.",
+  "noProducts": "Er zijn momenteel geen producten beschikbaar."
 }

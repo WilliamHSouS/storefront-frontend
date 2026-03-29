@@ -32,8 +32,8 @@ function displayHost(url: string): string {
 }
 ---
 
-<footer class="border-t border-border bg-muted/50 px-4 py-8">
-  <div class="mx-auto grid max-w-screen-xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
+<footer class="border-t border-border bg-muted/50 py-8">
+  <div class="mx-auto grid max-w-[1160px] gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 lg:px-8">
     <div>
       <h3 class="font-heading text-sm font-semibold uppercase tracking-wider text-foreground">
         {merchant.name}
@@ -202,7 +202,7 @@ function displayHost(url: string): string {
   </div>
 
   <div
-    class="mx-auto mt-8 max-w-screen-xl border-t border-border pt-4 text-center text-xs text-muted-foreground"
+    class="mx-auto mt-8 max-w-[1160px] border-t border-border px-4 pt-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8"
   >
     {t('poweredBy', lang)}
     <a

@@ -17,11 +17,11 @@ const { category, products, lang, currency, layout = 'grid' } = Astro.props;
   products.length > 0 && (
     <section
       id={`collection-${category.id}`}
-      class="scroll-mt-20 px-4 py-6 sm:px-6 lg:px-8"
+      class="scroll-mt-20 py-6"
       data-category-id={category.id}
       data-menu-section
     >
-      <div class="mx-auto max-w-[1160px]">
+      <div class="mx-auto max-w-[1160px] px-4 sm:px-6 lg:px-8">
         <h2 class="mb-5 text-2xl font-bold text-foreground">{category.name}</h2>
         <div
           class:list={[

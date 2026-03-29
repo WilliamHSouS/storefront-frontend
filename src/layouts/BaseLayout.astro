@@ -78,10 +78,13 @@ let commsMessages: CommsMessage[] = [];
   }
 }
 
-// Find the first top_banner content for SSR rendering
+// Find the first top_banner content with actual displayable text for SSR rendering
 for (const msg of commsMessages) {
   for (const content of msg.contents) {
-    if (content.surface === 'top_banner') {
+    if (
+      content.surface === 'top_banner' &&
+      (content.headline || content.body || (content.cta_label && content.cta_url))
+    ) {
       ssrTopBanner = content;
       break;
     }

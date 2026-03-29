@@ -15,6 +15,7 @@ interface Props {
     slug: string;
     name: string;
     description?: string | null;
+    intro?: string | null;
     price: string;
     compare_at_price?: string | null;
     image?: string | null;
@@ -34,6 +35,7 @@ const effectivePrice = getEffectivePrice(pricedItem);
 const originalPrice = getOriginalPrice(pricedItem);
 const showStrikethrough = hasUnitDiscount(pricedItem);
 const hasModifiers = (product.modifier_groups?.length ?? 0) > 0;
+const cardDescription = product.description || product.intro || null;
 const isGrid = variant === 'grid';
 const imgAttrs = product.image
   ? responsiveImage(
@@ -106,12 +108,12 @@ const imgAttrs = product.image
   <div
     class:list={[
       'flex flex-1 flex-col justify-between',
-      isGrid ? 'gap-2 sm:gap-4 sm:px-3 sm:pt-4 sm:pb-3' : 'gap-2 pl-3',
+      isGrid ? 'gap-2 pt-2 sm:gap-4 sm:px-3 sm:pt-4 sm:pb-3' : 'gap-2 pl-3',
     ]}
   >
     <div>
       <div class="flex items-start justify-between gap-2">
-        <h3 class="text-sm font-medium leading-tight text-card-foreground sm:text-base">
+        <h3 class="text-base font-medium leading-tight text-card-foreground sm:text-base">
           <a
             href={`/${lang}/product/${product.slug}`}
             class="after:absolute after:inset-0"
@@ -125,9 +127,9 @@ const imgAttrs = product.image
         </h3>
       </div>
       {
-        product.description && (
-          <p class="mt-0.5 line-clamp-2 text-xs font-normal leading-relaxed text-muted-foreground sm:text-sm">
-            {product.description}
+        cardDescription && (
+          <p class="mt-0.5 line-clamp-2 text-sm font-normal leading-relaxed text-muted-foreground">
+            {cardDescription}
           </p>
         )
       }

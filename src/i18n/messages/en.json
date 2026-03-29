@@ -165,5 +165,6 @@
   "viewDetails": "View details",
   "storageUnavailable": "Your browser doesn't support saving form progress. Please complete checkout in one session.",
   "paymentRetry": "Payment failed. Please try again.",
-  "cartUpdated": "Your cart was updated."
+  "cartUpdated": "Your cart was updated.",
+  "noProducts": "No products available at the moment."
 }
