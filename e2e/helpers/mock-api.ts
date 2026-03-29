@@ -724,7 +724,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   }
 
   // ── Checkout: shipping groups ──
-  const checkoutShippingMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/shipping\/$/);
+  const checkoutShippingMatch = path.match(/^\/api\/v1\/checkout\/([^/]+)\/shipping-groups\/$/);
   if (method === 'GET' && checkoutShippingMatch) {
     const id = checkoutShippingMatch[1];
     const checkout = checkoutStates.get(id);
@@ -732,25 +732,70 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       notFound(res);
       return;
     }
+    // Generate a 15-minute expiry for Uber Direct rate
+    const uberExpiry = new Date(Date.now() + 15 * 60 * 1000).toISOString();
     json(res, [
       {
         id: 'grp-1',
+        merchant_shipping_provider_id: 1,
         shipping_cost: '5.00',
-        selected_rate_id: 'local_delivery',
+        selected_rate_id: null,
         is_digital: false,
         available_rates: [
           {
-            id: 'local_delivery',
+            id: 'rate-local',
             name: 'Local Delivery',
             cost: '5.00',
             original_cost: '5.00',
             rate_id: 'local_delivery',
             expires_at: null,
           },
+          {
+            id: 'rate-uber',
+            name: 'Uber Direct',
+            cost: '6.50',
+            original_cost: '6.50',
+            rate_id: 'dqt_mock_quote_id',
+            expires_at: uberExpiry,
+          },
         ],
         line_items: [],
       },
     ]);
+    return;
+  }
+
+  // ── Checkout: select shipping rate ──
+  const selectRateMatch = path.match(
+    /^\/api\/v1\/checkout\/([^/]+)\/shipping-groups\/select-rate\/$/,
+  );
+  if (method === 'POST' && selectRateMatch) {
+    const id = selectRateMatch[1];
+    const checkout = checkoutStates.get(id);
+    if (!checkout) {
+      notFound(res);
+      return;
+    }
+    const body = JSON.parse(await readBody(req));
+    const { rate_id } = body;
+
+    // Simulate expired rate if rate_id starts with 'expired_'
+    if (rate_id === 'expired_rate') {
+      res.writeHead(410, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({ error: { code: 'shipping_rate_expired', message: 'Rate has expired' } }),
+      );
+      return;
+    }
+
+    // Apply selected rate cost to checkout
+    const rateCost = rate_id === 'dqt_mock_quote_id' ? '6.50' : '5.00';
+    checkout.shipping_cost = rateCost;
+    const subtotal = parseFloat(checkout.subtotal);
+    const discount = parseFloat(checkout.discount_amount);
+    checkout.total = (subtotal + parseFloat(rateCost) - discount).toFixed(2);
+
+    json(res, { status: 'ok', selected_rate_id: rate_id });
     return;
   }
 
