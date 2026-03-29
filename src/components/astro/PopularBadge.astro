@@ -1,0 +1,27 @@
+---
+import { t } from '@/i18n';
+
+interface Props {
+  tags: string[];
+  lang: string;
+  overlay?: boolean;
+}
+
+const { tags, lang, overlay = false } = Astro.props;
+const isPopular = tags.some((tag) => tag.toLowerCase() === 'popular');
+---
+
+{
+  isPopular && (
+    <span
+      class:list={[
+        'inline-flex items-center justify-center font-semibold leading-none whitespace-nowrap',
+        overlay
+          ? 'absolute top-1.5 right-1.5 z-10 rounded-full bg-amber-500 px-2.5 py-1 text-[12px] text-white sm:top-2 sm:right-2'
+          : 'rounded-sm bg-amber-500 px-1.5 py-0.5 text-xs font-medium text-white',
+      ]}
+    >
+      {t('popular', lang)}
+    </span>
+  )
+}

@@ -1,6 +1,7 @@
 {
   "addToCart": "In den Warenkorb",
   "soldOut": "Ausverkauft",
+  "popular": "Beliebt",
   "cart": "Warenkorb",
   "checkout": "Zur Kasse",
   "items_one": "{count} Artikel",
