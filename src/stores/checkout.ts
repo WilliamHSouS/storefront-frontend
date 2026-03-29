@@ -1,5 +1,5 @@
 import { atom, computed } from 'nanostores';
-import type { Checkout, CheckoutFormState } from '@/types/checkout';
+import type { Checkout, CheckoutFormState, ShippingGroup } from '@/types/checkout';
 import type { CartLineItem } from '@/stores/cart';
 import { validateStorageId } from '@/lib/validate-id';
 import * as log from '@/lib/logger';
@@ -9,6 +9,8 @@ import * as log from '@/lib/logger';
 export const $checkout = atom<Checkout | null>(null);
 export const $checkoutLoading = atom(false);
 export const $checkoutError = atom<string | null>(null);
+export const $shippingGroups = atom<ShippingGroup[]>([]);
+export const $shippingGroupsLoading = atom(false);
 
 // ── Computed ───────────────────────────────────────────────────────────────
 
