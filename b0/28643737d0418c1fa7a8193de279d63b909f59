@@ -1,0 +1,25 @@
+src/components/interactive/checkout/CheckoutFormOrchestrator.test.tsx
+  bb9711b54e44f71c 3,12-14,19-25,100-101,103-105,520-572
+src/components/interactive/checkout/CheckoutFormOrchestrator.tsx
+  bb9711b54e44f71c 3-4,320-351,414-421
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "b028643737d0418c1fa7a8193de279d63b909f59",
+  "prompts": {
+    "bb9711b54e44f71c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f05e68f2-f699-40d3-9d19-5bc0869561b3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 133,
+      "total_deletions": 12,
+      "accepted_lines": 144,
+      "overriden_lines": 0
+    }
+  }
+}
