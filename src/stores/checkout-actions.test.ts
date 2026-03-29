@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { $shippingGroups, $shippingGroupsLoading } from '@/stores/checkout';
+import type { ShippingGroup } from '@/types/checkout';
 
 vi.mock('@/lib/api', () => ({
   getClient: vi.fn(),
@@ -434,5 +436,121 @@ describe('cancelPendingPatch', () => {
     await new Promise((r) => setTimeout(r, 600));
 
     expect(mockPatch).not.toHaveBeenCalled();
+  });
+});
+
+describe('fetchShippingGroups', () => {
+  beforeEach(() => {
+    $shippingGroups.set([]);
+    $shippingGroupsLoading.set(false);
+  });
+
+  it('fetches shipping groups and stores them', async () => {
+    const mockGroups: ShippingGroup[] = [
+      {
+        id: 'grp-1',
+        merchant_shipping_provider_id: 1,
+        shipping_cost: '5.00',
+        selected_rate_id: null,
+        is_digital: false,
+        available_rates: [
+          {
+            id: 'rate-1',
+            name: 'Local Delivery',
+            cost: '5.00',
+            original_cost: '5.00',
+            rate_id: 'local_delivery',
+            expires_at: null,
+          },
+          {
+            id: 'rate-2',
+            name: 'Uber Direct',
+            cost: '6.00',
+            original_cost: '6.00',
+            rate_id: 'dqt_abc123',
+            expires_at: '2026-03-29T15:15:00Z',
+          },
+        ],
+        line_items: [],
+      },
+    ];
+
+    const mockClient = {
+      GET: vi.fn().mockResolvedValue({ data: mockGroups, error: null }),
+    };
+
+    const { fetchShippingGroups } = await import('./checkout-actions');
+    const groups = await fetchShippingGroups('chk-1', mockClient as any);
+
+    expect(mockClient.GET).toHaveBeenCalledWith('/api/v1/checkout/{checkout_id}/shipping-groups/', {
+      params: { path: { checkout_id: 'chk-1' } },
+    });
+    expect(groups).toEqual(mockGroups);
+    expect($shippingGroups.get()).toEqual(mockGroups);
+    expect($shippingGroupsLoading.get()).toBe(false);
+  });
+
+  it('returns empty array on error', async () => {
+    const mockClient = {
+      GET: vi.fn().mockResolvedValue({ data: null, error: { status: 500, statusText: 'Error' } }),
+    };
+
+    const { fetchShippingGroups } = await import('./checkout-actions');
+    const groups = await fetchShippingGroups('chk-1', mockClient as any);
+
+    expect(groups).toEqual([]);
+    expect($shippingGroups.get()).toEqual([]);
+  });
+});
+
+describe('selectShippingRate', () => {
+  beforeEach(() => {
+    $shippingGroups.set([]);
+  });
+
+  it('calls select-rate endpoint and returns success', async () => {
+    const mockClient = {
+      POST: vi.fn().mockResolvedValue({ data: { status: 'ok' }, error: null }),
+    };
+
+    const { selectShippingRate } = await import('./checkout-actions');
+    const result = await selectShippingRate('chk-1', 'grp-1', 'rate-1', mockClient as any);
+
+    expect(mockClient.POST).toHaveBeenCalledWith(
+      '/api/v1/checkout/{checkout_id}/shipping-groups/select-rate/',
+      {
+        params: { path: { checkout_id: 'chk-1' } },
+        body: { group_id: 'grp-1', rate_id: 'rate-1' },
+      },
+    );
+    expect(result).toEqual({ ok: true, expired: false });
+  });
+
+  it('returns expired=true on 410 response', async () => {
+    const mockClient = {
+      POST: vi.fn().mockResolvedValue({
+        data: null,
+        error: { status: 410, statusText: 'Gone', body: { code: 'shipping_rate_expired' } },
+      }),
+    };
+
+    const { selectShippingRate } = await import('./checkout-actions');
+    const result = await selectShippingRate('chk-1', 'grp-1', 'rate-1', mockClient as any);
+
+    expect(result).toEqual({ ok: false, expired: true });
+  });
+
+  it('returns ok=false on other errors', async () => {
+    const mockClient = {
+      POST: vi.fn().mockResolvedValue({
+        data: null,
+        error: { status: 500, statusText: 'Server Error' },
+      }),
+    };
+
+    const { selectShippingRate } = await import('./checkout-actions');
+    const result = await selectShippingRate('chk-1', 'grp-1', 'rate-1', mockClient as any);
+
+    expect(result).toEqual({ ok: false, expired: false });
   });
 });

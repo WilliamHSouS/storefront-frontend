@@ -4,10 +4,12 @@ import {
   $checkout,
   $checkoutLoading,
   $checkoutError,
+  $shippingGroups,
+  $shippingGroupsLoading,
   setStoredCheckoutId,
   clearStoredCheckoutId,
 } from '@/stores/checkout';
-import type { Checkout, PaymentResult } from '@/types/checkout';
+import type { Checkout, PaymentResult, ShippingGroup } from '@/types/checkout';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 import * as log from '@/lib/logger';
 
@@ -372,4 +374,80 @@ export async function ensurePaymentAndComplete(
       };
     }
   }
+}
+
+// ── fetchShippingGroups ────────────────────────────────────────────────
+
+/**
+ * Fetch shipping groups (with rates) for a checkout.
+ * Uber Direct rates will have populated `rate_id` and `expires_at`.
+ */
+export async function fetchShippingGroups(
+  checkoutId: string,
+  client?: StorefrontClient,
+): Promise<ShippingGroup[]> {
+  $shippingGroupsLoading.set(true);
+  try {
+    const sdk = client ?? getClient();
+    /* eslint-disable @typescript-eslint/no-explicit-any -- shipping-groups endpoint not yet in SDK types; remove after SDK regeneration */
+    const { data, error } = await sdk.GET(
+      '/api/v1/checkout/{checkout_id}/shipping-groups/' as any,
+      { params: { path: { checkout_id: checkoutId } } },
+    );
+    /* eslint-enable @typescript-eslint/no-explicit-any -- end shipping-groups SDK workaround */
+
+    if (error || !data) {
+      log.error('checkout', 'fetchShippingGroups failed:', error);
+      $shippingGroups.set([]);
+      return [];
+    }
+
+    const groups = data as unknown as ShippingGroup[];
+    $shippingGroups.set(groups);
+    return groups;
+  } finally {
+    $shippingGroupsLoading.set(false);
+  }
+}
+
+// ── selectShippingRate ─────────────────────────────────────────────────
+
+export interface SelectRateResult {
+  ok: boolean;
+  expired: boolean;
+}
+
+/**
+ * Select a shipping rate for a checkout.
+ * Returns `{ ok: true }` on success, `{ expired: true }` on HTTP 410
+ * (caller should re-fetch shipping groups for fresh quotes).
+ */
+export async function selectShippingRate(
+  checkoutId: string,
+  groupId: string,
+  rateId: string,
+  client?: StorefrontClient,
+): Promise<SelectRateResult> {
+  const sdk = client ?? getClient();
+  /* eslint-disable @typescript-eslint/no-explicit-any -- select-rate endpoint not yet in SDK types; remove after SDK regeneration */
+  const { data: _data, error } = await sdk.POST(
+    '/api/v1/checkout/{checkout_id}/shipping-groups/select-rate/' as any,
+    {
+      params: { path: { checkout_id: checkoutId } },
+      body: { group_id: groupId, rate_id: rateId },
+    },
+  );
+  /* eslint-enable @typescript-eslint/no-explicit-any -- end select-rate SDK workaround */
+
+  if (error) {
+    const apiError = error as { status?: number };
+    if (apiError.status === 410) {
+      log.warn('checkout', 'Shipping rate expired, need to re-fetch groups');
+      return { ok: false, expired: true };
+    }
+    log.error('checkout', 'selectShippingRate failed:', error);
+    return { ok: false, expired: false };
+  }
+
+  return { ok: true, expired: false };
 }
