@@ -1,0 +1,58 @@
+src/components/interactive/FulfillmentOverlay.tsx
+  c629eeadd3d379db 8,196-198
+src/components/interactive/Toast.tsx
+  c629eeadd3d379db 4,54-55
+src/components/interactive/ErrorBoundary.tsx
+  c629eeadd3d379db 1,48-71,73
+src/layouts/BaseLayout.astro
+  89773481fd62f596 101-110
+src/components/interactive/SearchBar.tsx
+  c629eeadd3d379db 12,407-408
+src/components/interactive/DeliveryBanner.tsx
+  c629eeadd3d379db 4,72-74
+src/components/interactive/CartDrawer.tsx
+  c629eeadd3d379db 21,180,409-410
+src/components/interactive/ProductDetail.tsx
+  c629eeadd3d379db 17,994-995
+src/components/interactive/CartBar.tsx
+  c629eeadd3d379db 12,90-91
+src/components/interactive/MerchantComms.tsx
+  c629eeadd3d379db 11,125-126
+.env.dev
+  c629eeadd3d379db 1-9
+e2e/global-teardown.ts
+  c629eeadd3d379db 10,18-21,23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "7c2158cb781f14f8f7638a6bb244ad0d28bcc21d",
+  "prompts": {
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 4,
+      "accepted_lines": 1524,
+      "overriden_lines": 0
+    },
+    "c629eeadd3d379db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d84df27-b6df-4cf1-a63e-926c9b36d7a9",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 937,
+      "overriden_lines": 0
+    }
+  }
+}
