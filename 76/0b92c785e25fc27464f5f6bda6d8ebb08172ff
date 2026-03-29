@@ -1,0 +1,25 @@
+src/components/astro/HeroSection.astro
+  7ce9aa811ed3044c 83
+src/styles/global.css
+  7ce9aa811ed3044c 9-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "760b92c785e25fc27464f5f6bda6d8ebb08172ff",
+  "prompts": {
+    "7ce9aa811ed3044c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c1a5757f-7d1f-4ded-b7d0-a44e8a42651a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 2,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
