@@ -1,0 +1,35 @@
+src/pages/[lang]/pages/terms.astro
+  7ce9aa811ed3044c 1-55
+src/i18n/messages/nl.json
+  7ce9aa811ed3044c 169-192
+src/i18n/messages/en.json
+  7ce9aa811ed3044c 169-192
+src/pages/[lang]/pages/privacy-policy.astro
+  7ce9aa811ed3044c 1-52
+src/i18n/messages/de.json
+  7ce9aa811ed3044c 169-192
+src/components/interactive/CheckoutPage.tsx
+  7ce9aa811ed3044c 308
+src/components/astro/Footer.astro
+  7ce9aa811ed3044c 87-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "22acad1baa2a6de97adcc79ae9455a30e5193de3",
+  "prompts": {
+    "7ce9aa811ed3044c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c1a5757f-7d1f-4ded-b7d0-a44e8a42651a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 194,
+      "total_deletions": 4,
+      "accepted_lines": 194,
+      "overriden_lines": 0
+    }
+  }
+}
