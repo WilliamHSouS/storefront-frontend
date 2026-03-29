@@ -9,12 +9,13 @@ import { normalizeProduct, type NormalizedProduct } from '@/lib/normalize';
 import { optimizedImageUrl } from '@/lib/image';
 import * as log from '@/lib/logger';
 import { CloseIcon, SearchIcon } from './icons';
+import { withErrorBoundary } from './ErrorBoundary';
 
 interface Props {
   lang: string;
 }
 
-export default function SearchBar({ lang }: Props) {
+function SearchBar({ lang }: Props) {
   const merchant = useStore($merchant);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<NormalizedProduct[]>([]);
@@ -403,3 +404,5 @@ export default function SearchBar({ lang }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(SearchBar, 'SearchBar');

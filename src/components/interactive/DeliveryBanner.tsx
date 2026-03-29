@@ -1,12 +1,13 @@
 import { useStore } from '@nanostores/preact';
 import { $addressCoords, $addressEligibility } from '@/stores/address';
 import { t } from '@/i18n/client';
+import { withErrorBoundary } from './ErrorBoundary';
 
 interface Props {
   lang: string;
 }
 
-export function DeliveryBanner({ lang }: Props) {
+function DeliveryBanner({ lang }: Props) {
   const coords = useStore($addressCoords);
   const eligibility = useStore($addressEligibility);
 
@@ -68,3 +69,6 @@ export function DeliveryBanner({ lang }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(DeliveryBanner, 'DeliveryBanner');
+export { DeliveryBanner };

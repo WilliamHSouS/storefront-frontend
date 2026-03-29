@@ -18,6 +18,7 @@ import { showToast } from '@/stores/toast';
 import PromoBanner from './PromoBanner';
 import DiscountCodeInput from './DiscountCodeInput';
 import { ShippingEstimate } from './ShippingEstimate';
+import { withErrorBoundary } from './ErrorBoundary';
 import { PricingBreakdown } from './cart/PricingBreakdown';
 import { CloseIcon } from './icons';
 
@@ -176,7 +177,7 @@ interface Props {
   inline?: boolean;
 }
 
-export default function CartDrawer({ lang, inline = false }: Props) {
+function CartDrawerInner({ lang, inline = false }: Props) {
   const cart = useStore($cart);
   const cartTotal = useStore($cartTotal);
   const isOpen = useStore($isCartOpen);
@@ -405,3 +406,5 @@ export default function CartDrawer({ lang, inline = false }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(CartDrawerInner, 'CartDrawer');

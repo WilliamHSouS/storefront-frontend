@@ -98,7 +98,16 @@ for (const msg of commsMessages) {
     <link rel="preconnect" href={import.meta.env.PUBLIC_API_BASE_URL} />
     {googleFontsUrl && <link rel="preconnect" href="https://fonts.googleapis.com" />}
     {googleFontsUrl && <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />}
-    {googleFontsUrl && <link rel="stylesheet" href={googleFontsUrl} />}
+    {
+      googleFontsUrl && (
+        <>
+          <link rel="stylesheet" href={googleFontsUrl} media="print" onload="this.media='all'" />
+          <noscript>
+            <link rel="stylesheet" href={googleFontsUrl} />
+          </noscript>
+        </>
+      )
+    }
     {themeCSS && <style set:html={`:root { ${themeCSS} }`} />}
     {/* PostHog queue stub — events pushed before SDK loads are replayed on init */}
     <script is:inline>

@@ -1,4 +1,4 @@
-import { Component, type ComponentChildren } from 'preact';
+import { Component, type ComponentChildren, type FunctionComponent } from 'preact';
 
 interface Props {
   children: ComponentChildren;
@@ -45,3 +45,29 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+/**
+ * HOC that wraps a component with ErrorBoundary internally.
+ *
+ * Use this instead of wrapping islands with `<ErrorBoundary client:idle>`
+ * in Astro templates. Astro only hydrates the outermost `client:` component
+ * as an island — nested Preact components become static slot content and
+ * never hydrate. This HOC keeps each component as its own island while
+ * still providing crash resilience.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic HOC requires any to bridge Preact's IntrinsicAttributes constraint
+export function withErrorBoundary<P extends Record<string, any>>(
+  WrappedComponent: FunctionComponent<P>,
+  name: string,
+): FunctionComponent<P> {
+  function Wrapped(props: P) {
+    return (
+      <ErrorBoundary name={name}>
+        <WrappedComponent {...props} />
+      </ErrorBoundary>
+    );
+  }
+  Wrapped.displayName = `withErrorBoundary(${name})`;
+  return Wrapped;
+}
+// eslint-enable @typescript-eslint/no-explicit-any -- end withErrorBoundary HOC generic constraint

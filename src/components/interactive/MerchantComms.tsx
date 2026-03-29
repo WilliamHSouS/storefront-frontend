@@ -8,6 +8,7 @@ import { capture, EVENTS } from '@/analytics';
 import TopBanner from './TopBanner';
 import BottomBanner from './BottomBanner';
 import CommsModal from './CommsModal';
+import { withErrorBoundary } from './ErrorBoundary';
 
 interface Props {
   lang: string;
@@ -30,7 +31,7 @@ function getSubjectKey(): string {
   }
 }
 
-export default function MerchantComms({ lang, messages }: Props) {
+function MerchantComms({ lang, messages }: Props) {
   const impressionSet = useRef(new Set<string>());
   const batcherRef = useRef<ReturnType<typeof createCommsBatcher> | null>(null);
 
@@ -121,3 +122,5 @@ export default function MerchantComms({ lang, messages }: Props) {
     </>
   );
 }
+
+export default withErrorBoundary(MerchantComms, 'MerchantComms');
