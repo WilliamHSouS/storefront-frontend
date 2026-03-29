@@ -73,6 +73,8 @@ export interface NormalizedProduct {
   sold_out: boolean;
   modifier_groups: ModifierGroup[];
   tags: string[];
+  is_popular: boolean | null;
+  popularity_rank: number | null;
   availableFulfillmentTypes: string[];
   pickupOnly: boolean;
   images: Array<{ image_url: string; alt_text: string; position: number }>;
@@ -181,6 +183,8 @@ export function normalizeProduct(raw: RawProduct | Record<string, unknown>): Nor
     sold_out: r.sold_out ?? false,
     modifier_groups: r.modifier_groups ?? [],
     tags: r.tags ?? [],
+    is_popular: (r as Record<string, unknown>).is_popular === true ? true : null,
+    popularity_rank: ((r as Record<string, unknown>).popularity_rank as number) ?? null,
     availableFulfillmentTypes:
       ((r as Record<string, unknown>).available_fulfillment_types as string[]) ?? [],
     pickupOnly: (r as Record<string, unknown>).pickup_only === true,

@@ -2,13 +2,15 @@
 import { t } from '@/i18n';
 
 interface Props {
-  tags: string[];
+  isPopular?: boolean | null;
+  tags?: string[];
   lang: string;
   overlay?: boolean;
 }
 
-const { tags, lang, overlay = false } = Astro.props;
-const isPopular = tags.some((tag) => tag.toLowerCase() === 'popular');
+const { isPopular: isPopularProp, tags = [], lang, overlay = false } = Astro.props;
+// Prefer API field, fall back to tag-based detection for merchants without computed stats
+const isPopular = isPopularProp ?? tags.some((tag) => tag.toLowerCase() === 'popular');
 ---
 
 {

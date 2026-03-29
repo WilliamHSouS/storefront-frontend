@@ -180,7 +180,7 @@ function SearchBar({ lang }: Props) {
       try {
         const client = getClient();
         const { data } = await client.GET('/api/v1/products/', {
-          params: { query: { page_size: '6' } },
+          params: { query: { ordering: '-popularity', page_size: '6' } },
           signal: controller.signal,
         });
         if (data) {

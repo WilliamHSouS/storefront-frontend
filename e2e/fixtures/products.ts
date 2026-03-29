@@ -42,6 +42,8 @@ function productDefaults() {
     images: [] as Array<{ id: number; image_url: string; alt: string; position: number }>,
     merchant_id: 1,
     pickup_only: false,
+    is_popular: false,
+    popularity_rank: null as number | null,
     product_type: { id: 1, name: 'physical', slug: 'physical' },
     tags: [] as string[],
     updated_at: '2025-01-01T00:00:00Z',
@@ -60,6 +62,8 @@ export const products = [
     category_id: 'cat-1',
     sold_out: false,
     ...productDefaults(),
+    is_popular: true,
+    popularity_rank: 1,
     tags: ['popular'],
     images: [
       {

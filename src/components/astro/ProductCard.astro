@@ -24,6 +24,7 @@ interface Props {
     discount?: PricedItem['discount'];
     modifier_groups?: unknown[];
     tags?: string[];
+    is_popular?: boolean | null;
   };
   lang: string;
   currency: string;
@@ -103,7 +104,7 @@ const imgAttrs = product.image
         <PromoBadge item={pricedItem} currency={currency} locale={locale} lang={lang} overlay />
       )
     }
-    <PopularBadge tags={product.tags ?? []} lang={lang} overlay />
+    <PopularBadge isPopular={product.is_popular} tags={product.tags ?? []} lang={lang} overlay />
   </div>
   <span data-fulfillment-badge class="empty:hidden"></span>
 
