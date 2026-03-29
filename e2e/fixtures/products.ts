@@ -43,6 +43,7 @@ function productDefaults() {
     merchant_id: 1,
     pickup_only: false,
     is_popular: false,
+    is_trending: false,
     popularity_rank: null as number | null,
     product_type: { id: 1, name: 'physical', slug: 'physical' },
     tags: [] as string[],

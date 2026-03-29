@@ -2,6 +2,7 @@
   "addToCart": "Toevoegen",
   "soldOut": "Uitverkocht",
   "popular": "Populair",
+  "trending": "Trending",
   "cart": "Winkelwagen",
   "checkout": "Afrekenen",
   "items_one": "{count} item",

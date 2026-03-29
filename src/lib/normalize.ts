@@ -74,6 +74,7 @@ export interface NormalizedProduct {
   modifier_groups: ModifierGroup[];
   tags: string[];
   is_popular: boolean | null;
+  is_trending: boolean | null;
   popularity_rank: number | null;
   availableFulfillmentTypes: string[];
   pickupOnly: boolean;
@@ -184,6 +185,7 @@ export function normalizeProduct(raw: RawProduct | Record<string, unknown>): Nor
     modifier_groups: r.modifier_groups ?? [],
     tags: r.tags ?? [],
     is_popular: (r as Record<string, unknown>).is_popular === true ? true : null,
+    is_trending: (r as Record<string, unknown>).is_trending === true ? true : null,
     popularity_rank: ((r as Record<string, unknown>).popularity_rank as number) ?? null,
     availableFulfillmentTypes:
       ((r as Record<string, unknown>).available_fulfillment_types as string[]) ?? [],
