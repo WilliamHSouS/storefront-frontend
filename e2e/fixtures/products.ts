@@ -45,6 +45,7 @@ function productDefaults() {
     is_popular: false,
     is_trending: false,
     popularity_rank: null as number | null,
+    trend_score: null as string | null,
     product_type: { id: 1, name: 'physical', slug: 'physical' },
     tags: [] as string[],
     updated_at: '2025-01-01T00:00:00Z',
