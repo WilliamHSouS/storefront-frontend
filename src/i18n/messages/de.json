@@ -168,6 +168,8 @@
   "paymentRetry": "Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.",
   "cartUpdated": "Ihr Warenkorb wurde aktualisiert.",
   "noProducts": "Derzeit sind keine Produkte verfügbar.",
+  "popularItems": "Beliebte Artikel",
+  "recentSearches": "Letzte Suchanfragen",
   "termsAndConditions": "Allgemeine Geschäftsbedingungen",
   "termsIntro": "Diese Allgemeinen Geschäftsbedingungen gelten für alle Bestellungen über die Online-Bestellplattform von {merchantName}.",
   "termsOrders": "Bestellungen",

@@ -168,6 +168,8 @@
   "paymentRetry": "Payment failed. Please try again.",
   "cartUpdated": "Your cart was updated.",
   "noProducts": "No products available at the moment.",
+  "popularItems": "Popular items",
+  "recentSearches": "Recent searches",
   "termsAndConditions": "Terms and Conditions",
   "termsIntro": "These terms and conditions apply to all orders placed through the {merchantName} online ordering platform.",
   "termsOrders": "Orders",

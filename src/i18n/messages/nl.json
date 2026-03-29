@@ -168,6 +168,8 @@
   "paymentRetry": "Betaling mislukt. Probeer het opnieuw.",
   "cartUpdated": "Je winkelwagen is bijgewerkt.",
   "noProducts": "Er zijn momenteel geen producten beschikbaar.",
+  "popularItems": "Populaire items",
+  "recentSearches": "Recente zoekopdrachten",
   "termsAndConditions": "Algemene Voorwaarden",
   "termsIntro": "Deze algemene voorwaarden zijn van toepassing op alle bestellingen via het online bestelplatform van {merchantName}.",
   "termsOrders": "Bestellingen",
