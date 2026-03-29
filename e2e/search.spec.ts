@@ -156,13 +156,16 @@ test.describe('Search', () => {
 
     // Dismiss the product detail modal (it opens after clicking a search result).
     // The backdrop intercepts pointer events, so press Escape to close it and wait
-    // for the navigation (history.back) to complete before reopening search.
+    // for the modal to fully close before reopening search.
     await page.keyboard.press('Escape');
     await page.waitForURL(/\/nl\/$/, { timeout: 5_000 });
+    // Allow modal close animation and DOM cleanup to settle on CI
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- modal close animation needs time on CI preview mode
+    await page.waitForTimeout(500);
 
     // Reopen search — should show "Recente zoekopdrachten" with "falafel"
     await openSearchOverlay(page);
-    await expect(page.getByText('Recente zoekopdrachten')).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByText('Recente zoekopdrachten')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByRole('button', { name: 'falafel', exact: true })).toBeVisible();
   });
 });

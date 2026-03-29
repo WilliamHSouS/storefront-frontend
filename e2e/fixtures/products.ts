@@ -38,6 +38,7 @@ function productDefaults() {
   return {
     address_fulfillment_types: ['local_delivery', 'pickup'],
     availability_state: 'available',
+    intro: '',
     created_at: '2025-01-01T00:00:00Z',
     images: [] as Array<{ id: number; image_url: string; alt: string; position: number }>,
     merchant_id: 1,
@@ -45,6 +46,7 @@ function productDefaults() {
     is_popular: false,
     is_trending: false,
     popularity_rank: null as number | null,
+    trend_score: null as string | null,
     product_type: { id: 1, name: 'physical', slug: 'physical' },
     tags: [] as string[],
     updated_at: '2025-01-01T00:00:00Z',
