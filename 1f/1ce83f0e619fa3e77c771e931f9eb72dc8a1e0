@@ -1,0 +1,52 @@
+src/lib/sdk-stub.ts
+  89773481fd62f596 8,75,124,168-169
+src/merchants/poke-perfect-demo.json
+  89773481fd62f596 48
+src/middleware.ts
+  89773481fd62f596 96
+src/types/merchant.ts
+  89773481fd62f596 70-71
+src/lib/api.ts
+  89773481fd62f596 27
+src/merchants/brasserie-van-dam.json
+  89773481fd62f596 52
+src/layouts/BaseLayout.astro
+  89773481fd62f596 32
+src/merchants/demo-restaurant.json
+  89773481fd62f596 48
+src/merchants/bar-sumac.json
+  89773481fd62f596 48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "1f1ce83f0e619fa3e77c771e931f9eb72dc8a1e0",
+  "prompts": {
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 14,
+      "accepted_lines": 1043,
+      "overriden_lines": 0
+    },
+    "c629eeadd3d379db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d84df27-b6df-4cf1-a63e-926c9b36d7a9",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 1,
+      "accepted_lines": 884,
+      "overriden_lines": 0
+    }
+  }
+}
