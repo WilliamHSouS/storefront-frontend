@@ -84,6 +84,20 @@ function displayHost(url: string): string {
           </nav>
         )
       }
+      <nav class="mt-3 flex flex-col gap-1" aria-label="Legal">
+        <a
+          href={`/${lang}/pages/privacy-policy`}
+          class="text-sm text-muted-foreground hover:text-foreground"
+        >
+          {t('privacyPolicy', lang)}
+        </a>
+        <a
+          href={`/${lang}/pages/terms`}
+          class="text-sm text-muted-foreground hover:text-foreground"
+        >
+          {t('termsAndConditions', lang)}
+        </a>
+      </nav>
     </div>
 
     <div>
