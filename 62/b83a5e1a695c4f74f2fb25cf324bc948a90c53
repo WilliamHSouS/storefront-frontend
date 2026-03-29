@@ -1,0 +1,23 @@
+e2e/shipping-rates.spec.ts
+  bb9711b54e44f71c 1-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "62b83a5e1a695c4f74f2fb25cf324bc948a90c53",
+  "prompts": {
+    "bb9711b54e44f71c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f05e68f2-f699-40d3-9d19-5bc0869561b3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 61,
+      "total_deletions": 0,
+      "accepted_lines": 72,
+      "overriden_lines": 0
+    }
+  }
+}
