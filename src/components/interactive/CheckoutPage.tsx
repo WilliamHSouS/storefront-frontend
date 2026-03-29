@@ -305,7 +305,7 @@ export default function CheckoutPage({ lang }: Props) {
           />
 
           {/* Privacy notice */}
-          <PrivacyNotice lang={typedLang} />
+          <PrivacyNotice lang={typedLang} privacyPolicyUrl={`/${lang}/pages/privacy-policy`} />
 
           <CheckoutPlaceOrder
             lang={typedLang}

@@ -9,12 +9,13 @@ import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
 import { normalizeCart } from '@/lib/normalize';
 import { CartIcon } from './icons';
+import { withErrorBoundary } from './ErrorBoundary';
 
 interface Props {
   lang: string;
 }
 
-export default function CartBar({ lang }: Props) {
+function CartBar({ lang }: Props) {
   // Initialize cart from API on first mount.
   // Skip if address hydration will re-fetch the cart with coordinates (prevents double GET).
   useEffect(() => {
@@ -86,3 +87,5 @@ export default function CartBar({ lang }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(CartBar, 'CartBar');

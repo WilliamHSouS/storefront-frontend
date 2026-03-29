@@ -18,6 +18,7 @@ import { showToast } from '@/stores/toast';
 import PromoBanner from './PromoBanner';
 import DiscountCodeInput from './DiscountCodeInput';
 import { ShippingEstimate } from './ShippingEstimate';
+import { withErrorBoundary } from './ErrorBoundary';
 import { PricingBreakdown } from './cart/PricingBreakdown';
 import { CloseIcon } from './icons';
 
@@ -130,6 +131,7 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
       style={style}
     >
       <DiscountCodeInput cart={cart} lang={lang} />
+      <CartSuggestions lang={lang} />
 
       <PricingBreakdown
         lang={lang as 'nl' | 'en' | 'de'}
@@ -154,7 +156,6 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
         }
       />
 
-      <CartSuggestions lang={lang} />
       <a
         href={`/${lang}/checkout`}
         class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
@@ -176,7 +177,7 @@ interface Props {
   inline?: boolean;
 }
 
-export default function CartDrawer({ lang, inline = false }: Props) {
+function CartDrawerInner({ lang, inline = false }: Props) {
   const cart = useStore($cart);
   const cartTotal = useStore($cartTotal);
   const isOpen = useStore($isCartOpen);
@@ -405,3 +406,5 @@ export default function CartDrawer({ lang, inline = false }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(CartDrawerInner, 'CartDrawer');

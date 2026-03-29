@@ -45,7 +45,7 @@
   "social": {
     "instagram": "https://instagram.com/demo-restaurant"
   },
-  "hmacSecret": "0000000000000000000000000000000000000000000000000000000000000000",
+  "merchantSigningKey": "0000000000000000000000000000000000000000000000000000000000000000",
   "seo": {
     "titleTemplate": "%s | Demo Restaurant",
     "defaultDescription": "Bestel online bij Demo Restaurant — Mediterraans eten in Amsterdam"

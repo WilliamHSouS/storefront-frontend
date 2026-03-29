@@ -103,55 +103,9 @@ export interface EligiblePromotion {
 
 export const $eligiblePromotions = atom<EligiblePromotion[]>([]);
 
-/** Extract a human-readable detail string from an SDK error (ApiError or Error). */
-export function errorDetail(error: unknown): string {
-  if (!error || typeof error !== 'object') return 'Unknown error';
-  const e = error as Record<string, unknown>;
-  // SDK ApiError wraps the response body: { status, statusText, body: { detail: "..." } }
-  if (e.body && typeof e.body === 'object') {
-    const body = e.body as Record<string, unknown>;
-    if (typeof body.detail === 'string') return body.detail;
-    // Backend error envelope: body: { error: { code, message } }
-    if (body.error && typeof body.error === 'object') {
-      const nested = body.error as Record<string, unknown>;
-      if (typeof nested.message === 'string') return nested.message;
-    }
-  }
-  // Raw DRF-style response body: { detail: "..." }
-  if (typeof e.detail === 'string') return e.detail;
-  // Raw error envelope: { error: { code, message } }
-  if (e.error && typeof e.error === 'object') {
-    const nested = e.error as Record<string, unknown>;
-    if (typeof nested.message === 'string') return nested.message;
-  }
-  if ('message' in error && typeof (error as Error).message === 'string')
-    return (error as Error).message;
-  if ('statusText' in error) {
-    const err = error as { status: number; statusText: string };
-    return `${err.status} ${err.statusText}`;
-  }
-  return 'Unknown error';
-}
-
-/** Extract the `code` field from a backend error envelope, if present. */
-export function errorCode(error: unknown): string | undefined {
-  if (!error || typeof error !== 'object') return undefined;
-  const e = error as Record<string, unknown>;
-  // SDK ApiError: body.error.code
-  if (e.body && typeof e.body === 'object') {
-    const body = e.body as Record<string, unknown>;
-    if (body.error && typeof body.error === 'object') {
-      const nested = body.error as Record<string, unknown>;
-      if (typeof nested.code === 'string') return nested.code;
-    }
-  }
-  // Raw envelope: error.code
-  if (e.error && typeof e.error === 'object') {
-    const nested = e.error as Record<string, unknown>;
-    if (typeof nested.code === 'string') return nested.code;
-  }
-  return undefined;
-}
+// Re-export from unified error module for backward compatibility
+import { errorDetail, errorCode } from '@/lib/errors';
+export { errorDetail, errorCode };
 
 /** Carry forward the previous shipping_estimate when a mutation response lacks one. */
 export function mergeShippingEstimate(newCart: Cart, prevCart: Cart | null): Cart {

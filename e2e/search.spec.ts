@@ -98,4 +98,71 @@ test.describe('Search', () => {
     // The search overlay (including the input) should disappear
     await expect(searchInput).toBeHidden();
   });
+
+  test('shows popular items when search opens with no query', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    await openSearchOverlay(page);
+
+    // Should show "Populaire items" section (default lang is nl)
+    await expect(page.getByText('Populaire items')).toBeVisible({ timeout: 5_000 });
+
+    // Should show product items in the zero-state
+    const popularList = page.getByRole('listbox', { name: 'Populaire items' });
+    await expect(popularList.getByRole('option').first()).toBeVisible({ timeout: 5_000 });
+  });
+
+  test('navigates results with arrow keys', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    await openSearchOverlay(page);
+
+    // Wait for featured products to load
+    const popularList = page.getByRole('listbox', { name: 'Populaire items' });
+    await expect(popularList.getByRole('option').first()).toBeVisible({ timeout: 5_000 });
+
+    // Press ArrowDown — first item should be highlighted
+    await page.keyboard.press('ArrowDown');
+    const firstOption = popularList.getByRole('option').first();
+    await expect(firstOption).toHaveAttribute('aria-selected', 'true');
+
+    // Press ArrowDown again — second item highlighted, first deselected
+    await page.keyboard.press('ArrowDown');
+    const secondOption = popularList.getByRole('option').nth(1);
+    await expect(secondOption).toHaveAttribute('aria-selected', 'true');
+    await expect(firstOption).toHaveAttribute('aria-selected', 'false');
+  });
+
+  test('saves and shows recent searches', async ({ page }) => {
+    await page.goto(menuPage());
+    await waitForHydration(page);
+
+    // Open search, type a query, select a result
+    const searchInput = await openSearchOverlay(page);
+    await searchInput.fill('falafel');
+
+    // Wait for search results
+    const listbox = page.getByRole('listbox', { name: 'Zoeken' });
+    await expect(listbox.getByRole('option').first()).toBeVisible({ timeout: 5_000 });
+
+    // Click the first result (use force due to backdrop overlay)
+    // eslint-disable-next-line playwright/no-force-option -- backdrop overlay intercepts pointer events
+    await listbox.getByRole('button').first().click({ force: true });
+
+    // Wait for search to close
+    await expect(searchInput).toBeHidden({ timeout: 3_000 });
+
+    // Dismiss the product detail modal (it opens after clicking a search result).
+    // The backdrop intercepts pointer events, so press Escape to close it and wait
+    // for the navigation (history.back) to complete before reopening search.
+    await page.keyboard.press('Escape');
+    await page.waitForURL(/\/nl\/$/, { timeout: 5_000 });
+
+    // Reopen search — should show "Recente zoekopdrachten" with "falafel"
+    await openSearchOverlay(page);
+    await expect(page.getByText('Recente zoekopdrachten')).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByRole('button', { name: 'falafel', exact: true })).toBeVisible();
+  });
 });

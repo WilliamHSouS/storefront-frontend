@@ -6,6 +6,11 @@
   * {
     @apply border-border;
   }
+  /* Hide native clear button on search inputs — we use a custom close button */
+  input[type='search']::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -33,6 +38,16 @@
   }
   .animate-in {
     animation: slide-in 0.2s ease-out;
+  }
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--muted) / 0.4) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
   }
 }
 
@@ -63,6 +78,15 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 

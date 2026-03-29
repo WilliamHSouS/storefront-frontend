@@ -1,5 +1,6 @@
 ---
 import type { MerchantConfig } from '@/types/merchant';
+import { responsiveImage } from '@/lib/image';
 
 interface Props {
   page: 'menu' | 'category' | 'product' | 'cart' | 'checkout' | 'orders' | 'login' | 'cms';
@@ -26,6 +27,11 @@ const noIndexPages = new Set(['cart', 'checkout', 'orders', 'login']);
 const shouldNoIndex = noIndexPages.has(page);
 
 const ogImage = image ?? merchant.heroImage;
+
+const heroPreload =
+  page === 'menu' && merchant.heroImage
+    ? responsiveImage(merchant.heroImage, [640, 960, 1280, 1920], '100vw', 80)
+    : null;
 
 // Generate hreflang alternates
 const currentPath = Astro.url.pathname.replace(`/${lang}`, '');
@@ -61,9 +67,15 @@ const alternates = merchant.languages.map((l) => ({
   href={`${Astro.url.origin}/${merchant.defaultLanguage}${currentPath}`}
 />
 
-{/* Hero image preload for menu page */}
+{/* Hero image preload for menu page — uses optimized responsive URL */}
 {
-  page === 'menu' && merchant.heroImage && (
-    <link rel="preload" as="image" href={merchant.heroImage} />
+  heroPreload && (
+    <link
+      rel="preload"
+      as="image"
+      href={heroPreload.src}
+      imagesrcset={heroPreload.srcset}
+      imagesizes="100vw"
+    />
   )
 }

@@ -9,21 +9,26 @@ import { normalizeProduct, type NormalizedProduct } from '@/lib/normalize';
 import { optimizedImageUrl } from '@/lib/image';
 import * as log from '@/lib/logger';
 import { CloseIcon, SearchIcon } from './icons';
+import { withErrorBoundary } from './ErrorBoundary';
 
 interface Props {
   lang: string;
 }
 
-export default function SearchBar({ lang }: Props) {
+function SearchBar({ lang }: Props) {
   const merchant = useStore($merchant);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<NormalizedProduct[]>([]);
   const [isFallback, setIsFallback] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [featured, setFeatured] = useState<NormalizedProduct[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const abortRef = useRef<AbortController>();
+  const listRef = useRef<HTMLUListElement>(null);
 
   const currency = merchant?.currency ?? 'EUR';
   const locale = langToLocale(lang);
@@ -87,29 +92,68 @@ export default function SearchBar({ lang }: Props) {
       setResults([]);
     } finally {
       setLoading(false);
+      setActiveIndex(-1);
     }
   }, []);
 
   const handleInput = (value: string) => {
     setQuery(value);
+    setActiveIndex(-1);
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => search(value), 300);
   };
 
   const handleSelect = (result: NormalizedProduct) => {
+    if (query.length >= 2) {
+      try {
+        const stored = localStorage.getItem('recentSearches');
+        const existing: string[] = stored ? JSON.parse(stored) : [];
+        const updated = [query, ...existing.filter((s) => s !== query)].slice(0, 5);
+        localStorage.setItem('recentSearches', JSON.stringify(updated));
+      } catch {
+        // Ignore
+      }
+    }
     closeSearch();
     $selectedProduct.set({ id: String(result.id), name: result.name, slug: result.slug });
   };
 
-  // Close on escape
+  // Keyboard navigation: Escape, ArrowDown, ArrowUp, Enter
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeSearch();
+      if (e.key === 'Escape') {
+        closeSearch();
+        return;
+      }
+
+      // Determine the active list: search results when query >= 2, else featured products
+      const activeList = query.length >= 2 ? results : featured;
+      if (activeList.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((prev) => {
+          const next = prev < activeList.length - 1 ? prev + 1 : 0;
+          listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
+          return next;
+        });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((prev) => {
+          const next = prev > 0 ? prev - 1 : activeList.length - 1;
+          listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
+          return next;
+        });
+      } else if (e.key === 'Enter' && activeIndex >= 0 && activeIndex < activeList.length) {
+        e.preventDefault();
+        handleSelect(activeList[activeIndex]);
+      }
     };
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, results, featured, activeIndex, query]);
 
   // Listen for search trigger from Header button
   useEffect(() => {
@@ -126,6 +170,42 @@ export default function SearchBar({ lang }: Props) {
         .forEach((el) => el.removeEventListener('click', handler));
     };
   }, []);
+
+  // Fetch featured products for zero-state (once when first opened)
+  useEffect(() => {
+    if (!isOpen || featured.length > 0) return;
+
+    const controller = new AbortController();
+    const fetchFeatured = async () => {
+      try {
+        const client = getClient();
+        const { data } = await client.GET('/api/v1/products/', {
+          params: { query: { ordering: '-popularity', page_size: '6' } },
+          signal: controller.signal,
+        });
+        if (data) {
+          const page = data as { results: Array<Record<string, unknown>> };
+          setFeatured((page.results ?? []).map(normalizeProduct));
+        }
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        log.error('search', 'Failed to fetch featured products:', err);
+      }
+    };
+    fetchFeatured();
+    return () => controller.abort();
+  }, [isOpen]);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    if (!isOpen) return;
+    try {
+      const stored = localStorage.getItem('recentSearches');
+      if (stored) setRecentSearches(JSON.parse(stored));
+    } catch {
+      // Ignore — localStorage may be unavailable
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -175,16 +255,19 @@ export default function SearchBar({ lang }: Props) {
                 </div>
               )}
               <ul
+                ref={query.length >= 2 ? listRef : undefined}
                 class="max-h-64 overflow-y-auto py-1"
                 role="listbox"
                 aria-label={t('search', lang)}
               >
-                {results.map((result) => (
-                  <li key={result.id} role="option" aria-selected="false">
+                {results.map((result, idx) => (
+                  <li key={result.id} role="option" aria-selected={idx === activeIndex}>
                     <button
                       type="button"
                       onClick={() => handleSelect(result)}
-                      class="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent"
+                      class={`flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent ${
+                        query.length >= 2 && idx === activeIndex ? 'bg-accent' : ''
+                      }`}
                     >
                       {result.image && (
                         <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
@@ -211,6 +294,97 @@ export default function SearchBar({ lang }: Props) {
             </div>
           )}
 
+          {query.length < 2 && results.length === 0 && (
+            <div class="max-h-64 overflow-y-auto">
+              {/* Recent searches */}
+              {recentSearches.length > 0 && (
+                <div class="border-b border-border px-3 py-2">
+                  <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('recentSearches', lang)}
+                  </h3>
+                  <ul>
+                    {recentSearches.map((term) => (
+                      <li key={term}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQuery(term);
+                            search(term);
+                          }}
+                          class="flex w-full items-center gap-2 rounded px-1 py-1.5 text-sm text-card-foreground hover:bg-accent"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="text-muted-foreground"
+                          >
+                            <polyline points="1 4 1 10 7 10" />
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                          </svg>
+                          {term}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Featured products */}
+              {featured.length > 0 && (
+                <div class="px-3 py-2">
+                  <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('popularItems', lang)}
+                  </h3>
+                  <ul
+                    ref={query.length < 2 ? listRef : undefined}
+                    role="listbox"
+                    aria-label={t('popularItems', lang)}
+                  >
+                    {featured.map((product, idx) => (
+                      <li key={product.id} role="option" aria-selected={idx === activeIndex}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelect(product)}
+                          class={`flex w-full items-center gap-3 rounded px-1 py-2 text-left hover:bg-accent ${
+                            query.length < 2 && idx === activeIndex ? 'bg-accent' : ''
+                          }`}
+                        >
+                          {product.image && (
+                            <div class="h-10 w-10 shrink-0 overflow-hidden rounded bg-card-image">
+                              <img
+                                src={optimizedImageUrl(product.image, { width: 80 })}
+                                alt=""
+                                class="h-full w-full object-cover"
+                                width="40"
+                                height="40"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                          <div class="flex-1">
+                            <span class="text-sm font-medium text-card-foreground">
+                              {product.name}
+                            </span>
+                          </div>
+                          <span class="text-sm text-muted-foreground">
+                            {formatPrice(product.price, currency, locale)}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           {query.length >= 2 && results.length === 0 && !loading && (
             <div class="px-3 py-6 text-center text-sm text-muted-foreground">
               {t('noResults', lang)}
@@ -230,3 +404,5 @@ export default function SearchBar({ lang }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(SearchBar, 'SearchBar');
