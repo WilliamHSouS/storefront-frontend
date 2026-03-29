@@ -63,7 +63,7 @@ const imgAttrs = product.image
       isGrid ? 'aspect-square w-full' : 'h-[104px] w-[104px]',
     ]}
   >
-    <div class="absolute inset-0 overflow-hidden rounded-[10px] bg-card-image">
+    <div class="absolute inset-0 overflow-hidden rounded-[10px] bg-card-image animate-pulse">
       {
         imgAttrs ? (
           <img
@@ -75,6 +75,7 @@ const imgAttrs = product.image
             loading="lazy"
             width={isGrid ? 300 : 104}
             height={isGrid ? 300 : 104}
+            onload="this.parentElement.classList.remove('animate-pulse')"
           />
         ) : (
           <div class="flex h-full w-full items-center justify-center text-muted-foreground/30">
