@@ -20,35 +20,71 @@ const lang = Astro.locals.lang as string;
   />
   <Header merchant={merchant} lang={lang} />
 
-  <main class="mx-auto max-w-[1160px] px-4 py-8 sm:px-6 lg:px-8">
-    <article
-      class="prose prose-sm max-w-none text-foreground prose-headings:font-heading prose-headings:text-foreground prose-a:text-primary"
-    >
-      <h1 class="font-heading text-2xl font-bold">{t('termsAndConditions', lang)}</h1>
-      <p>{t('termsIntro', lang, { merchantName: merchant.name })}</p>
+  <main class="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <h1 class="font-heading text-2xl font-bold text-foreground sm:text-3xl">
+      {t('termsAndConditions', lang)}
+    </h1>
+    <p class="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+      {t('termsIntro', lang, { merchantName: merchant.name })}
+    </p>
 
-      <h2>{t('termsOrders', lang)}</h2>
-      <p>{t('termsOrdersBody', lang)}</p>
+    <section class="mt-8 space-y-6">
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">{t('termsOrders', lang)}</h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('termsOrdersBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('termsPricing', lang)}</h2>
-      <p>{t('termsPricingBody', lang)}</p>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('termsPricing', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('termsPricingBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('termsDelivery', lang)}</h2>
-      <p>{t('termsDeliveryBody', lang)}</p>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('termsDelivery', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('termsDeliveryBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('termsCancellation', lang)}</h2>
-      <p>{t('termsCancellationBody', lang)}</p>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('termsCancellation', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('termsCancellationBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('termsLiability', lang)}</h2>
-      <p>{t('termsLiabilityBody', lang)}</p>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('termsLiability', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('termsLiabilityBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('termsContact', lang)}</h2>
-      <p>
-        {merchant.name}<br />
-        {merchant.contact.email}<br />
-        {merchant.contact.address}
-      </p>
-    </article>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('termsContact', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {merchant.name}<br />
+          <a href={`mailto:${merchant.contact.email}`} class="underline hover:text-foreground">
+            {merchant.contact.email}
+          </a><br />
+          {merchant.contact.address}
+        </p>
+      </div>
+    </section>
   </main>
 
   <Footer merchant={merchant} lang={lang} />

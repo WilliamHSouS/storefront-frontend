@@ -20,32 +20,64 @@ const lang = Astro.locals.lang as string;
   />
   <Header merchant={merchant} lang={lang} />
 
-  <main class="mx-auto max-w-[1160px] px-4 py-8 sm:px-6 lg:px-8">
-    <article
-      class="prose prose-sm max-w-none text-foreground prose-headings:font-heading prose-headings:text-foreground prose-a:text-primary"
-    >
-      <h1 class="font-heading text-2xl font-bold">{t('privacyPolicy', lang)}</h1>
-      <p>{t('privacyPolicyIntro', lang, { merchantName: merchant.name })}</p>
+  <main class="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <h1 class="font-heading text-2xl font-bold text-foreground sm:text-3xl">
+      {t('privacyPolicy', lang)}
+    </h1>
+    <p class="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+      {t('privacyPolicyIntro', lang, { merchantName: merchant.name })}
+    </p>
 
-      <h2>{t('privacyDataCollected', lang)}</h2>
-      <p>{t('privacyDataCollectedBody', lang)}</p>
+    <section class="mt-8 space-y-6">
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacyDataCollected', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('privacyDataCollectedBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('privacyHowWeUse', lang)}</h2>
-      <p>{t('privacyHowWeUseBody', lang)}</p>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacyHowWeUse', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('privacyHowWeUseBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('privacySharing', lang)}</h2>
-      <p>{t('privacySharingBody', lang)}</p>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacySharing', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('privacySharingBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('privacyRights', lang)}</h2>
-      <p>{t('privacyRightsBody', lang)}</p>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacyRights', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('privacyRightsBody', lang)}
+        </p>
+      </div>
 
-      <h2>{t('privacyContact', lang)}</h2>
-      <p>
-        {merchant.name}<br />
-        {merchant.contact.email}<br />
-        {merchant.contact.address}
-      </p>
-    </article>
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacyContact', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {merchant.name}<br />
+          <a href={`mailto:${merchant.contact.email}`} class="underline hover:text-foreground">
+            {merchant.contact.email}
+          </a><br />
+          {merchant.contact.address}
+        </p>
+      </div>
+    </section>
   </main>
 
   <Footer merchant={merchant} lang={lang} />
