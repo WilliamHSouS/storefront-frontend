@@ -1,7 +1,13 @@
 import { useEffect, useCallback, useState } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
-import { $checkout } from '@/stores/checkout';
-import { patchDelivery, cancelPendingPatch } from '@/stores/checkout-actions';
+import { $checkout, $shippingGroups, $shippingGroupsLoading } from '@/stores/checkout';
+import {
+  patchDelivery,
+  cancelPendingPatch,
+  fetchShippingGroups,
+  selectShippingRate,
+  fetchCheckout,
+} from '@/stores/checkout-actions';
 import { persistFormState } from '@/stores/checkout';
 import { onAddressChange } from '@/stores/address-actions';
 import { $addressCoords } from '@/stores/address';
@@ -15,6 +21,8 @@ import DeliveryAddressForm from './DeliveryAddressForm';
 import FulfillmentToggle from './FulfillmentToggle';
 import { PickupLocationPicker } from './PickupLocationPicker';
 import SchedulingPicker from './SchedulingPicker';
+import { ShippingRateSelector } from './ShippingRateSelector';
+import { showToast } from '@/stores/toast';
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -73,6 +81,9 @@ export default function CheckoutFormOrchestrator({
     }>
   >([]);
   const [timeSlotsLoading, setTimeSlotsLoading] = useState(false);
+
+  const shippingGroups = useStore($shippingGroups);
+  const shippingGroupsLoading = useStore($shippingGroupsLoading);
 
   // ── Cancel pending PATCH on unmount ──────────────────────────────
   useEffect(() => {
@@ -139,15 +150,11 @@ export default function CheckoutFormOrchestrator({
 
       try {
         // First, get the merchant_shipping_provider_id from checkout shipping groups
-        const { data: shippingData } = await client.GET(
-          '/api/v1/checkout/{checkout_id}/shipping/',
-          { params: { path: { checkout_id: checkoutId } } },
-        );
-
-        const groups = shippingData as unknown as Array<{
-          merchant_shipping_provider_id?: number;
-        }> | null;
-        const mspId = groups?.[0]?.merchant_shipping_provider_id;
+        let groups = $shippingGroups.get();
+        if (groups.length === 0 && checkoutId) {
+          groups = await fetchShippingGroups(checkoutId);
+        }
+        const mspId = groups[0]?.merchant_shipping_provider_id;
 
         if (!mspId) {
           // No shipping provider configured — fall back to empty slots
@@ -310,6 +317,44 @@ export default function CheckoutFormOrchestrator({
     handleBlur,
   ]);
 
+  // ── Fetch shipping groups when delivery is set ──────────────────────
+  // Triggers when checkout transitions to delivery_set (address saved).
+  // Re-fetches when address changes (checkout updates from PATCH response).
+  useEffect(() => {
+    if (!checkout?.id) return;
+    if (checkout.status === 'created') return; // address not set yet
+
+    fetchShippingGroups(checkout.id);
+  }, [checkout?.id, checkout?.status, checkout?.shipping_address?.postal_code]);
+
+  // ── Shipping rate selection handler ──────────────────────────────
+  const handleRateSelect = useCallback(
+    async (groupId: string, rateId: string) => {
+      if (!checkoutId) return;
+
+      dispatch({ type: 'SET_FIELD', field: 'selectedShippingRateId', value: rateId });
+
+      const result = await selectShippingRate(checkoutId, groupId, rateId);
+
+      if (result.expired) {
+        // Rate expired — re-fetch shipping groups for fresh quotes
+        dispatch({ type: 'SET_FIELD', field: 'selectedShippingRateId', value: null });
+        await fetchShippingGroups(checkoutId);
+        showToast(t('shippingRateExpired', lang), 'error');
+        return;
+      }
+
+      if (!result.ok) {
+        dispatch({ type: 'SET_FIELD', field: 'selectedShippingRateId', value: null });
+        return;
+      }
+
+      // Re-fetch checkout to get updated shipping_cost
+      await fetchCheckout(checkoutId);
+    },
+    [checkoutId, lang, dispatch],
+  );
+
   // ── JSX ──────────────────────────────────────────────────────────
   return (
     <>
@@ -364,6 +409,20 @@ export default function CheckoutFormOrchestrator({
             </div>
           )}
         </>
+      )}
+
+      {/* Shipping rate selection (visible only for delivery with multiple rates) */}
+      {form.fulfillmentMethod === 'delivery' && (
+        <div class="px-4 py-3">
+          <ShippingRateSelector
+            lang={lang}
+            currency={checkout?.currency ?? 'EUR'}
+            groups={shippingGroups}
+            selectedRateId={form.selectedShippingRateId}
+            onRateSelect={handleRateSelect}
+            loading={shippingGroupsLoading}
+          />
+        </div>
       )}
 
       {/* Scheduling */}

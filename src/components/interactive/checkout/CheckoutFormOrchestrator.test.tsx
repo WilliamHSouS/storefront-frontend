@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, cleanup, fireEvent, act, waitFor } from '@testing-library/preact';
-import { $checkout } from '@/stores/checkout';
+import { $checkout, $shippingGroups, $shippingGroupsLoading } from '@/stores/checkout';
 import type { CheckoutFormState } from '@/types/checkout';
 
 /* ------------------------------------------------------------------ */
@@ -9,10 +9,20 @@ import type { CheckoutFormState } from '@/types/checkout';
 
 const mockPatchDelivery = vi.fn();
 const mockCancelPendingPatch = vi.fn();
+const mockFetchShippingGroups = vi.fn().mockResolvedValue([]);
+const mockSelectShippingRate = vi.fn().mockResolvedValue({ ok: true, expired: false });
+const mockFetchCheckout = vi.fn().mockResolvedValue({});
 
 vi.mock('@/stores/checkout-actions', () => ({
   patchDelivery: (...args: unknown[]) => mockPatchDelivery(...args),
   cancelPendingPatch: () => mockCancelPendingPatch(),
+  fetchShippingGroups: (...args: unknown[]) => mockFetchShippingGroups(...args),
+  selectShippingRate: (...args: unknown[]) => mockSelectShippingRate(...args),
+  fetchCheckout: (...args: unknown[]) => mockFetchCheckout(...args),
+}));
+
+vi.mock('@/stores/toast', () => ({
+  showToast: vi.fn(),
 }));
 
 const mockGET = vi.fn().mockResolvedValue({ data: [] });
@@ -87,7 +97,12 @@ describe('CheckoutFormOrchestrator', () => {
     cleanup();
     vi.clearAllMocks();
     $checkout.set(null);
+    $shippingGroups.set([]);
+    $shippingGroupsLoading.set(false);
     mockGET.mockResolvedValue({ data: [] });
+    mockFetchShippingGroups.mockResolvedValue([]);
+    mockSelectShippingRate.mockResolvedValue({ ok: true, expired: false });
+    mockFetchCheckout.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -500,6 +515,66 @@ describe('CheckoutFormOrchestrator', () => {
       expect(setFormErrors).toHaveBeenCalledWith(
         expect.objectContaining({ email: 'emailInvalid' }),
       );
+    });
+  });
+
+  /* -- 7. Shipping rate selection ----------------------------------- */
+
+  describe('shipping rate selection', () => {
+    it('fetches shipping groups when checkout status becomes delivery_set', async () => {
+      $checkout.set({
+        id: 'co_test',
+        status: 'delivery_set',
+        cart_id: 'cart-1',
+        merchant_id: 1,
+        channel_id: null,
+        currency: 'EUR',
+        display_currency: 'EUR',
+        fx_rate_to_display: '1.00',
+        email: 'test@example.com',
+        shipping_address: {
+          first_name: 'J',
+          last_name: 'D',
+          street_address_1: 'St 1',
+          city: 'A',
+          postal_code: '1012AB',
+          country_code: 'NL',
+        },
+        billing_address: null,
+        shipping_method: null,
+        payment_method: null,
+        payment_status: null,
+        line_items: [],
+        subtotal: '10.00',
+        tax_total: '0.83',
+        shipping_cost: '0.00',
+        surcharge_total: '0.00',
+        display_surcharge_total: '0.00',
+        discount_amount: '0.00',
+        discount_code: null,
+        applied_promotion_id: null,
+        promotion_discount_amount: '0.00',
+        total: '10.00',
+        display_subtotal: '€ 10,00',
+        display_tax_total: '€ 0,83',
+        display_shipping_cost: '€ 0,00',
+        display_discount_amount: '€ 0,00',
+        display_promotion_discount_amount: '€ 0,00',
+        display_total: '€ 10,00',
+        fulfillment_slot_id: null,
+        gift_card_details: null,
+        order_number: null,
+        purpose: 'standard',
+        created_at: null,
+        updated_at: null,
+        available_payment_gateways: null,
+      } as any);
+
+      await renderOrchestrator();
+
+      await waitFor(() => {
+        expect(mockFetchShippingGroups).toHaveBeenCalledWith('co_test');
+      });
     });
   });
 });
