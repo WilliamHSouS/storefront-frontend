@@ -1,0 +1,25 @@
+src/components/interactive/checkout/ShippingRateSelector.tsx
+  bb9711b54e44f71c 1-111
+src/components/interactive/checkout/ShippingRateSelector.test.tsx
+  bb9711b54e44f71c 1-168
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "4ab9a5d5e3542ab31bc6cec5d7c609e4567a12ef",
+  "prompts": {
+    "bb9711b54e44f71c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f05e68f2-f699-40d3-9d19-5bc0869561b3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 285,
+      "total_deletions": 0,
+      "accepted_lines": 296,
+      "overriden_lines": 0
+    }
+  }
+}
