@@ -130,6 +130,7 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
       style={style}
     >
       <DiscountCodeInput cart={cart} lang={lang} />
+      <CartSuggestions lang={lang} />
 
       <PricingBreakdown
         lang={lang as 'nl' | 'en' | 'de'}
@@ -154,7 +155,6 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
         }
       />
 
-      <CartSuggestions lang={lang} />
       <a
         href={`/${lang}/checkout`}
         class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
