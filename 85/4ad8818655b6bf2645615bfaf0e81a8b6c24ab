@@ -1,0 +1,46 @@
+src/i18n/messages/nl.json
+  c629eeadd3d379db 5
+src/lib/normalize.ts
+  c629eeadd3d379db 77,188
+src/i18n/messages/de.json
+  c629eeadd3d379db 5
+e2e/fixtures/products.ts
+  c629eeadd3d379db 46
+src/i18n/messages/en.json
+  c629eeadd3d379db 5
+src/components/astro/PopularBadge.astro
+  c629eeadd3d379db 6,12,15-21,25,28,30-31,34-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "854ad8818655b6bf2645615bfaf0e81a8b6c24ab",
+  "prompts": {
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1499,
+      "overriden_lines": 0
+    },
+    "c629eeadd3d379db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d84df27-b6df-4cf1-a63e-926c9b36d7a9",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 894,
+      "overriden_lines": 0
+    }
+  }
+}
