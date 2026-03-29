@@ -1,0 +1,38 @@
+src/stores/toast.test.ts
+  89773481fd62f596 2,9,65-86
+src/stores/toast.ts
+  89773481fd62f596 12,14-19,22-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "d12de2450980491ab5aa4fb419d3c1b21362a762",
+  "prompts": {
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 149,
+      "total_deletions": 1,
+      "accepted_lines": 1178,
+      "overriden_lines": 0
+    },
+    "c629eeadd3d379db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d84df27-b6df-4cf1-a63e-926c9b36d7a9",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 869,
+      "overriden_lines": 0
+    }
+  }
+}
