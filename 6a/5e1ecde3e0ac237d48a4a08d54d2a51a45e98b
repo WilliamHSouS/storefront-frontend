@@ -1,0 +1,23 @@
+e2e/helpers/mock-api.ts
+  bb9711b54e44f71c 727,735-736,740,742,746,753-759,768-799
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "6a5e1ecde3e0ac237d48a4a08d54d2a51a45e98b",
+  "prompts": {
+    "bb9711b54e44f71c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f05e68f2-f699-40d3-9d19-5bc0869561b3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 3,
+      "accepted_lines": 57,
+      "overriden_lines": 0
+    }
+  }
+}
