@@ -12,20 +12,26 @@ import ProductDetail from '@/components/interactive/ProductDetail';
 import SearchBar from '@/components/interactive/SearchBar';
 import Toast from '@/components/interactive/Toast';
 import MerchantComms from '@/components/interactive/MerchantComms';
-import { FulfillmentOverlay } from '@/components/interactive/FulfillmentOverlay';
-import { DeliveryBanner } from '@/components/interactive/DeliveryBanner';
-import { ErrorBoundary } from '@/components/interactive/ErrorBoundary';
+import FulfillmentOverlay from '@/components/interactive/FulfillmentOverlay';
+import DeliveryBanner from '@/components/interactive/DeliveryBanner';
 import type { CommsMessage, CommsTheme } from '@/stores/comms';
 import { BANNER_THEME_CLASSES } from '@/lib/comms-theme';
 import { safeUrl } from '@/lib/safe-url';
+import { fetchCommsMessages } from '@/lib/comms-fetch';
 
 interface Props {
   title: string;
   description?: string;
   hideSharedIslands?: boolean;
+  commsMessages?: CommsMessage[];
 }
 
-const { title, description, hideSharedIslands = false } = Astro.props;
+const {
+  title,
+  description,
+  hideSharedIslands = false,
+  commsMessages: commsMessagesProp,
+} = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
@@ -61,22 +67,9 @@ let ssrTopBanner: {
   custom_colors: Record<string, string>;
 } | null = null;
 
-let commsMessages: CommsMessage[] = [];
-{
-  const sdk = Astro.locals.sdk;
-  if (sdk) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- merchant-comms endpoint not in SDK
-      const { data } = await sdk.GET('/api/v1/merchant-comms/storefront/active/' as any);
-      if (data) {
-        commsMessages = Array.isArray(data)
-          ? (data as unknown as CommsMessage[])
-          : (((data as unknown as Record<string, unknown>).results as CommsMessage[]) ?? []);
-      }
-    } catch {
-      // Silent degradation — no banners is better than a broken page
-    }
-  }
+let commsMessages: CommsMessage[] = commsMessagesProp ?? [];
+if (commsMessagesProp === undefined) {
+  commsMessages = await fetchCommsMessages(Astro.locals.sdk);
 }
 
 // Find the first top_banner content with actual displayable text for SSR rendering
@@ -183,50 +176,18 @@ for (const msg of commsMessages) {
         /* best-effort */
       }
     </script>
-    {
-      !hideSharedIslands && (
-        <ErrorBoundary client:idle name="MerchantComms">
-          <MerchantComms lang={langValue} messages={commsMessages} />
-        </ErrorBoundary>
-      )
-    }
-    {
-      !hideSharedIslands && (
-        <ErrorBoundary client:idle name="DeliveryBanner">
-          <DeliveryBanner lang={langValue} />
-        </ErrorBoundary>
-      )
-    }
+    {!hideSharedIslands && <MerchantComms client:idle lang={langValue} messages={commsMessages} />}
+    {!hideSharedIslands && <DeliveryBanner client:idle lang={langValue} />}
 
     <slot />
 
     {/* Shared islands: cart, product detail modal, search */}
-    <ErrorBoundary client:idle name="CartBar">
-      <CartBar lang={langValue} />
-    </ErrorBoundary>
-    {
-      !hideSharedIslands && (
-        <ErrorBoundary client:idle name="CartDrawer">
-          <CartDrawer lang={langValue} />
-        </ErrorBoundary>
-      )
-    }
-    {
-      !hideSharedIslands && (
-        <ErrorBoundary client:idle name="ProductDetail">
-          <ProductDetail lang={langValue} />
-        </ErrorBoundary>
-      )
-    }
-    <ErrorBoundary client:idle name="SearchBar">
-      <SearchBar lang={langValue} />
-    </ErrorBoundary>
-    <ErrorBoundary client:idle name="Toast">
-      <Toast lang={langValue} />
-    </ErrorBoundary>
-    <ErrorBoundary client:idle name="FulfillmentOverlay">
-      <FulfillmentOverlay lang={langValue} />
-    </ErrorBoundary>
+    <CartBar client:idle lang={langValue} />
+    {!hideSharedIslands && <CartDrawer client:idle lang={langValue} />}
+    {!hideSharedIslands && <ProductDetail client:idle lang={langValue} />}
+    <SearchBar client:idle lang={langValue} />
+    <Toast client:idle lang={langValue} />
+    <FulfillmentOverlay client:idle lang={langValue} />
 
     <script is:inline>
       document.addEventListener('click', function (e) {

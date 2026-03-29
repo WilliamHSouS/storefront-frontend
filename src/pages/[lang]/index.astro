@@ -9,6 +9,7 @@ import StructuredData from '@/components/astro/StructuredData.astro';
 import { generateRestaurantLD, generateItemListLD } from '@/lib/structured-data';
 import { normalizeProduct } from '@/lib/normalize';
 import { fetchCollectionsOrCategories } from '@/lib/collections';
+import { fetchCommsMessages } from '@/lib/comms-fetch';
 import { t } from '@/i18n';
 
 // Interactive Preact islands
@@ -16,8 +17,11 @@ import FreshnessProvider from '@/components/interactive/FreshnessProvider';
 
 const { merchant, lang, sdk } = Astro.locals;
 
-// Fetch collections (or categories as fallback), then products per section
-const { sections: menuSections, source } = await fetchCollectionsOrCategories(sdk);
+// Fetch comms and collections in parallel — eliminates sequential waterfall
+const [commsMessages, { sections: menuSections, source }] = await Promise.all([
+  fetchCommsMessages(sdk),
+  fetchCollectionsOrCategories(sdk),
+]);
 
 const sectionProducts = await Promise.all(
   menuSections.map(async (section) => {
@@ -49,7 +53,11 @@ const homepageProductUrls = allProducts.slice(0, MAX_HOMEPAGE_ITEMS).map((p) => 
 }));
 ---
 
-<BaseLayout title={merchant.name} description={merchant.seo.defaultDescription}>
+<BaseLayout
+  title={merchant.name}
+  description={merchant.seo.defaultDescription}
+  commsMessages={commsMessages}
+>
   <SEOHead
     slot="head"
     page="menu"
