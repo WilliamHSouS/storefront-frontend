@@ -29,7 +29,7 @@ const { title, description, hideSharedIslands = false } = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
-// hmacSecret is included client-side — it's a vendor-specific HMAC key (not a user secret)
+// merchantSigningKey is included client-side — it's a vendor-specific HMAC key (not a user secret)
 // needed for client-side write requests (add to cart, checkout mutations) to pass backend signature validation
 const merchantJSON = merchant ? JSON.stringify(merchant) : '';
 const messages = lang ? getMessages(lang) : null;

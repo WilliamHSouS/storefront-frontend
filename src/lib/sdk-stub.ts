@@ -5,7 +5,7 @@
  * This wrapper adapts responses to the `ApiResult` discriminated union that
  * all consumer code already relies on, so zero call-site changes are needed.
  *
- * When an `hmacSecret` is provided, write requests (POST/PATCH/PUT/DELETE) are
+ * When an `merchantSigningKey` is provided, write requests (POST/PATCH/PUT/DELETE) are
  * signed with HMAC-SHA256 via the Web Crypto API / Node crypto module.
  */
 
@@ -72,7 +72,7 @@ export interface CreateClientOptions {
   vendorId: string;
   language: string;
   token?: string;
-  hmacSecret?: string;
+  merchantSigningKey?: string;
   fetch?: typeof globalThis.fetch;
 }
 
@@ -121,7 +121,7 @@ function createSigningFetch(
     }
     const signature = await computeHmac(bodyStr, secret);
     const headers = new Headers(init?.headers);
-    headers.set('X-Vendor-Signature', signature);
+    headers.set('X-Merchant-Signature', signature);
     return baseFetch(input, { ...init, headers });
   };
 }
@@ -165,8 +165,8 @@ export function createStorefrontClient(options: CreateClientOptions): Storefront
     return baseFetch(input, { ...init, headers });
   };
 
-  const fetchFn = options.hmacSecret
-    ? createSigningFetch(merchantFetch, options.hmacSecret)
+  const fetchFn = options.merchantSigningKey
+    ? createSigningFetch(merchantFetch, options.merchantSigningKey)
     : merchantFetch;
 
   const realClient = createRealClient({

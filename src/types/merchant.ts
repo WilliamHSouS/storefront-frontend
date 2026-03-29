@@ -67,8 +67,8 @@ export interface MerchantConfig {
   features?: {
     upsells?: boolean;
   };
-  /** HMAC-SHA256 secret for signing write requests to the backend. */
-  hmacSecret?: string;
+  /** HMAC-SHA256 key for signing write requests — scopes requests to this merchant (not a secret). */
+  merchantSigningKey?: string;
   seo: {
     titleTemplate: string;
     defaultDescription: string;
