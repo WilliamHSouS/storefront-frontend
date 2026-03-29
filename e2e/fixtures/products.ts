@@ -38,6 +38,7 @@ function productDefaults() {
   return {
     address_fulfillment_types: ['local_delivery', 'pickup'],
     availability_state: 'available',
+    intro: null as string | null,
     created_at: '2025-01-01T00:00:00Z',
     images: [] as Array<{ id: number; image_url: string; alt: string; position: number }>,
     merchant_id: 1,
