@@ -1,0 +1,50 @@
+src/components/interactive/checkout/CheckoutPaymentSection.tsx
+  c629eeadd3d379db 124,127-128,191
+src/components/interactive/checkout/StripePaymentForm.tsx
+  c629eeadd3d379db 4,7,23,51,98,102
+src/components/interactive/checkout/SchedulingPicker.tsx
+  c629eeadd3d379db 145,194
+src/i18n/messages/de.json
+  c629eeadd3d379db 196-205
+src/i18n/messages/nl.json
+  c629eeadd3d379db 196-205
+src/components/interactive/checkout/ExpressCheckout.tsx
+  c629eeadd3d379db 146,192,203,214
+src/i18n/messages/en.json
+  c629eeadd3d379db 196-205
+src/components/interactive/checkout/CheckoutPaymentSection.test.tsx
+  c629eeadd3d379db 285,304,323,349,443
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "72c0678452d875a6803bff702baf637ec50ab1db",
+  "prompts": {
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1499,
+      "overriden_lines": 0
+    },
+    "c629eeadd3d379db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5d84df27-b6df-4cf1-a63e-926c9b36d7a9",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 13,
+      "accepted_lines": 54,
+      "overriden_lines": 0
+    }
+  }
+}
