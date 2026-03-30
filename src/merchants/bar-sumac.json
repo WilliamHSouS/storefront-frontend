@@ -45,7 +45,7 @@
   "social": {
     "instagram": "https://instagram.com/barsumac"
   },
-  "hmacSecret": "0000000000000000000000000000000000000000000000000000000000000000",
+  "merchantSigningKey": "0000000000000000000000000000000000000000000000000000000000000000",
   "seo": {
     "titleTemplate": "%s | Bar Sumac",
     "defaultDescription": "Bestel online bij Bar Sumac — Mediterraans eten in Amsterdam"

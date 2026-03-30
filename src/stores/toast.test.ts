@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { $toasts, showToast, dismissToast } from './toast';
+import { $toasts, showToast, dismissToast, _resetForTesting } from './toast';
 
 // crypto.randomUUID is available in happy-dom
 describe('toast store', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     $toasts.set([]);
+    _resetForTesting();
   });
 
   afterEach(() => {
@@ -60,5 +61,27 @@ describe('toast store', () => {
     expect(toasts).toHaveLength(3);
     expect(toasts[0].message).toBe('two');
     expect(toasts[2].message).toBe('four');
+  });
+
+  it('deduplicates identical messages within 2 seconds', () => {
+    showToast('Connection failed');
+    showToast('Connection failed');
+    showToast('Connection failed');
+    expect($toasts.get()).toHaveLength(1);
+    expect($toasts.get()[0].message).toBe('Connection failed');
+  });
+
+  it('allows same message after dedup window expires', () => {
+    showToast('Connection failed');
+    expect($toasts.get()).toHaveLength(1);
+    vi.advanceTimersByTime(2100);
+    showToast('Connection failed');
+    expect($toasts.get()).toHaveLength(2);
+  });
+
+  it('allows different messages within dedup window', () => {
+    showToast('Error A');
+    showToast('Error B');
+    expect($toasts.get()).toHaveLength(2);
   });
 });

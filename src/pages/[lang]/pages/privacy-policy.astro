@@ -1,0 +1,84 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/astro/Header.astro';
+import Footer from '@/components/astro/Footer.astro';
+import SEOHead from '@/components/astro/SEOHead.astro';
+import type { MerchantConfig } from '@/types/merchant';
+import { t } from '@/i18n';
+
+const merchant = Astro.locals.merchant as MerchantConfig;
+const lang = Astro.locals.lang as string;
+---
+
+<BaseLayout title={`${t('privacyPolicy', lang)} — ${merchant.name}`}>
+  <SEOHead
+    slot="head"
+    page="cms"
+    merchant={merchant}
+    lang={lang}
+    title={t('privacyPolicy', lang)}
+  />
+  <Header merchant={merchant} lang={lang} />
+
+  <main class="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <h1 class="font-heading text-2xl font-bold text-foreground sm:text-3xl">
+      {t('privacyPolicy', lang)}
+    </h1>
+    <p class="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+      {t('privacyPolicyIntro', lang, { merchantName: merchant.name })}
+    </p>
+
+    <section class="mt-8 space-y-6">
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacyDataCollected', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('privacyDataCollectedBody', lang)}
+        </p>
+      </div>
+
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacyHowWeUse', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('privacyHowWeUseBody', lang)}
+        </p>
+      </div>
+
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacySharing', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('privacySharingBody', lang)}
+        </p>
+      </div>
+
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacyRights', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t('privacyRightsBody', lang)}
+        </p>
+      </div>
+
+      <div>
+        <h2 class="font-heading text-lg font-semibold text-foreground">
+          {t('privacyContact', lang)}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {merchant.name}<br />
+          <a href={`mailto:${merchant.contact.email}`} class="underline hover:text-foreground">
+            {merchant.contact.email}
+          </a><br />
+          {merchant.contact.address}
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer merchant={merchant} lang={lang} />
+</BaseLayout>

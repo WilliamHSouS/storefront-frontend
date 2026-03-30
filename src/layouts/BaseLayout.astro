@@ -12,23 +12,30 @@ import ProductDetail from '@/components/interactive/ProductDetail';
 import SearchBar from '@/components/interactive/SearchBar';
 import Toast from '@/components/interactive/Toast';
 import MerchantComms from '@/components/interactive/MerchantComms';
-import { FulfillmentOverlay } from '@/components/interactive/FulfillmentOverlay';
-import { DeliveryBanner } from '@/components/interactive/DeliveryBanner';
+import FulfillmentOverlay from '@/components/interactive/FulfillmentOverlay';
+import DeliveryBanner from '@/components/interactive/DeliveryBanner';
 import type { CommsMessage, CommsTheme } from '@/stores/comms';
 import { BANNER_THEME_CLASSES } from '@/lib/comms-theme';
 import { safeUrl } from '@/lib/safe-url';
+import { fetchCommsMessages } from '@/lib/comms-fetch';
 
 interface Props {
   title: string;
   description?: string;
   hideSharedIslands?: boolean;
+  commsMessages?: CommsMessage[];
 }
 
-const { title, description, hideSharedIslands = false } = Astro.props;
+const {
+  title,
+  description,
+  hideSharedIslands = false,
+  commsMessages: commsMessagesProp,
+} = Astro.props;
 const merchant = Astro.locals.merchant as MerchantConfig | undefined;
 const lang = Astro.locals.lang as string | undefined;
 const themeCSS = merchant ? themeToCSS(merchant.theme) : '';
-// hmacSecret is included client-side — it's a vendor-specific HMAC key (not a user secret)
+// merchantSigningKey is included client-side — it's a vendor-specific HMAC key (not a user secret)
 // needed for client-side write requests (add to cart, checkout mutations) to pass backend signature validation
 const merchantJSON = merchant ? JSON.stringify(merchant) : '';
 const messages = lang ? getMessages(lang) : null;
@@ -60,28 +67,18 @@ let ssrTopBanner: {
   custom_colors: Record<string, string>;
 } | null = null;
 
-let commsMessages: CommsMessage[] = [];
-{
-  const sdk = Astro.locals.sdk;
-  if (sdk) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- merchant-comms endpoint not in SDK
-      const { data } = await sdk.GET('/api/v1/merchant-comms/storefront/active/' as any);
-      if (data) {
-        commsMessages = Array.isArray(data)
-          ? (data as unknown as CommsMessage[])
-          : (((data as unknown as Record<string, unknown>).results as CommsMessage[]) ?? []);
-      }
-    } catch {
-      // Silent degradation — no banners is better than a broken page
-    }
-  }
+let commsMessages: CommsMessage[] = commsMessagesProp ?? [];
+if (commsMessagesProp === undefined) {
+  commsMessages = await fetchCommsMessages(Astro.locals.sdk);
 }
 
-// Find the first top_banner content for SSR rendering
+// Find the first top_banner content with actual displayable text for SSR rendering
 for (const msg of commsMessages) {
   for (const content of msg.contents) {
-    if (content.surface === 'top_banner') {
+    if (
+      content.surface === 'top_banner' &&
+      (content.headline || content.body || (content.cta_label && content.cta_url))
+    ) {
       ssrTopBanner = content;
       break;
     }
@@ -95,13 +92,22 @@ for (const msg of commsMessages) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    {merchant?.favicon && <link rel="icon" href={merchant.favicon} />}
+    <link rel="icon" href={merchant?.logo || '/favicon.ico'} />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     <link rel="preconnect" href={import.meta.env.PUBLIC_API_BASE_URL} />
     {googleFontsUrl && <link rel="preconnect" href="https://fonts.googleapis.com" />}
     {googleFontsUrl && <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />}
-    {googleFontsUrl && <link rel="stylesheet" href={googleFontsUrl} />}
+    {
+      googleFontsUrl && (
+        <>
+          <link rel="stylesheet" href={googleFontsUrl} media="print" onload="this.media='all'" />
+          <noscript>
+            <link rel="stylesheet" href={googleFontsUrl} />
+          </noscript>
+        </>
+      )
+    }
     {themeCSS && <style set:html={`:root { ${themeCSS} }`} />}
     {/* PostHog queue stub — events pushed before SDK loads are replayed on init */}
     <script is:inline>

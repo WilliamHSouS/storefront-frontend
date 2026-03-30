@@ -5,6 +5,7 @@ import { getClient } from '@/lib/api';
 import { t } from '@/i18n/client';
 import * as log from '@/lib/logger';
 import type { AddressCoords, ProductFulfillment } from '@/types/address';
+import { withErrorBoundary } from './ErrorBoundary';
 
 interface Props {
   lang: string;
@@ -120,7 +121,7 @@ function showAllProducts(): void {
   }
 }
 
-export function FulfillmentOverlay({ lang }: Props) {
+function FulfillmentOverlay({ lang }: Props) {
   const coords = useStore($addressCoords);
 
   useEffect(() => {
@@ -192,3 +193,6 @@ async function fetchAndApplyFulfillment(
     showAllProducts();
   }
 }
+
+export default withErrorBoundary(FulfillmentOverlay, 'FulfillmentOverlay');
+export { FulfillmentOverlay };

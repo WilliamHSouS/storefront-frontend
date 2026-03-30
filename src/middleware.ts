@@ -93,7 +93,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
     baseUrl: process.env.API_BASE_URL ?? import.meta.env.API_BASE_URL,
     vendorId: merchant.merchantId,
     language: lang,
-    hmacSecret: merchant.hmacSecret || undefined,
+    merchantSigningKey: merchant.merchantSigningKey || undefined,
   });
 
   // 4. Inject into locals

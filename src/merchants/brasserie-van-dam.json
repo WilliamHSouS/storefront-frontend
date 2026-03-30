@@ -49,7 +49,7 @@
   "social": {
     "instagram": "https://instagram.com/brasserievandam"
   },
-  "hmacSecret": "0000000000000000000000000000000000000000000000000000000000000000",
+  "merchantSigningKey": "0000000000000000000000000000000000000000000000000000000000000000",
   "seo": {
     "titleTemplate": "%s | Brasserie Van Dam",
     "defaultDescription": "Bestel online bij Brasserie Van Dam"

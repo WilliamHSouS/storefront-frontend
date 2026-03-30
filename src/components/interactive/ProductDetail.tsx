@@ -14,6 +14,7 @@ import { optimizedImageUrl, responsiveImage } from '@/lib/image';
 import { showToast } from '@/stores/toast';
 import * as log from '@/lib/logger';
 import QuantitySelector from './QuantitySelector';
+import { withErrorBoundary } from './ErrorBoundary';
 
 /** Mapped modifier option ready for UI rendering. */
 interface MappedModifierOption {
@@ -171,7 +172,7 @@ interface Props {
   lang: string;
 }
 
-export default function ProductDetail({ lang }: Props) {
+function ProductDetail({ lang }: Props) {
   const selectedProduct = useStore($selectedProduct);
   const merchant = useStore($merchant);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -990,3 +991,5 @@ export default function ProductDetail({ lang }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(ProductDetail, 'ProductDetail');

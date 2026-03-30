@@ -36,6 +36,11 @@ function ensureScript(): Promise<void> {
     const script = document.createElement('script');
     script.src = STRIPE_JS_URL;
     script.async = true;
+    // SRI not feasible: Stripe's v3/ is a living endpoint (cache-control: max-age=120)
+    // whose content changes without URL changes. Stripe does not publish per-version
+    // SRI hashes. Supply-chain protection relies on CSP script-src whitelist
+    // (enforced on checkout routes) + Stripe's own CDN security.
+    // Evaluated 2026-03-29 — re-evaluate if Stripe adds versioned endpoints.
     script.onload = () => resolve();
     script.onerror = () => reject(new Error('Failed to load Stripe.js'));
     document.head.appendChild(script);

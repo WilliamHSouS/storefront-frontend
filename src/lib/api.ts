@@ -24,7 +24,7 @@ export function getClient(): StorefrontClient {
       baseUrl: import.meta.env.PUBLIC_API_BASE_URL,
       vendorId: merchant.merchantId,
       language: currentLang,
-      hmacSecret: merchant.hmacSecret || undefined,
+      merchantSigningKey: merchant.merchantSigningKey || undefined,
     });
     clientLang = currentLang;
   }

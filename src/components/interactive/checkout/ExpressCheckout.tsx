@@ -106,9 +106,6 @@ export default function ExpressCheckout({
         return;
       }
 
-      setAvailable(true);
-      onAvailable?.(true);
-
       // Mount the Payment Request Button
       const elements = stripe.elements();
       const prButton = elements.create('paymentRequestButton', {
@@ -119,6 +116,18 @@ export default function ExpressCheckout({
       if (buttonRef.current) {
         prButton.mount(buttonRef.current);
       }
+
+      // Wait for the button to render, then check if it has visible height.
+      // canMakePayment() returns truthy when the browser supports wallets,
+      // but the button renders empty when the domain isn't registered.
+      prButton.on('ready', () => {
+        requestAnimationFrame(() => {
+          if (!mountedRef.current) return;
+          const hasContent = (buttonRef.current?.offsetHeight ?? 0) > 0;
+          setAvailable(hasContent);
+          onAvailable?.(hasContent);
+        });
+      });
 
       // Handle payment
       paymentRequest.on('paymentmethod', async (ev: PaymentRequestPaymentMethodEvent) => {

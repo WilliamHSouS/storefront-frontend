@@ -1,4 +1,5 @@
 import { getClient } from '@/lib/api';
+import { errorDetail } from '@/lib/errors';
 import { $cart, clearStoredCartId } from '@/stores/cart';
 import {
   $checkout,
@@ -12,42 +13,6 @@ import {
 import type { Checkout, PaymentResult, ShippingGroup } from '@/types/checkout';
 import type { StorefrontClient } from '@/lib/sdk-stub';
 import * as log from '@/lib/logger';
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function errorDetail(error: unknown): string {
-  if (!error || typeof error !== 'object') return 'Unknown error';
-  const e = error as Record<string, unknown>;
-  // Backend returns { error: { message: "...", code: "..." } }
-  if (e.body && typeof e.body === 'object') {
-    const body = e.body as Record<string, unknown>;
-    if (body.error && typeof body.error === 'object') {
-      const err = body.error as Record<string, unknown>;
-      // For validation errors, format the field-level details
-      if (err.code === 'VALIDATION_ERROR' && err.details && typeof err.details === 'object') {
-        const details = err.details as Record<string, string[]>;
-        const messages = Object.entries(details).map(([field, fieldErrors]) => {
-          const fieldName = field.replace(/_/g, ' ');
-          const errorMsg = Array.isArray(fieldErrors)
-            ? fieldErrors.join(', ')
-            : String(fieldErrors);
-          return `${fieldName}: ${errorMsg}`;
-        });
-        if (messages.length > 0) return messages.join('. ');
-      }
-      // For all other errors, use the message
-      if (typeof err.message === 'string') return err.message;
-    }
-    if (typeof body.message === 'string') return body.message;
-    if (typeof body.detail === 'string') return body.detail;
-  }
-  if (typeof e.detail === 'string') return e.detail;
-  if (e.message && typeof e.message === 'string') return e.message;
-  if (typeof e.status === 'number' && typeof e.statusText === 'string') {
-    return `${e.status} ${e.statusText}`;
-  }
-  return 'Unknown error';
-}
 
 // ── PATCH queue (debounced delivery updates) ────────────────────────────────
 

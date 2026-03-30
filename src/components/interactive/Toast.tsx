@@ -1,12 +1,13 @@
 import { useStore } from '@nanostores/preact';
 import { $toasts, dismissToast } from '@/stores/toast';
 import { t } from '@/i18n/client';
+import { withErrorBoundary } from './ErrorBoundary';
 
 interface Props {
   lang: string;
 }
 
-export default function Toast({ lang }: Props) {
+function Toast({ lang }: Props) {
   const toasts = useStore($toasts);
 
   if (toasts.length === 0) return null;
@@ -50,3 +51,5 @@ export default function Toast({ lang }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(Toast, 'Toast');

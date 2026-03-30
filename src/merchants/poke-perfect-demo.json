@@ -45,7 +45,7 @@
   "social": {
     "instagram": "https://instagram.com/pokeperfect"
   },
-  "hmacSecret": "0000000000000000000000000000000000000000000000000000000000000000",
+  "merchantSigningKey": "0000000000000000000000000000000000000000000000000000000000000000",
   "seo": {
     "titleTemplate": "%s | Poké Perfect",
     "defaultDescription": "Bestel online bij Poké Perfect — Verse poké bowls in Amsterdam"
