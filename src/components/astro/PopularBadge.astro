@@ -15,9 +15,9 @@ const isPopular = isPopularProp ?? tags.some((tag) => tag.toLowerCase() === 'pop
 
 // Trending takes priority over popular (more specific, time-sensitive signal)
 const badge = isTrending
-  ? { label: t('trending', lang), color: 'bg-orange-500' }
+  ? { label: t('trending', lang) }
   : isPopular
-    ? { label: t('popular', lang), color: 'bg-amber-500' }
+    ? { label: t('popular', lang) }
     : null;
 ---
 
@@ -25,24 +25,12 @@ const badge = isTrending
   badge && (
     <span
       class:list={[
-        'inline-flex items-center justify-center gap-0.5 font-semibold leading-none whitespace-nowrap',
+        'inline-flex items-center justify-center font-medium leading-none whitespace-nowrap',
         overlay
-          ? `absolute top-1.5 right-1.5 z-10 rounded-full ${badge.color} px-2.5 py-1 text-[12px] text-white sm:top-2 sm:right-2`
-          : `rounded-sm ${badge.color} px-1.5 py-0.5 text-xs font-medium text-white`,
+          ? 'absolute top-2 left-2 z-10 rounded-full bg-white/85 px-2.5 py-1 text-[11px] tracking-wide text-foreground/80 shadow-sm backdrop-blur-sm sm:top-2.5 sm:left-2.5'
+          : 'rounded-full bg-foreground/5 px-2 py-0.5 text-[11px] tracking-wide text-foreground/60',
       ]}
     >
-      {isTrending && (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="shrink-0"
-        >
-          <path d="M12 23c-4.97 0-9-3.58-9-8 0-3.19 2.13-6.12 4-8 0 3 2 5 4 5 0-4 2-8 6-10-1 4 1 7 4 9 1.5-1.5 2-3.5 2-5.5 1.5 2 3 4.88 3 8.5 0 4.42-4.03 8-9 8z" />
-        </svg>
-      )}
       {badge.label}
     </span>
   )

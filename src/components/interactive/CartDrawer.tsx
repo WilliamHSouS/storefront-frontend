@@ -127,7 +127,7 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
 
   return (
     <div
-      class="max-h-[50vh] shrink-0 overflow-y-auto border-t border-border px-4 py-3"
+      class="max-h-[50vh] shrink-0 overflow-y-auto border-t border-border/60 px-5 py-3 md:px-6"
       style={style}
     >
       <DiscountCodeInput cart={cart} lang={lang} />
@@ -158,7 +158,7 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
 
       <a
         href={`/${lang}/checkout`}
-        class={`flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+        class={`flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
         aria-disabled={loading}
       >
         {t('nextCheckout', lang)}
@@ -332,13 +332,11 @@ function CartDrawerInner({ lang, inline = false }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={t('cart', lang)}
-        class="absolute bottom-0 left-0 right-0 flex max-h-[85vh] flex-col overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-auto md:right-4 md:top-16 md:w-96 md:rounded-lg"
+        class="absolute bottom-0 left-0 right-0 flex max-h-[85vh] flex-col overflow-hidden rounded-t-2xl bg-card shadow-xl md:inset-y-0 md:left-auto md:right-0 md:max-h-full md:w-[420px] md:rounded-none md:rounded-bl-2xl"
       >
         {/* Header */}
-        <div class="flex items-center justify-between border-b border-border px-4 py-3">
-          <h2 class="font-heading text-base font-semibold text-card-foreground">
-            {t('cart', lang)}
-          </h2>
+        <div class="flex items-center justify-between border-b border-border/60 px-5 py-4 md:px-6 md:pt-6 md:pb-4">
+          <h2 class="text-lg font-semibold text-foreground md:text-xl">{t('cart', lang)}</h2>
           <button
             type="button"
             onClick={close}
@@ -351,7 +349,7 @@ function CartDrawerInner({ lang, inline = false }: Props) {
 
         {/* Body */}
         <div
-          class={`shrink overflow-y-auto px-4 py-3 transition-opacity duration-150 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+          class={`shrink overflow-y-auto px-5 py-3 transition-opacity duration-150 md:px-6 ${loading ? 'pointer-events-none opacity-50' : ''}`}
         >
           {lineItems.length === 0 ? (
             <div class="py-8 text-center">

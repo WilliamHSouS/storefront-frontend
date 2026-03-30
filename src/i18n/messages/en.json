@@ -202,5 +202,8 @@
   "deliveryDetailsFailed": "Failed to set delivery details",
   "checkoutCreateFailed": "Failed to create checkout",
   "paymentFailed": "Payment failed. Please try again.",
-  "paymentInitFailed": "Payment setup failed. Please try again."
+  "paymentInitFailed": "Payment setup failed. Please try again.",
+  "deliveryDescription": "Delivered to your door",
+  "pickupDescription": "Pick up at a nearby location",
+  "browseMenu": "Browse menu"
 }

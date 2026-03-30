@@ -13,6 +13,7 @@ import SearchBar from '@/components/interactive/SearchBar';
 import Toast from '@/components/interactive/Toast';
 import MerchantComms from '@/components/interactive/MerchantComms';
 import FulfillmentOverlay from '@/components/interactive/FulfillmentOverlay';
+import FulfillmentModal from '@/components/interactive/FulfillmentModal';
 import DeliveryBanner from '@/components/interactive/DeliveryBanner';
 import type { CommsMessage, CommsTheme } from '@/stores/comms';
 import { BANNER_THEME_CLASSES } from '@/lib/comms-theme';
@@ -197,6 +198,7 @@ for (const msg of commsMessages) {
     <SearchBar client:idle lang={langValue} />
     <Toast client:idle lang={langValue} />
     <FulfillmentOverlay client:idle lang={langValue} />
+    {!hideSharedIslands && <FulfillmentModal client:idle lang={langValue} />}
 
     <script is:inline>
       document.addEventListener('click', function (e) {

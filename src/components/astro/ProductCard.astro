@@ -53,7 +53,7 @@ const imgAttrs = product.image
 
 <article
   class:list={[
-    'group relative cursor-pointer overflow-hidden rounded-[16px] bg-card p-2 sm:pt-2 sm:px-2 sm:pb-1.5',
+    'group relative cursor-pointer overflow-hidden rounded-2xl bg-card p-2 pb-1.5',
     isGrid ? 'flex flex-col' : 'flex flex-row',
   ]}
   data-product-id={product.id}
@@ -122,15 +122,10 @@ const imgAttrs = product.image
   <span data-fulfillment-badge class="empty:hidden"></span>
 
   {/* Content */}
-  <div
-    class:list={[
-      'flex flex-1 flex-col justify-between',
-      isGrid ? 'gap-2 pt-2 sm:gap-4 sm:px-3 sm:pt-4 sm:pb-3' : 'gap-2 pl-3',
-    ]}
-  >
+  <div class:list={['flex flex-1 flex-col justify-between', isGrid ? 'pt-4' : 'gap-2 pl-3']}>
     <div>
       <div class="flex items-start justify-between gap-2">
-        <h3 class="text-base font-medium leading-tight text-card-foreground sm:text-base">
+        <h3 class="mb-1 text-base font-semibold leading-normal text-foreground">
           <a
             href={`/${lang}/product/${product.slug}`}
             class="after:absolute after:inset-0"
@@ -145,14 +140,12 @@ const imgAttrs = product.image
       </div>
       {
         cardDescription && (
-          <p class="mt-0.5 line-clamp-2 text-sm font-normal leading-relaxed text-muted-foreground">
-            {cardDescription}
-          </p>
+          <p class="line-clamp-2 text-sm leading-5 text-muted-foreground">{cardDescription}</p>
         )
       }
     </div>
 
-    <div class="mt-auto flex items-center justify-between gap-2 sm:pb-1">
+    <div class="mt-5 flex items-center justify-between gap-2 pb-3 pt-1">
       <div class="flex items-baseline gap-1.5">
         {
           showStrikethrough && (
@@ -163,8 +156,8 @@ const imgAttrs = product.image
         }
         <span
           class:list={[
-            'text-sm font-medium sm:text-base',
-            showStrikethrough ? 'text-destructive' : 'text-card-foreground/70',
+            'text-base',
+            showStrikethrough ? 'font-medium text-destructive' : 'text-foreground/70',
           ]}
         >
           {formatPrice(String(effectivePrice), currency, locale)}

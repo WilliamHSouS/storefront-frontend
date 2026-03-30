@@ -202,5 +202,8 @@
   "deliveryDetailsFailed": "Bezorggegevens konden niet worden ingesteld",
   "checkoutCreateFailed": "Afrekenen kon niet worden aangemaakt",
   "paymentFailed": "Betaling mislukt. Probeer het opnieuw.",
-  "paymentInitFailed": "Betaling instellen mislukt. Probeer het opnieuw."
+  "paymentInitFailed": "Betaling instellen mislukt. Probeer het opnieuw.",
+  "deliveryDescription": "Bezorgd aan je deur",
+  "pickupDescription": "Ophalen bij een locatie in de buurt",
+  "browseMenu": "Bekijk menu"
 }
