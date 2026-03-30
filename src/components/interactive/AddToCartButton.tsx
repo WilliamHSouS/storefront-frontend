@@ -91,13 +91,26 @@ export default function AddToCartButton({
         }
       } else if (data) {
         commitCartResponse(data);
-        // Open modal in upsell mode so suggestions are shown if available
-        $selectedProduct.set({
-          id: productId,
-          name: productName,
-          slug: productSlug,
-          skipToUpsell: true,
-        });
+        // Fetch suggestions before opening modal to avoid flash-then-close
+        try {
+          const { data: suggestions } = await client.GET(`/api/v1/products/{id}/suggestions/`, {
+            params: { path: { id: productId } },
+          });
+          const items = (suggestions as Array<unknown>) ?? [];
+          if (items.length > 0) {
+            $selectedProduct.set({
+              id: productId,
+              name: productName,
+              slug: productSlug,
+              skipToUpsell: true,
+            });
+          } else {
+            showToast(t('toastAddedToCart', lang), 'success');
+          }
+        } catch {
+          // Suggestions fetch failed — still a successful add, just show toast
+          showToast(t('toastAddedToCart', lang), 'success');
+        }
       }
     } catch (err) {
       log.error('AddToCart', 'Error:', err);
