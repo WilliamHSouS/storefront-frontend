@@ -37,6 +37,9 @@ function StripePaymentFormInner({
 
     let elements: StripeElements | null = null;
 
+    const toHsl = (v: string | undefined, fallback: string) =>
+      v ? `hsl(${v.replace(/ /g, ', ')})` : fallback;
+
     async function init() {
       try {
         const stripe = await loadStripe(publishableKey, { stripeAccount });
@@ -49,9 +52,9 @@ function StripePaymentFormInner({
         const appearance: Appearance = {
           theme: 'stripe',
           variables: {
-            colorPrimary: merchantTheme?.primary ?? 'hsl(240 100% 50%)',
-            colorBackground: merchantTheme?.background ?? 'hsl(0 0% 100%)',
-            colorText: merchantTheme?.foreground ?? 'hsl(0 0% 5%)',
+            colorPrimary: toHsl(merchantTheme?.primary, 'hsl(240, 100%, 50%)'),
+            colorBackground: toHsl(merchantTheme?.background, 'hsl(0, 0%, 100%)'),
+            colorText: toHsl(merchantTheme?.foreground, 'hsl(0, 0%, 5%)'),
             borderRadius: merchantTheme?.radius ?? '0.5rem',
             fontFamily: 'Inter, system-ui, sans-serif',
           },
