@@ -205,5 +205,6 @@
   "paymentInitFailed": "Zahlungseinrichtung fehlgeschlagen. Bitte versuchen Sie es erneut.",
   "deliveryDescription": "An Ihre Tür geliefert",
   "pickupDescription": "Abholung an einem Standort in der Nähe",
-  "browseMenu": "Menü ansehen"
+  "browseMenu": "Menü ansehen",
+  "openUntil": "Geöffnet bis {time}"
 }

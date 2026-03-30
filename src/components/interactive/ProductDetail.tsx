@@ -547,7 +547,7 @@ function ProductDetail({ lang }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={product?.name ?? ''}
-        class="absolute bottom-0 left-0 right-0 flex max-h-[90vh] flex-col overflow-hidden rounded-t-xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg"
+        class="absolute bottom-0 left-0 right-0 flex max-h-[95vh] flex-col overflow-hidden rounded-t-2xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl"
       >
         {loadingProduct ? (
           <div

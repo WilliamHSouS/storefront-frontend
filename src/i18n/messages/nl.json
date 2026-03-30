@@ -205,5 +205,6 @@
   "paymentInitFailed": "Betaling instellen mislukt. Probeer het opnieuw.",
   "deliveryDescription": "Bezorgd aan je deur",
   "pickupDescription": "Ophalen bij een locatie in de buurt",
-  "browseMenu": "Bekijk menu"
+  "browseMenu": "Bekijk menu",
+  "openUntil": "Open tot {time}"
 }

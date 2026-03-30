@@ -205,5 +205,6 @@
   "paymentInitFailed": "Payment setup failed. Please try again.",
   "deliveryDescription": "Delivered to your door",
   "pickupDescription": "Pick up at a nearby location",
-  "browseMenu": "Browse menu"
+  "browseMenu": "Browse menu",
+  "openUntil": "Open until {time}"
 }
