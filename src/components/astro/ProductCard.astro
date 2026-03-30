@@ -41,6 +41,7 @@ const showStrikethrough = hasUnitDiscount(pricedItem);
 const hasModifiers = (product.modifier_groups?.length ?? 0) > 0;
 const cardDescription = product.description || product.intro || null;
 const isGrid = variant === 'grid';
+const hasImage = !!product.image;
 const imgAttrs = product.image
   ? responsiveImage(
       product.image,
@@ -61,7 +62,11 @@ const imgAttrs = product.image
   <div
     class:list={[
       'relative shrink-0 overflow-hidden',
-      isGrid ? 'aspect-square w-full' : 'h-[104px] w-[104px]',
+      isGrid
+        ? hasImage
+          ? 'aspect-square w-full'
+          : 'aspect-[2/1] w-full sm:aspect-square'
+        : 'h-[104px] w-[104px]',
     ]}
   >
     <div class="absolute inset-0 overflow-hidden rounded-[10px] bg-card-image animate-shimmer">
@@ -79,15 +84,15 @@ const imgAttrs = product.image
             onload="this.parentElement.classList.remove('animate-shimmer')"
           />
         ) : (
-          <div class="flex h-full w-full items-center justify-center text-muted-foreground/30">
+          <div class="flex h-full w-full items-center justify-center text-muted-foreground/20">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
+              width="48"
+              height="48"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="1.5"
+              stroke-width="1"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
