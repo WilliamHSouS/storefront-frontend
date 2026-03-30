@@ -32,11 +32,18 @@ jobs:
             --format=json \
             --original-filenames=false \
             --bundle-structure="src/i18n/messages/%LANG_ISO%.json" \
-            --placeholder-format=icu \
             --export-sort=a_z \
             --replace-breaks=false \
-            --include-tags="" \
             --indentation=2sp
+
+      - name: Normalize language filenames
+        run: |
+          cd src/i18n/messages
+          # Lokalise uses nl_NL/de_DE but our codebase uses nl/de
+          [ -f nl_NL.json ] && mv nl_NL.json nl.json
+          [ -f de_DE.json ] && mv de_DE.json de.json
+          # Remove en_GB if it exists (we only use en)
+          rm -f en_GB.json
 
       - name: Check for changes
         id: changes
