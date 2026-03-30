@@ -1,5 +1,6 @@
 import { $dismissedMessages } from '@/stores/comms';
 import * as log from '@/lib/logger';
+import { getClient } from '@/lib/api';
 
 // ---------------------------------------------------------------------------
 // Duration parser
@@ -123,11 +124,11 @@ const MAX_BATCH_SIZE = 50;
 
 /**
  * Create a fire-and-forget event batcher that POSTs queued comms events to
- * the backend every 5 seconds.
+ * the backend every 5 seconds via the SDK client (HMAC-signed).
  */
 export function createCommsBatcher(
-  apiBaseUrl: string,
-  vendorId: string,
+  _apiBaseUrl: string,
+  _vendorId: string,
 ): {
   track: (event: CommsEvent) => void;
   flush: () => void;
@@ -138,19 +139,19 @@ export function createCommsBatcher(
   function flush(): void {
     if (queue.length === 0) return;
     const batch = queue.splice(0, MAX_BATCH_SIZE);
-    const url = `${apiBaseUrl}/api/v1/merchant-comms/storefront/events/`;
     try {
-      fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Merchant-ID': vendorId,
-          'X-Vendor-ID': vendorId,
-        },
-        body: JSON.stringify({ events: batch }),
-      }).catch(() => {
-        /* fire-and-forget */
-      });
+      /* eslint-disable @typescript-eslint/no-explicit-any -- merchant-comms endpoint not in SDK types */
+      getClient()
+        .POST(
+          '/api/v1/merchant-comms/storefront/events/' as any,
+          {
+            body: { events: batch },
+          } as any,
+        )
+        .catch(() => {
+          /* fire-and-forget */
+        });
+      /* eslint-enable @typescript-eslint/no-explicit-any -- end merchant-comms SDK workaround */
     } catch {
       /* fire-and-forget */
     }
