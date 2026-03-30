@@ -142,7 +142,7 @@ export default function SchedulingPicker({
             <button
               type="button"
               class="p-2 rounded-full hover:bg-muted flex-shrink-0"
-              aria-label="Previous dates"
+              aria-label={t('previousDates', lang)}
               disabled={scrollOffset === 0}
               onClick={() => setScrollOffset(Math.max(0, scrollOffset - 1))}
             >
@@ -191,7 +191,7 @@ export default function SchedulingPicker({
             <button
               type="button"
               class="p-2 rounded-full hover:bg-muted flex-shrink-0"
-              aria-label="Next dates"
+              aria-label={t('nextDates', lang)}
               disabled={scrollOffset >= maxOffset}
               onClick={() => setScrollOffset(Math.min(maxOffset, scrollOffset + 1))}
             >
