@@ -1,0 +1,62 @@
+name: Sync Translations
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1' # Weekly Monday 9am UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository == 'Acroya-B-V/storefront-frontend'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lokalise CLI
+        run: |
+          curl -sfL https://raw.githubusercontent.com/lokalise/lokalise-cli-2-go/master/install.sh | sh
+          echo "$PWD/bin" >> $GITHUB_PATH
+
+      - name: Pull translations from Lokalise
+        env:
+          LOKALISE_API_TOKEN: ${{ secrets.LOKALISE_API_TOKEN }}
+          LOKALISE_PROJECT_ID: ${{ secrets.LOKALISE_PROJECT_ID }}
+        run: |
+          lokalise2 file download \
+            --token="$LOKALISE_API_TOKEN" \
+            --project-id="$LOKALISE_PROJECT_ID" \
+            --format=json \
+            --original-filenames=false \
+            --bundle-structure="src/i18n/messages/%LANG_ISO%.json" \
+            --placeholder-format=icu \
+            --export-sort=a_z \
+            --replace-breaks=false \
+            --include-tags="" \
+            --indentation=2sp
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet src/i18n/messages/; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(i18n): sync translations from Lokalise'
+          title: 'chore(i18n): sync translations from Lokalise'
+          body: |
+            Automated translation sync from Lokalise.
+
+            Review the JSON changes to ensure correctness before merging.
+          branch: chore/translations-sync
+          delete-branch: true
