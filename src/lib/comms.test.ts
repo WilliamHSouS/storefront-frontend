@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { $dismissedMessages } from '@/stores/comms';
 
+// Mock getClient — must be before comms import
+const mockPost = vi.fn().mockResolvedValue({ data: null, error: null });
+vi.mock('@/lib/api', () => ({
+  getClient: () => ({ POST: mockPost }),
+}));
+
 // Mock localStorage
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
@@ -148,12 +154,11 @@ describe('isDismissed', () => {
 describe('createCommsBatcher', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true });
+    mockPost.mockClear();
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   function makeEvent(id: string): CommsEvent {
@@ -171,31 +176,25 @@ describe('createCommsBatcher', () => {
     batcher.track(makeEvent('1'));
     batcher.track(makeEvent('2'));
 
-    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(mockPost).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(5000);
 
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(mockPost).toHaveBeenCalledTimes(1);
     batcher.destroy();
   });
 
-  it('sends batched events in correct format', () => {
+  it('sends batched events via SDK client', () => {
     const batcher = createCommsBatcher('https://api.test', 'vendor-1');
     batcher.track(makeEvent('1'));
     batcher.track(makeEvent('2'));
 
     vi.advanceTimersByTime(5000);
 
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://api.test/api/v1/merchant-comms/storefront/events/',
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/v1/merchant-comms/storefront/events/',
       expect.objectContaining({
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Merchant-ID': 'vendor-1',
-          'X-Vendor-ID': 'vendor-1',
-        },
-        body: JSON.stringify({ events: [makeEvent('1'), makeEvent('2')] }),
+        body: { events: [makeEvent('1'), makeEvent('2')] },
       }),
     );
     batcher.destroy();
@@ -206,7 +205,7 @@ describe('createCommsBatcher', () => {
 
     vi.advanceTimersByTime(5000);
 
-    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(mockPost).not.toHaveBeenCalled();
     batcher.destroy();
   });
 
@@ -219,17 +218,15 @@ describe('createCommsBatcher', () => {
 
     vi.advanceTimersByTime(5000);
 
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-    const firstCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    const body = JSON.parse(firstCall[1].body);
-    expect(body.events).toHaveLength(50);
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    const firstCall = mockPost.mock.calls[0];
+    expect(firstCall[1].body.events).toHaveLength(50);
 
     // Next flush sends remaining 10
     vi.advanceTimersByTime(5000);
-    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
-    const secondCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[1];
-    const body2 = JSON.parse(secondCall[1].body);
-    expect(body2.events).toHaveLength(10);
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    const secondCall = mockPost.mock.calls[1];
+    expect(secondCall[1].body.events).toHaveLength(10);
 
     batcher.destroy();
   });
@@ -240,10 +237,10 @@ describe('createCommsBatcher', () => {
 
     batcher.destroy();
 
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(mockPost).toHaveBeenCalledTimes(1);
 
     // No more flushes after destroy
     vi.advanceTimersByTime(10_000);
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(mockPost).toHaveBeenCalledTimes(1);
   });
 });
