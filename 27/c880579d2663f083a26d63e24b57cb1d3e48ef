@@ -1,0 +1,62 @@
+src/i18n/messages/de.json
+  e9ada3820a653b06 205-208
+src/components/astro/MenuSection.astro
+  e9ada3820a653b06 25,30
+src/components/interactive/AddressBar.tsx
+  e9ada3820a653b06 5,31,112-118,152-161,165
+src/components/interactive/FulfillmentModal.tsx
+  e9ada3820a653b06 1-263
+src/i18n/messages/en.json
+  e9ada3820a653b06 205-208
+src/i18n/messages/nl.json
+  e9ada3820a653b06 205-208
+src/components/astro/StickyNav.astro
+  e9ada3820a653b06 18
+src/components/astro/ProductCard.astro
+  e9ada3820a653b06 56,128,148
+src/components/interactive/AddToCartButton.tsx
+  e9ada3820a653b06 4,108,111-112,199
+src/components/astro/PopularBadge.astro
+  e9ada3820a653b06 18,20,28,30-31
+src/stores/fulfillment.ts
+  e9ada3820a653b06 1-47
+src/layouts/BaseLayout.astro
+  e9ada3820a653b06 16,201
+src/components/interactive/CartDrawer.tsx
+  e9ada3820a653b06 130,161,335,338-339
+src/components/interactive/CartBar.tsx
+  e9ada3820a653b06 75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "27c880579d2663f083a26d63e24b57cb1d3e48ef",
+  "prompts": {
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1499,
+      "overriden_lines": 0
+    },
+    "e9ada3820a653b06": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa10a65e-c8e1-41a9-b9bb-6ca64bc01986",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 421,
+      "total_deletions": 105,
+      "accepted_lines": 381,
+      "overriden_lines": 0
+    }
+  }
+}
