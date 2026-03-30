@@ -1,0 +1,36 @@
+vercel.json
+  227f891cd675c407 24,53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "183f9309759657afc6e739e1c43c9215a0275ad4",
+  "prompts": {
+    "227f891cd675c407": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d6615670-6f29-41b8-8cad-a877cb6a98f0",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1499,
+      "overriden_lines": 0
+    }
+  }
+}
