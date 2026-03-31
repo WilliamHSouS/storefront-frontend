@@ -160,7 +160,7 @@ test.describe('Product detail modal — modifier groups', () => {
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // CTA button shows "Toevoegen" with the base price
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     await expect(ctaButton).toBeVisible();
     // Base price: €14.50
     await expect(ctaButton).toContainText('€ 14,50');
@@ -179,7 +179,7 @@ test.describe('Product detail modal — modifier groups', () => {
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // Try to submit without selecting the required Size modifier.
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option -- bypass pointer-event interception in modal
     await ctaButton.click({ force: true });
 
@@ -207,7 +207,7 @@ test.describe('Product detail modal — modifier groups', () => {
     await expect(sizeSection.getByText('Verplicht')).toBeHidden();
 
     // Submit should now work — clicking the CTA should add to cart.
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option -- bypass pointer-event interception in modal
     await ctaButton.click({ force: true });
 
@@ -233,7 +233,7 @@ test.describe('Product detail modal — modifier groups', () => {
     const modal = await openProductDetailModal(page, shawarma.id);
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
 
     // Base price: €14.50
     await expect(ctaButton).toContainText('€ 14,50');
@@ -266,7 +266,7 @@ test.describe('Product detail modal — quantity and notes', () => {
     const modal = await openProductDetailModal(page, shawarma.id);
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
 
     // Base price at quantity 1: €14.50
     await expect(ctaButton).toContainText('€ 14,50');

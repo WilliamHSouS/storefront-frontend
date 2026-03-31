@@ -81,7 +81,7 @@ test.describe('Upsells — post-add upsell step', () => {
 
     // Select required modifier and submit
     await modal.getByRole('radio', { name: 'Regular' }).check();
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option
     await ctaButton.click({ force: true });
 
@@ -109,7 +109,7 @@ test.describe('Upsells — post-add upsell step', () => {
 
     // Add product
     await modal.getByRole('radio', { name: 'Regular' }).check();
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option
     await ctaButton.click({ force: true });
 
@@ -132,7 +132,7 @@ test.describe('Upsells — post-add upsell step', () => {
 
     // Add product
     await modal.getByRole('radio', { name: 'Regular' }).check();
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option
     await ctaButton.click({ force: true });
 
