@@ -73,13 +73,35 @@ async function doFetch(productId: string, signal?: AbortSignal): Promise<CachedP
   }
 }
 
+// ── Prefetch with concurrency control ─────────────────────────────
+const MAX_CONCURRENT_PREFETCH = 2;
+let activePrefetches = 0;
+const prefetchQueue: string[] = [];
+
+function drainQueue(): void {
+  while (prefetchQueue.length > 0 && activePrefetches < MAX_CONCURRENT_PREFETCH) {
+    const id = prefetchQueue.shift()!;
+    if (getCached(id) || inflight.has(id)) continue;
+    activePrefetches++;
+    fetchProduct(id)
+      .catch(() => {
+        // Prefetch is best-effort
+      })
+      .finally(() => {
+        activePrefetches--;
+        drainQueue();
+      });
+  }
+}
+
 /**
- * Prefetch a product on hover. Fire-and-forget — errors are silently ignored.
- * Uses a short AbortController timeout to avoid blocking if the user moves away.
+ * Prefetch a product. Fire-and-forget — errors are silently ignored.
+ * Limits concurrent prefetches to avoid flooding the API when many cards
+ * enter the viewport at once.
  */
 export function prefetch(productId: string): void {
-  if (getCached(productId)) return;
-  fetchProduct(productId).catch(() => {
-    // Prefetch is best-effort
-  });
+  if (getCached(productId) || inflight.has(productId)) return;
+  if (prefetchQueue.includes(productId)) return;
+  prefetchQueue.push(productId);
+  drainQueue();
 }
