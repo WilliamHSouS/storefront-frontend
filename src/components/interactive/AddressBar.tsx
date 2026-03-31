@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
 import { $addressCoords } from '@/stores/address';
 import { onAddressChange, clearAddress, hydrateAddressFromStorage } from '@/stores/address-actions';
+import { $fulfillmentChoice, $showFulfillmentModal } from '@/stores/fulfillment';
 import { t } from '@/i18n/client';
 
 // Decoupled from component lifecycle to avoid remount loops where store
@@ -27,6 +28,7 @@ const LANG_TO_COUNTRY: Record<string, string> = {
 
 export function AddressBar({ lang }: Props) {
   const coords = useStore($addressCoords);
+  const fulfillment = useStore($fulfillmentChoice);
   const [expanded, setExpanded] = useState(false);
   const [postcode, setPostcode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -107,7 +109,14 @@ export function AddressBar({ lang }: Props) {
     </svg>
   );
 
-  // Compact state: address set
+  const fulfillmentLabel =
+    fulfillment === 'delivery'
+      ? t('delivery', lang)
+      : fulfillment === 'pickup'
+        ? t('pickup', lang)
+        : null;
+
+  // Compact state: address set (delivery chosen)
   if (coords && !expanded) {
     return (
       <div class="flex items-center gap-1.5 text-sm">
@@ -140,8 +149,22 @@ export function AddressBar({ lang }: Props) {
     );
   }
 
-  // Compact state: no address
-  if (!expanded) {
+  // Compact state: pickup chosen (no postcode needed)
+  if (fulfillment === 'pickup' && !expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => $showFulfillmentModal.set(true)}
+        class="flex items-center gap-1.5 text-sm text-foreground cursor-pointer"
+      >
+        <span class="text-muted-foreground">{pinIcon}</span>
+        <span class="font-medium">{fulfillmentLabel}</span>
+      </button>
+    );
+  }
+
+  // Compact state: delivery chosen but no address yet — show postcode prompt
+  if (fulfillment === 'delivery' && !expanded) {
     return (
       <button
         type="button"
@@ -152,6 +175,22 @@ export function AddressBar({ lang }: Props) {
       >
         {pinIcon}
         <span>{t('enterPostcode', lang)}</span>
+      </button>
+    );
+  }
+
+  // Compact state: no fulfillment choice yet
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => $showFulfillmentModal.set(true)}
+        class="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+        aria-expanded="false"
+        aria-label={t('enterPostcode', lang)}
+      >
+        {pinIcon}
+        <span>{t('deliveryPickup', lang)}</span>
       </button>
     );
   }
@@ -170,7 +209,7 @@ export function AddressBar({ lang }: Props) {
           aria-label={t('enterPostcode', lang)}
           maxLength={10}
           autoComplete="postal-code"
-          class="w-24 rounded border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          class="w-24 rounded border border-input bg-background px-2 py-1 text-base focus:outline-none focus:ring-1 focus:ring-ring"
           disabled={loading}
           onKeyDown={handleKeyDown}
         />

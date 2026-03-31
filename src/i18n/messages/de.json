@@ -193,5 +193,18 @@
   "privacySharingBody": "Wir geben Ihre Daten nur an Parteien weiter, die zur Erfüllung Ihrer Bestellung erforderlich sind: Zahlungsdienstleister, Lieferpartner und das Restaurant, das Ihr Essen zubereitet. Wir verkaufen Ihre personenbezogenen Daten nicht an Dritte.",
   "privacyRights": "Ihre Rechte",
   "privacyRightsBody": "Gemäß der DSGVO haben Sie das Recht auf Auskunft, Berichtigung oder Löschung Ihrer personenbezogenen Daten. Sie können auch der Verarbeitung widersprechen oder die Datenübertragbarkeit verlangen. Um diese Rechte auszuüben, kontaktieren Sie uns über die unten angegebenen Daten.",
-  "privacyContact": "Kontakt"
+  "privacyContact": "Kontakt",
+  "stripeLoadFailed": "Zahlungsformular konnte nicht geladen werden. Bitte überprüfen Sie Ihre Verbindung.",
+  "paymentFormLoadFailed": "Zahlungsformular konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+  "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+  "previousDates": "Vorherige Termine",
+  "nextDates": "Nächste Termine",
+  "deliveryDetailsFailed": "Lieferdetails konnten nicht festgelegt werden",
+  "checkoutCreateFailed": "Bestellung konnte nicht erstellt werden",
+  "paymentFailed": "Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+  "paymentInitFailed": "Zahlungseinrichtung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+  "deliveryDescription": "An Ihre Tür geliefert",
+  "pickupDescription": "Abholung an einem Standort in der Nähe",
+  "browseMenu": "Menü ansehen",
+  "openUntil": "Geöffnet bis {time}"
 }

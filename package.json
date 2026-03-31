@@ -36,7 +36,7 @@
     {
       "name": "Total client JS (all chunks)",
       "path": "dist/client/**/*.js",
-      "limit": "75 KB",
+      "limit": "77 KB",
       "gzip": true
     }
   ],

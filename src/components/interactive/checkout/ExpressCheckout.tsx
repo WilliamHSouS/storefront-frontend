@@ -143,7 +143,7 @@ export default function ExpressCheckout({
             try {
               checkout = await createCheckout(cartId);
             } catch (err) {
-              const msg = err instanceof Error ? err.message : 'Failed to create checkout';
+              const msg = err instanceof Error ? err.message : t('checkoutCreateFailed', lang);
               ev.complete('fail');
               onError(msg);
               return;
@@ -189,7 +189,7 @@ export default function ExpressCheckout({
           try {
             await patchDeliveryImmediate(checkout.id, deliveryData);
           } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Delivery unavailable';
+            const msg = err instanceof Error ? err.message : t('deliveryDetailsFailed', lang);
             ev.complete('fail');
             setInlineError(msg);
             return;
@@ -200,7 +200,7 @@ export default function ExpressCheckout({
           try {
             paymentResult = await initiatePayment(checkout.id);
           } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Payment failed';
+            const msg = err instanceof Error ? err.message : t('paymentFailed', lang);
             ev.complete('fail');
             onError(msg);
             return;
@@ -211,7 +211,7 @@ export default function ExpressCheckout({
           onSuccess(paymentResult.order_number ?? checkout.order_number ?? checkout.id);
         } catch (err) {
           ev.complete('fail');
-          onError(err instanceof Error ? err.message : 'Unexpected error');
+          onError(err instanceof Error ? err.message : t('unexpectedError', lang));
         }
       });
     }

@@ -193,5 +193,18 @@
   "privacySharingBody": "Wij delen uw gegevens alleen met partijen die nodig zijn om uw bestelling te vervullen: betalingsverwerkers, bezorgpartners en het restaurant dat uw eten bereidt. Wij verkopen uw persoonsgegevens niet aan derden.",
   "privacyRights": "Uw rechten",
   "privacyRightsBody": "Op grond van de AVG heeft u het recht om uw persoonsgegevens in te zien, te corrigeren of te verwijderen. U kunt ook bezwaar maken tegen verwerking of verzoeken om gegevensoverdracht. Om deze rechten uit te oefenen, neemt u contact met ons op via onderstaande gegevens.",
-  "privacyContact": "Contact"
+  "privacyContact": "Contact",
+  "stripeLoadFailed": "Betaalformulier kon niet geladen worden. Controleer je verbinding.",
+  "paymentFormLoadFailed": "Betaalformulier kon niet geladen worden. Probeer het opnieuw.",
+  "unexpectedError": "Er is een onverwachte fout opgetreden. Probeer het opnieuw.",
+  "previousDates": "Vorige data",
+  "nextDates": "Volgende data",
+  "deliveryDetailsFailed": "Bezorggegevens konden niet worden ingesteld",
+  "checkoutCreateFailed": "Afrekenen kon niet worden aangemaakt",
+  "paymentFailed": "Betaling mislukt. Probeer het opnieuw.",
+  "paymentInitFailed": "Betaling instellen mislukt. Probeer het opnieuw.",
+  "deliveryDescription": "Bezorgd aan je deur",
+  "pickupDescription": "Ophalen bij een locatie in de buurt",
+  "browseMenu": "Bekijk menu",
+  "openUntil": "Open tot {time}"
 }

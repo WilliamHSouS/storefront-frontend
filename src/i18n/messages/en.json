@@ -193,5 +193,18 @@
   "privacySharingBody": "We share your data only with parties necessary to fulfill your order: payment processors, delivery partners, and the restaurant preparing your food. We do not sell your personal data to third parties.",
   "privacyRights": "Your Rights",
   "privacyRightsBody": "Under the GDPR, you have the right to access, correct, or delete your personal data. You may also object to processing or request data portability. To exercise these rights, contact us using the details below.",
-  "privacyContact": "Contact"
+  "privacyContact": "Contact",
+  "stripeLoadFailed": "Failed to load payment form. Please check your connection.",
+  "paymentFormLoadFailed": "Payment form failed to load. Please try again.",
+  "unexpectedError": "An unexpected error occurred. Please try again.",
+  "previousDates": "Previous dates",
+  "nextDates": "Next dates",
+  "deliveryDetailsFailed": "Failed to set delivery details",
+  "checkoutCreateFailed": "Failed to create checkout",
+  "paymentFailed": "Payment failed. Please try again.",
+  "paymentInitFailed": "Payment setup failed. Please try again.",
+  "deliveryDescription": "Delivered to your door",
+  "pickupDescription": "Pick up at a nearby location",
+  "browseMenu": "Browse menu",
+  "openUntil": "Open until {time}"
 }
