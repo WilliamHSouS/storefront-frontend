@@ -65,10 +65,12 @@ test.describe('Search', () => {
     // eslint-disable-next-line playwright/no-force-option -- backdrop overlay intercepts pointer events
     await listbox.getByRole('button', { name: /Shawarma Bowl/ }).click({ force: true });
 
-    // Clicking a search result navigates to the product page.
-    // On mobile CI preview mode, hydration and navigation can be slow.
-    await page.waitForURL(/\/product\//, { timeout: 15_000 });
-    await expect(page.getByRole('heading', { name: 'Shawarma Bowl' })).toBeVisible({
+    // Clicking a search result opens the product detail modal.
+    // On mobile, the product card heading (h3) is still visible behind the modal,
+    // so scope to the dialog to avoid strict mode violations.
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible({ timeout: 15_000 });
+    await expect(modal.getByRole('heading', { name: 'Shawarma Bowl' })).toBeVisible({
       timeout: 10_000,
     });
   });
