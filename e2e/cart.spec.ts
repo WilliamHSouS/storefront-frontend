@@ -224,7 +224,7 @@ test.describe('Cart — modifier display', () => {
         resp.url().includes('/api/v1/cart/') &&
         resp.request().method() === 'POST',
     );
-    await page.getByRole('button', { name: /toevoegen aan bestelling/i }).click();
+    await page.getByRole('button', { name: /toevoegen/i }).click();
     await responsePromise;
 
     // Dismiss the upsell dialog that appears after adding a modifier product
