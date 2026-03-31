@@ -216,8 +216,10 @@ test.describe('Product detail modal — modifier groups', () => {
     await expect(modal.getByText('Toegevoegd')).toBeVisible({ timeout: 5_000 });
     await modal.getByRole('button', { name: 'Klaar' }).click();
 
-    // Modal should close after dismissing upsell step
-    await expect(modal).toBeHidden();
+    // Modal should close after dismissing upsell step (cart drawer opens automatically)
+    await expect(modal).toBeHidden({ timeout: 5_000 });
+    // Close the auto-opened cart drawer
+    await page.keyboard.press('Escape');
 
     // Cart state should be updated — a cart trigger should be visible.
     // CartBadge (desktop, hidden on mobile) and CartBar (mobile-only) both
