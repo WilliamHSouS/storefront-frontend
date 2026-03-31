@@ -65,9 +65,12 @@ test.describe('Search', () => {
     // eslint-disable-next-line playwright/no-force-option -- backdrop overlay intercepts pointer events
     await listbox.getByRole('button', { name: /Shawarma Bowl/ }).click({ force: true });
 
-    // Clicking a search result navigates to the product page
-    await page.waitForURL(/\/product\//, { timeout: 10_000 });
-    await expect(page.getByRole('heading', { name: 'Shawarma Bowl' })).toBeVisible();
+    // Clicking a search result navigates to the product page.
+    // On mobile CI preview mode, hydration and navigation can be slow.
+    await page.waitForURL(/\/product\//, { timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Shawarma Bowl' })).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test('no results shows empty state', async ({ page }) => {
@@ -143,25 +146,26 @@ test.describe('Search', () => {
     const searchInput = await openSearchOverlay(page);
     await searchInput.fill('falafel');
 
-    // Wait for search results
+    // Wait for search results — use longer timeout on CI
     const listbox = page.getByRole('listbox', { name: 'Zoeken' });
-    await expect(listbox.getByRole('option').first()).toBeVisible({ timeout: 5_000 });
+    await expect(listbox.getByRole('option').first()).toBeVisible({ timeout: 10_000 });
 
     // Click the first result (use force due to backdrop overlay)
     // eslint-disable-next-line playwright/no-force-option -- backdrop overlay intercepts pointer events
     await listbox.getByRole('button').first().click({ force: true });
 
     // Wait for search to close
-    await expect(searchInput).toBeHidden({ timeout: 3_000 });
+    await expect(searchInput).toBeHidden({ timeout: 5_000 });
 
     // Dismiss the product detail modal (it opens after clicking a search result).
     // The backdrop intercepts pointer events, so press Escape to close it and wait
     // for the modal to fully close before reopening search.
     await page.keyboard.press('Escape');
     await page.waitForURL(/\/nl\/$/, { timeout: 5_000 });
-    // Allow modal close animation and DOM cleanup to settle on CI
+    // Allow modal close animation and DOM cleanup to settle on CI.
+    // Preview mode (pre-bundled JS) can be slower to re-hydrate after navigation.
     // eslint-disable-next-line playwright/no-wait-for-timeout -- modal close animation needs time on CI preview mode
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
     // Reopen search — should show "Recente zoekopdrachten" with "falafel"
     await openSearchOverlay(page);
