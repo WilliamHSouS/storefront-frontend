@@ -247,6 +247,7 @@ function ProductDetail({ lang }: Props) {
     setNotes('');
     setShowNotes(false);
     setFetchError(false);
+    setTriedSubmit(false);
     setStep('detail');
     setSuggestions([]);
     setAddedSuggestions(new Set());
