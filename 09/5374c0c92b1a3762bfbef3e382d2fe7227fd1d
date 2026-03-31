@@ -1,0 +1,38 @@
+src/layouts/BaseLayout.astro
+  e9ada3820a653b06 225,227-228,241-266
+src/lib/product-cache.ts
+  e9ada3820a653b06 76-96,98-100,103-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "095374c0c92b1a3762bfbef3e382d2fe7227fd1d",
+  "prompts": {
+    "89773481fd62f596": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a94b2d3f-d0c2-4d93-af9d-e7e62a6dd499",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1499,
+      "overriden_lines": 0
+    },
+    "e9ada3820a653b06": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa10a65e-c8e1-41a9-b9bb-6ca64bc01986",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 57,
+      "total_deletions": 7,
+      "accepted_lines": 57,
+      "overriden_lines": 0
+    }
+  }
+}
