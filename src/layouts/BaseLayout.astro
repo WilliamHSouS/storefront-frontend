@@ -222,6 +222,23 @@ for (const msg of commsMessages) {
     </script>
 
     <script>
+      // Prefetch product data on hover for instant modal opening
+      import { prefetch } from '@/lib/product-cache';
+      document.addEventListener(
+        'pointerenter',
+        function (e) {
+          const target = e.target as HTMLElement;
+          if (!target?.closest) return;
+          const card = target.closest('[data-product-id]') as HTMLElement | null;
+          if (!card) return;
+          const id = card.dataset.productId;
+          if (id) prefetch(id);
+        },
+        true,
+      );
+    </script>
+
+    <script>
       function boot() {
         import('@/analytics').then(({ initAnalytics }) =>
           initAnalytics().catch((err) => {

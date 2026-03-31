@@ -9,6 +9,7 @@ import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { t } from '@/i18n/client';
 import { getClient } from '@/lib/api';
+import { fetchProduct as fetchProductCached, getCached } from '@/lib/product-cache';
 import { normalizeProduct, type ModifierGroup as RawModifierGroup } from '@/lib/normalize';
 import { optimizedImageUrl, responsiveImage } from '@/lib/image';
 import { showToast } from '@/stores/toast';
@@ -206,29 +207,26 @@ function ProductDetail({ lang }: Props) {
   useFocusTrap(dialogRef, !!selectedProduct, close);
 
   const fetchProductById = async (productId: string, signal?: AbortSignal) => {
+    // Check cache first — if hit, skip loading state entirely (instant open)
+    const cached = getCached(productId);
+    if (cached) {
+      setProduct(toProductData(cached.product));
+      setSuggestions(cached.suggestions as Suggestion[]);
+      setLoadingProduct(false);
+      return;
+    }
+
     setLoadingProduct(true);
     setFetchError(false);
     try {
-      const client = getClient();
-      const [productRes, suggestionsRes] = await Promise.all([
-        client.GET(`/api/v1/products/{id}/`, {
-          params: { path: { id: productId } },
-          signal,
-        }),
-        client.GET(`/api/v1/products/{id}/suggestions/`, {
-          params: { path: { id: productId } },
-          signal,
-        }),
-      ]);
+      const result = await fetchProductCached(productId, signal);
       if (signal?.aborted) return;
-      if (!productRes.data) {
-        if (productRes.error)
-          log.error('ProductDetail', 'SDK error loading product:', productRes.error);
+      if (!result) {
         setFetchError(true);
         return;
       }
-      setProduct(toProductData(productRes.data as Record<string, unknown>));
-      if (suggestionsRes.data) setSuggestions(suggestionsRes.data as Suggestion[]);
+      setProduct(toProductData(result.product));
+      setSuggestions(result.suggestions as Suggestion[]);
     } catch (err) {
       if (signal?.aborted) return;
       log.error('ProductDetail', 'Failed to load product:', err);
@@ -554,12 +552,16 @@ function ProductDetail({ lang }: Props) {
         class="absolute bottom-0 left-0 right-0 flex max-h-[95vh] flex-col overflow-hidden rounded-t-2xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl"
       >
         {loadingProduct ? (
-          <div
-            class="flex h-64 items-center justify-center"
-            role="status"
-            aria-label={t('loading', lang)}
-          >
-            <div class="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          <div role="status" aria-label={t('loading', lang)} class="animate-pulse">
+            {/* Skeleton: image */}
+            <div class="mx-3 mt-3 aspect-[4/3] rounded-xl bg-muted sm:mx-4 sm:mt-4" />
+            {/* Skeleton: text lines */}
+            <div class="space-y-3 px-4 pt-4">
+              <div class="h-6 w-3/4 rounded bg-muted" />
+              <div class="h-4 w-full rounded bg-muted" />
+              <div class="h-4 w-1/2 rounded bg-muted" />
+              <div class="h-5 w-1/4 rounded bg-muted" />
+            </div>
           </div>
         ) : !product && fetchError ? (
           <div class="relative flex h-64 flex-col items-center justify-center gap-3 px-4">
@@ -597,12 +599,13 @@ function ProductDetail({ lang }: Props) {
             </button>
           </div>
         ) : !product ? (
-          <div
-            class="flex h-64 items-center justify-center"
-            role="status"
-            aria-label={t('loading', lang)}
-          >
-            <div class="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          <div role="status" aria-label={t('loading', lang)} class="animate-pulse">
+            <div class="mx-3 mt-3 aspect-[4/3] rounded-xl bg-muted sm:mx-4 sm:mt-4" />
+            <div class="space-y-3 px-4 pt-4">
+              <div class="h-6 w-3/4 rounded bg-muted" />
+              <div class="h-4 w-full rounded bg-muted" />
+              <div class="h-4 w-1/2 rounded bg-muted" />
+            </div>
           </div>
         ) : (
           <>
