@@ -9,6 +9,7 @@ import { formatPrice, langToLocale } from '@/lib/currency';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { t } from '@/i18n/client';
 import { getClient } from '@/lib/api';
+import { fetchProduct as fetchProductCached, getCached } from '@/lib/product-cache';
 import { normalizeProduct, type ModifierGroup as RawModifierGroup } from '@/lib/normalize';
 import { optimizedImageUrl, responsiveImage } from '@/lib/image';
 import { showToast } from '@/stores/toast';
@@ -184,6 +185,7 @@ function ProductDetail({ lang }: Props) {
   const [notes, setNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
   const [shakeGroup, setShakeGroup] = useState<string | null>(null);
+  const [triedSubmit, setTriedSubmit] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [fetchError, setFetchError] = useState(false);
   const [step, setStep] = useState<'detail' | 'upsell'>('detail');
@@ -205,29 +207,26 @@ function ProductDetail({ lang }: Props) {
   useFocusTrap(dialogRef, !!selectedProduct, close);
 
   const fetchProductById = async (productId: string, signal?: AbortSignal) => {
+    // Check cache first — if hit, skip loading state entirely (instant open)
+    const cached = getCached(productId);
+    if (cached) {
+      setProduct(toProductData(cached.product));
+      setSuggestions(cached.suggestions as Suggestion[]);
+      setLoadingProduct(false);
+      return;
+    }
+
     setLoadingProduct(true);
     setFetchError(false);
     try {
-      const client = getClient();
-      const [productRes, suggestionsRes] = await Promise.all([
-        client.GET(`/api/v1/products/{id}/`, {
-          params: { path: { id: productId } },
-          signal,
-        }),
-        client.GET(`/api/v1/products/{id}/suggestions/`, {
-          params: { path: { id: productId } },
-          signal,
-        }),
-      ]);
+      const result = await fetchProductCached(productId, signal);
       if (signal?.aborted) return;
-      if (!productRes.data) {
-        if (productRes.error)
-          log.error('ProductDetail', 'SDK error loading product:', productRes.error);
+      if (!result) {
         setFetchError(true);
         return;
       }
-      setProduct(toProductData(productRes.data as Record<string, unknown>));
-      if (suggestionsRes.data) setSuggestions(suggestionsRes.data as Suggestion[]);
+      setProduct(toProductData(result.product));
+      setSuggestions(result.suggestions as Suggestion[]);
     } catch (err) {
       if (signal?.aborted) return;
       log.error('ProductDetail', 'Failed to load product:', err);
@@ -248,6 +247,7 @@ function ProductDetail({ lang }: Props) {
     setNotes('');
     setShowNotes(false);
     setFetchError(false);
+    setTriedSubmit(false);
     setStep('detail');
     setSuggestions([]);
     setAddedSuggestions(new Set());
@@ -430,11 +430,14 @@ function ProductDetail({ lang }: Props) {
   const handleSubmit = async () => {
     const unfilled = getUnfilledGroups();
     if (unfilled.length > 0) {
-      // Shake first unfilled group and scroll to it
-      setShakeGroup(unfilled[0]);
+      setTriedSubmit(true);
+      // Scroll to first unfilled group, then shake after scroll completes
       const el = document.getElementById(`modifier-group-${unfilled[0]}`);
-      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => setShakeGroup(null), 600);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => setShakeGroup(unfilled[0]), 350);
+        setTimeout(() => setShakeGroup(null), 750);
+      }
       return;
     }
 
@@ -550,12 +553,16 @@ function ProductDetail({ lang }: Props) {
         class="absolute bottom-0 left-0 right-0 flex max-h-[95vh] flex-col overflow-hidden rounded-t-2xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl"
       >
         {loadingProduct ? (
-          <div
-            class="flex h-64 items-center justify-center"
-            role="status"
-            aria-label={t('loading', lang)}
-          >
-            <div class="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          <div role="status" aria-label={t('loading', lang)} class="animate-pulse">
+            {/* Skeleton: image */}
+            <div class="mx-3 mt-3 aspect-[4/3] rounded-xl bg-muted sm:mx-4 sm:mt-4" />
+            {/* Skeleton: text lines */}
+            <div class="space-y-3 px-4 pt-4">
+              <div class="h-6 w-3/4 rounded bg-muted" />
+              <div class="h-4 w-full rounded bg-muted" />
+              <div class="h-4 w-1/2 rounded bg-muted" />
+              <div class="h-5 w-1/4 rounded bg-muted" />
+            </div>
           </div>
         ) : !product && fetchError ? (
           <div class="relative flex h-64 flex-col items-center justify-center gap-3 px-4">
@@ -593,12 +600,13 @@ function ProductDetail({ lang }: Props) {
             </button>
           </div>
         ) : !product ? (
-          <div
-            class="flex h-64 items-center justify-center"
-            role="status"
-            aria-label={t('loading', lang)}
-          >
-            <div class="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          <div role="status" aria-label={t('loading', lang)} class="animate-pulse">
+            <div class="mx-3 mt-3 aspect-[4/3] rounded-xl bg-muted sm:mx-4 sm:mt-4" />
+            <div class="space-y-3 px-4 pt-4">
+              <div class="h-6 w-3/4 rounded bg-muted" />
+              <div class="h-4 w-full rounded bg-muted" />
+              <div class="h-4 w-1/2 rounded bg-muted" />
+            </div>
           </div>
         ) : (
           <>
@@ -625,99 +633,305 @@ function ProductDetail({ lang }: Props) {
               </svg>
             </button>
 
-            {/* Product image (hidden during upsell step) */}
-            {step === 'detail' && product.image && (
-              <div class="aspect-video w-full shrink-0 overflow-hidden bg-card-image">
-                {(() => {
-                  const img = responsiveImage(
-                    product.image,
-                    [300, 450, 600],
-                    '(min-width: 768px) 512px, 100vw',
-                  );
-                  return (
-                    <img
-                      src={img.src}
-                      srcset={img.srcset || undefined}
-                      sizes={img.sizes || undefined}
-                      alt={product.name}
-                      class="h-full w-full object-cover"
-                      width="512"
-                      height="288"
-                    />
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* Scrollable content */}
-            <div
-              class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-8"
-              style={{ maxHeight: product.image ? 'calc(90vh - 340px)' : 'calc(90vh - 160px)' }}
-            >
-              {step === 'upsell' ? (
-                /* ── Upsell step: shown after successful add ── */
-                <div>
-                  <div class="flex items-center gap-2 text-card-foreground">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      class="text-green-600"
-                    >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                    <h2 class="font-heading text-lg font-bold">{t('addedToCart', lang)}</h2>
+            {/* Scrollable content (image scrolls with content per Sil's feedback) */}
+            <div class="min-h-0 flex-1 overflow-y-auto">
+              {/* Product image (hidden during upsell step) */}
+              {step === 'detail' && product.image && (
+                <div class="mx-3 mt-3 overflow-hidden rounded-xl bg-card-image sm:mx-4 sm:mt-4">
+                  <div class="aspect-[4/3] w-full">
+                    {(() => {
+                      const img = responsiveImage(
+                        product.image,
+                        [300, 450, 600],
+                        '(min-width: 768px) 512px, 100vw',
+                      );
+                      return (
+                        <img
+                          src={img.src}
+                          srcset={img.srcset || undefined}
+                          sizes={img.sizes || undefined}
+                          alt={product.name}
+                          class="h-full w-full object-cover"
+                          width="512"
+                          height="384"
+                        />
+                      );
+                    })()}
                   </div>
-                  <p class="mt-1 text-sm text-muted-foreground">{product.name}</p>
+                </div>
+              )}
 
-                  {/* Attributes */}
-                  {product.attribute_values && product.attribute_values.length > 0 && (
-                    <div class="mt-3 grid grid-cols-2 gap-2">
-                      {product.attribute_values.map((attr) => {
-                        let display: string | null = null;
-                        if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
-                          const labels = attr.selected_choices
-                            .map((c) => c.value || c.slug?.replace(/_/g, ' ') || '')
-                            .filter(Boolean);
-                          display = labels.length > 0 ? labels.join(', ') : null;
-                        } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
-                          display = attr.value_boolean ? t('yes', lang) : t('no', lang);
-                        } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
-                          display = String(Math.round(Number(attr.value_numeric)));
-                        } else if (attr.value_text) {
-                          display = attr.value_text;
-                        }
-                        if (!display) return null;
-                        return (
-                          <div key={attr.attribute_slug} class="rounded-md bg-muted px-2.5 py-1.5">
-                            <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                              {attr.attribute_name}
-                            </p>
-                            <p class="text-xs text-card-foreground">{display}</p>
-                          </div>
-                        );
-                      })}
+              <div class="px-4 pt-4 pb-8">
+                {step === 'upsell' ? (
+                  /* ── Upsell step: shown after successful add ── */
+                  <div>
+                    <div class="flex items-center gap-2 text-card-foreground">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="text-green-600"
+                      >
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                      <h2 class="font-heading text-lg font-bold">{t('addedToCart', lang)}</h2>
                     </div>
-                  )}
-                  {suggestions.length > 0 && (
-                    <div class="mt-4">
-                      <h3 class="text-sm font-semibold text-card-foreground">
-                        {t('frequentlyCombined', lang)}
-                      </h3>
-                      <div class="mt-2 space-y-2">
-                        {suggestions
-                          .filter((s) => !addedSuggestions.has(s.id))
-                          .map((s) => (
+                    <p class="mt-1 text-sm text-muted-foreground">{product.name}</p>
+
+                    {/* Attributes */}
+                    {product.attribute_values && product.attribute_values.length > 0 && (
+                      <div class="mt-3 grid grid-cols-2 gap-2">
+                        {product.attribute_values.map((attr) => {
+                          let display: string | null = null;
+                          if (
+                            attr.input_type === 'multiselect' &&
+                            attr.selected_choices.length > 0
+                          ) {
+                            const labels = attr.selected_choices
+                              .map((c) => c.value || c.slug?.replace(/_/g, ' ') || '')
+                              .filter(Boolean);
+                            display = labels.length > 0 ? labels.join(', ') : null;
+                          } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
+                            display = attr.value_boolean ? t('yes', lang) : t('no', lang);
+                          } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
+                            display = String(Math.round(Number(attr.value_numeric)));
+                          } else if (attr.value_text) {
+                            display = attr.value_text;
+                          }
+                          if (!display) return null;
+                          return (
+                            <div
+                              key={attr.attribute_slug}
+                              class="rounded-md bg-muted px-2.5 py-1.5"
+                            >
+                              <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                {attr.attribute_name}
+                              </p>
+                              <p class="text-xs text-card-foreground">{display}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {suggestions.length > 0 && (
+                      <div class="mt-4">
+                        <h3 class="text-sm font-semibold text-card-foreground">
+                          {t('frequentlyCombined', lang)}
+                        </h3>
+                        <div class="mt-2 space-y-2">
+                          {suggestions
+                            .filter((s) => !addedSuggestions.has(s.id))
+                            .map((s) => (
+                              <SuggestionItem
+                                key={s.id}
+                                suggestion={s}
+                                added={false}
+                                currency={currency}
+                                locale={locale}
+                                lang={lang}
+                                onAdd={async () => {
+                                  const result = await addSuggestionToCart(s.id);
+                                  if (result === 'added') {
+                                    setAddedSuggestions((prev) => new Set([...prev, s.id]));
+                                  } else if (result === 'requires_options') {
+                                    $selectedProduct.set({ id: String(s.id), name: s.title });
+                                  } else {
+                                    showToast(t('toastAddToCartFailed', lang));
+                                  }
+                                }}
+                              />
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* ── Detail step: normal product view ── */
+                  <div>
+                    <h2 class="font-heading text-xl font-bold text-card-foreground">
+                      {product.name}
+                    </h2>
+                    {product.description && (
+                      <p class="mt-1 text-sm text-muted-foreground">{product.description}</p>
+                    )}
+                    <p class="mt-2 text-lg font-semibold text-card-foreground">
+                      {formatPrice(product.price, currency, locale)}
+                    </p>
+
+                    {/* Attributes */}
+                    {product.attribute_values && product.attribute_values.length > 0 && (
+                      <div class="mt-3 grid grid-cols-2 gap-2">
+                        {product.attribute_values.map((attr) => {
+                          let display: string | null = null;
+                          if (
+                            attr.input_type === 'multiselect' &&
+                            attr.selected_choices.length > 0
+                          ) {
+                            display = attr.selected_choices.map((c) => c.value).join(', ');
+                          } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
+                            display = attr.value_boolean ? t('yes', lang) : t('no', lang);
+                          } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
+                            display = String(Math.round(Number(attr.value_numeric)));
+                          } else if (attr.value_text) {
+                            display = attr.value_text;
+                          }
+                          if (!display) return null;
+                          return (
+                            <div
+                              key={attr.attribute_slug}
+                              class="rounded-md bg-muted px-2.5 py-1.5"
+                            >
+                              <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                {attr.attribute_name}
+                              </p>
+                              <p class="text-xs text-card-foreground">{display}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Modifier groups */}
+                    {(product.modifier_groups ?? []).map((group) => (
+                      <div
+                        key={group.id}
+                        id={`modifier-group-${group.id}`}
+                        class={`mt-4 rounded-2xl bg-muted/50 p-4 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
+                      >
+                        <div class="flex items-center justify-between">
+                          <h3 class="text-sm font-semibold text-card-foreground">{group.name}</h3>
+                          {group.required && (
+                            <span
+                              class={`inline-flex items-center gap-1 text-xs font-medium transition-colors duration-300 ${
+                                isGroupFilled(group.id)
+                                  ? 'text-emerald-600'
+                                  : triedSubmit
+                                    ? 'text-destructive'
+                                    : 'text-muted-foreground'
+                              }`}
+                            >
+                              {isGroupFilled(group.id) && (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path d="M20 6 9 17l-5-5" />
+                                </svg>
+                              )}
+                              {isGroupFilled(group.id) ? t('done', lang) : t('required', lang)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div class="mt-2 space-y-2">
+                          {group.options.map((opt) => {
+                            const isSelected = (selections[group.id] ?? []).includes(opt.id);
+                            const optQty = quantities[group.id]?.[opt.id] ?? 0;
+                            const optPrice = Number(opt.price);
+
+                            return (
+                              <div key={opt.id} class="flex items-center justify-between">
+                                {group.type === 'radio' || group.type === 'checkbox' ? (
+                                  <label class="flex flex-1 cursor-pointer items-center gap-2">
+                                    {group.type === 'radio' ? (
+                                      <input
+                                        type="radio"
+                                        name={group.id}
+                                        checked={isSelected}
+                                        onChange={() => handleRadioSelect(group.id, opt.id)}
+                                        class="h-4 w-4 accent-primary"
+                                      />
+                                    ) : (
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() =>
+                                          handleCheckboxToggle(
+                                            group.id,
+                                            opt.id,
+                                            group.max_selections,
+                                          )
+                                        }
+                                        class="h-4 w-4 accent-primary"
+                                      />
+                                    )}
+                                    <span class="text-sm text-card-foreground">{opt.name}</span>
+                                    {optPrice > 0 && (
+                                      <span class="ml-auto text-xs text-muted-foreground">
+                                        +{formatPrice(opt.price, currency, locale)}
+                                      </span>
+                                    )}
+                                  </label>
+                                ) : (
+                                  <>
+                                    <span class="text-sm text-card-foreground">{opt.name}</span>
+                                    <div class="flex items-center gap-2">
+                                      {optPrice > 0 && (
+                                        <span class="text-xs text-muted-foreground">
+                                          +{formatPrice(opt.price, currency, locale)}
+                                        </span>
+                                      )}
+                                      <div
+                                        class="inline-flex items-center gap-1"
+                                        role="group"
+                                        aria-label={opt.name}
+                                      >
+                                        <button
+                                          type="button"
+                                          onClick={() => handleQuantityChange(group.id, opt.id, -1)}
+                                          disabled={optQty === 0}
+                                          aria-label={`${t('remove', lang)} ${opt.name}`}
+                                          class="relative inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-sm disabled:opacity-30 before:absolute before:inset-[-4px]"
+                                        >
+                                          −
+                                        </button>
+                                        <span class="w-6 text-center text-sm" aria-live="polite">
+                                          {optQty}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleQuantityChange(group.id, opt.id, 1)}
+                                          aria-label={`${t('addToCart', lang)} ${opt.name}`}
+                                          class="relative inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-sm before:absolute before:inset-[-4px]"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Suggestions (PDP surface) */}
+                    {suggestions.length > 0 && (
+                      <div class="mt-4">
+                        <h3 class="text-sm font-semibold text-card-foreground">
+                          {t('frequentlyCombined', lang)}
+                        </h3>
+                        <div class="mt-2 space-y-2">
+                          {suggestions.map((s) => (
                             <SuggestionItem
                               key={s.id}
                               suggestion={s}
-                              added={false}
+                              added={addedSuggestions.has(s.id)}
                               currency={currency}
                               locale={locale}
                               lang={lang}
@@ -733,215 +947,48 @@ function ProductDetail({ lang }: Props) {
                               }}
                             />
                           ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* ── Detail step: normal product view ── */
-                <div>
-                  <h2 class="font-heading text-xl font-bold text-card-foreground">
-                    {product.name}
-                  </h2>
-                  {product.description && (
-                    <p class="mt-1 text-sm text-muted-foreground">{product.description}</p>
-                  )}
-                  <p class="mt-2 text-lg font-semibold text-card-foreground">
-                    {formatPrice(product.price, currency, locale)}
-                  </p>
-
-                  {/* Attributes */}
-                  {product.attribute_values && product.attribute_values.length > 0 && (
-                    <div class="mt-3 grid grid-cols-2 gap-2">
-                      {product.attribute_values.map((attr) => {
-                        let display: string | null = null;
-                        if (attr.input_type === 'multiselect' && attr.selected_choices.length > 0) {
-                          display = attr.selected_choices.map((c) => c.value).join(', ');
-                        } else if (attr.input_type === 'boolean' && attr.value_boolean != null) {
-                          display = attr.value_boolean ? t('yes', lang) : t('no', lang);
-                        } else if (attr.input_type === 'numeric' && attr.value_numeric != null) {
-                          display = String(Math.round(Number(attr.value_numeric)));
-                        } else if (attr.value_text) {
-                          display = attr.value_text;
-                        }
-                        if (!display) return null;
-                        return (
-                          <div key={attr.attribute_slug} class="rounded-md bg-muted px-2.5 py-1.5">
-                            <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                              {attr.attribute_name}
-                            </p>
-                            <p class="text-xs text-card-foreground">{display}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Modifier groups */}
-                  {(product.modifier_groups ?? []).map((group) => (
-                    <div
-                      key={group.id}
-                      id={`modifier-group-${group.id}`}
-                      class={`mt-4 rounded-lg border border-border p-3 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
-                    >
-                      <div class="flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-card-foreground">{group.name}</h3>
-                        {group.required && (
-                          <span
-                            class={`text-xs font-medium ${
-                              isGroupFilled(group.id) ? 'text-green-600' : 'text-destructive'
-                            }`}
-                          >
-                            {isGroupFilled(group.id) ? '✓' : t('required', lang)}
-                          </span>
-                        )}
-                      </div>
-
-                      <div class="mt-2 space-y-2">
-                        {group.options.map((opt) => {
-                          const isSelected = (selections[group.id] ?? []).includes(opt.id);
-                          const optQty = quantities[group.id]?.[opt.id] ?? 0;
-                          const optPrice = Number(opt.price);
-
-                          return (
-                            <div key={opt.id} class="flex items-center justify-between">
-                              {group.type === 'radio' || group.type === 'checkbox' ? (
-                                <label class="flex flex-1 cursor-pointer items-center gap-2">
-                                  {group.type === 'radio' ? (
-                                    <input
-                                      type="radio"
-                                      name={group.id}
-                                      checked={isSelected}
-                                      onChange={() => handleRadioSelect(group.id, opt.id)}
-                                      class="h-4 w-4 accent-primary"
-                                    />
-                                  ) : (
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={() =>
-                                        handleCheckboxToggle(group.id, opt.id, group.max_selections)
-                                      }
-                                      class="h-4 w-4 accent-primary"
-                                    />
-                                  )}
-                                  <span class="text-sm text-card-foreground">{opt.name}</span>
-                                  {optPrice > 0 && (
-                                    <span class="ml-auto text-xs text-muted-foreground">
-                                      +{formatPrice(opt.price, currency, locale)}
-                                    </span>
-                                  )}
-                                </label>
-                              ) : (
-                                <>
-                                  <span class="text-sm text-card-foreground">{opt.name}</span>
-                                  <div class="flex items-center gap-2">
-                                    {optPrice > 0 && (
-                                      <span class="text-xs text-muted-foreground">
-                                        +{formatPrice(opt.price, currency, locale)}
-                                      </span>
-                                    )}
-                                    <div
-                                      class="inline-flex items-center gap-1"
-                                      role="group"
-                                      aria-label={opt.name}
-                                    >
-                                      <button
-                                        type="button"
-                                        onClick={() => handleQuantityChange(group.id, opt.id, -1)}
-                                        disabled={optQty === 0}
-                                        aria-label={`${t('remove', lang)} ${opt.name}`}
-                                        class="relative inline-flex h-8 w-8 items-center justify-center rounded border border-border text-sm disabled:opacity-30 before:absolute before:inset-[-4px]"
-                                      >
-                                        −
-                                      </button>
-                                      <span class="w-6 text-center text-sm" aria-live="polite">
-                                        {optQty}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleQuantityChange(group.id, opt.id, 1)}
-                                        aria-label={`${t('addToCart', lang)} ${opt.name}`}
-                                        class="relative inline-flex h-8 w-8 items-center justify-center rounded border border-border text-sm before:absolute before:inset-[-4px]"
-                                      >
-                                        +
-                                      </button>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Suggestions (PDP surface) */}
-                  {suggestions.length > 0 && (
-                    <div class="mt-4">
-                      <h3 class="text-sm font-semibold text-card-foreground">
-                        {t('frequentlyCombined', lang)}
-                      </h3>
-                      <div class="mt-2 space-y-2">
-                        {suggestions.map((s) => (
-                          <SuggestionItem
-                            key={s.id}
-                            suggestion={s}
-                            added={addedSuggestions.has(s.id)}
-                            currency={currency}
-                            locale={locale}
-                            lang={lang}
-                            onAdd={async () => {
-                              const result = await addSuggestionToCart(s.id);
-                              if (result === 'added') {
-                                setAddedSuggestions((prev) => new Set([...prev, s.id]));
-                              } else if (result === 'requires_options') {
-                                $selectedProduct.set({ id: String(s.id), name: s.title });
-                              } else {
-                                showToast(t('toastAddToCartFailed', lang));
-                              }
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Notes */}
-                  <div class="mt-4">
-                    {!showNotes ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowNotes(true)}
-                        class="text-sm text-primary hover:underline"
-                      >
-                        {t('addNotes', lang)}
-                      </button>
-                    ) : (
-                      <textarea
-                        value={notes}
-                        onInput={(e) => setNotes((e.target as HTMLTextAreaElement).value)}
-                        placeholder={t('addNotes', lang)}
-                        class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        rows={2}
-                      />
                     )}
+
+                    {/* Notes */}
+                    <div class="mt-4">
+                      {!showNotes ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowNotes(true)}
+                          class="text-sm text-primary hover:underline"
+                        >
+                          {t('addNotes', lang)}
+                        </button>
+                      ) : (
+                        <textarea
+                          value={notes}
+                          onInput={(e) => setNotes((e.target as HTMLTextAreaElement).value)}
+                          placeholder={t('addNotes', lang)}
+                          class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                          rows={2}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Sticky bottom CTA */}
             <div
-              class="shrink-0 border-t border-border px-4 pt-3 pb-6"
+              class="shrink-0 px-4 pt-3 pb-6"
               style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
             >
               {step === 'upsell' ? (
                 <div class="space-y-2">
                   <button
                     type="button"
-                    onClick={close}
+                    onClick={() => {
+                      close();
+                      $isCartOpen.set(true);
+                    }}
                     class="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
                     {t('done', lang)}

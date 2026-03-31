@@ -81,7 +81,7 @@ test.describe('Upsells — post-add upsell step', () => {
 
     // Select required modifier and submit
     await modal.getByRole('radio', { name: 'Regular' }).check();
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option
     await ctaButton.click({ force: true });
 
@@ -109,18 +109,21 @@ test.describe('Upsells — post-add upsell step', () => {
 
     // Add product
     await modal.getByRole('radio', { name: 'Regular' }).check();
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option
     await ctaButton.click({ force: true });
 
     // Wait for upsell step
     await expect(modal.getByText('Toegevoegd')).toBeVisible({ timeout: 5_000 });
 
-    // Click Done
+    // Click Done — closes the modal and opens the cart drawer
     await modal.getByRole('button', { name: 'Klaar' }).click();
 
-    // Modal should close
-    await expect(modal).toBeHidden();
+    // Product detail modal should close
+    await expect(modal).toBeHidden({ timeout: 5_000 });
+
+    // Cart drawer opens automatically — close it for test cleanup
+    await page.keyboard.press('Escape');
   });
 
   test('adding suggestion from upsell step adds to cart', async ({ page }) => {
@@ -132,7 +135,7 @@ test.describe('Upsells — post-add upsell step', () => {
 
     // Add product
     await modal.getByRole('radio', { name: 'Regular' }).check();
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option
     await ctaButton.click({ force: true });
 
@@ -150,12 +153,13 @@ test.describe('Upsells — post-add upsell step', () => {
     await addSuggestion.click();
     await responsePromise;
 
-    // Close modal
+    // Close modal — cart drawer opens automatically after upsell dismiss
     await modal.getByRole('button', { name: 'Klaar' }).click();
-    await expect(modal).toBeHidden();
+    await expect(modal).toBeHidden({ timeout: 5_000 });
 
-    // Verify cart has 2 items (shawarma + mint lemonade)
-    const drawer = await openCartDrawer(page);
+    // Cart drawer is already open — verify it has 2 items (shawarma + mint lemonade)
+    const drawer = page.getByRole('dialog').filter({ hasText: /Shawarma Bowl/ });
+    await expect(drawer).toBeVisible({ timeout: 5_000 });
     await expect(drawer.getByText('Shawarma Bowl')).toBeVisible();
     await expect(drawer.getByText('Mint Lemonade')).toBeVisible();
   });

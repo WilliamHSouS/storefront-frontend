@@ -116,10 +116,10 @@ test.describe('Checkout error recovery', () => {
     );
 
     // The payment error message and "Try again" button should appear
-    await expect(page.getByText('Payment failed. Please try again.')).toBeVisible({
+    await expect(page.getByText('Payment setup failed. Please try again.').first()).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Try again' }).first()).toBeVisible();
 
     // Click retry — the second payment call should succeed and mount the payment form
     await page.getByRole('button', { name: 'Try again' }).click();

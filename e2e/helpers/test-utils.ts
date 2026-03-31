@@ -266,7 +266,11 @@ export async function openProductDetailModal(page: Page, productId: string) {
   const card = page.locator(`[data-product-id="${productId}"]`).first();
   await card.scrollIntoViewIfNeeded();
 
-  const modal = page.getByRole('dialog');
+  // Use a locator that excludes the cart drawer (aria-label="Winkelwagen")
+  // so it doesn't match when the cart opens after upsell dismiss.
+  const modal = page.locator(
+    '[role="dialog"]:not([aria-label="Winkelwagen"]):not([aria-label="Cart"])',
+  );
 
   for (let attempt = 0; attempt < 3; attempt++) {
     // Check again before each click — the modal can appear between retries

@@ -159,8 +159,8 @@ test.describe('Product detail modal — modifier groups', () => {
     const modal = await openProductDetailModal(page, shawarma.id);
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
-    // CTA button shows "Toevoegen aan bestelling" with the base price
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
+    // CTA button shows "Toevoegen" with the base price
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     await expect(ctaButton).toBeVisible();
     // Base price: €14.50
     await expect(ctaButton).toContainText('€ 14,50');
@@ -179,7 +179,7 @@ test.describe('Product detail modal — modifier groups', () => {
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // Try to submit without selecting the required Size modifier.
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option -- bypass pointer-event interception in modal
     await ctaButton.click({ force: true });
 
@@ -207,7 +207,7 @@ test.describe('Product detail modal — modifier groups', () => {
     await expect(sizeSection.getByText('Verplicht')).toBeHidden();
 
     // Submit should now work — clicking the CTA should add to cart.
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
     // eslint-disable-next-line playwright/no-force-option -- bypass pointer-event interception in modal
     await ctaButton.click({ force: true });
 
@@ -216,8 +216,10 @@ test.describe('Product detail modal — modifier groups', () => {
     await expect(modal.getByText('Toegevoegd')).toBeVisible({ timeout: 5_000 });
     await modal.getByRole('button', { name: 'Klaar' }).click();
 
-    // Modal should close after dismissing upsell step
-    await expect(modal).toBeHidden();
+    // Modal should close after dismissing upsell step (cart drawer opens automatically)
+    await expect(modal).toBeHidden({ timeout: 5_000 });
+    // Close the auto-opened cart drawer
+    await page.keyboard.press('Escape');
 
     // Cart state should be updated — a cart trigger should be visible.
     // CartBadge (desktop, hidden on mobile) and CartBar (mobile-only) both
@@ -233,7 +235,7 @@ test.describe('Product detail modal — modifier groups', () => {
     const modal = await openProductDetailModal(page, shawarma.id);
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
 
     // Base price: €14.50
     await expect(ctaButton).toContainText('€ 14,50');
@@ -266,7 +268,7 @@ test.describe('Product detail modal — quantity and notes', () => {
     const modal = await openProductDetailModal(page, shawarma.id);
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
-    const ctaButton = modal.getByRole('button', { name: /Toevoegen aan bestelling/ });
+    const ctaButton = modal.getByRole('button', { name: /Toevoegen.*€/ });
 
     // Base price at quantity 1: €14.50
     await expect(ctaButton).toContainText('€ 14,50');

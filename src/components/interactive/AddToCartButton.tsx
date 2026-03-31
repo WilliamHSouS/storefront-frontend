@@ -141,9 +141,23 @@ export default function AddToCartButton({
         type="button"
         onClick={handleAdd}
         disabled={loading}
-        class="group relative inline-flex h-9 items-center justify-center rounded-[10px] bg-accent px-3 text-xs font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:opacity-50"
+        class="group relative inline-flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        aria-label={t('addToCart', lang)}
       >
-        {t('addToCart', lang)}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 12h14" />
+          <path d="M12 5v14" />
+        </svg>
         {quantity > 0 && (
           <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground group-hover:animate-badge-bounce">
             {quantity}
@@ -196,9 +210,27 @@ export default function AddToCartButton({
       type="button"
       onClick={handleAdd}
       disabled={loading}
-      class="inline-flex h-9 items-center justify-center rounded-[10px] bg-primary px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+      class="group/add inline-flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary text-primary-foreground transition-all hover:w-auto hover:gap-1.5 hover:px-4 hover:bg-primary/90 disabled:opacity-50"
+      aria-label={t('addToCart', lang)}
     >
-      {t('addToCart', lang)}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="shrink-0"
+      >
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
+      </svg>
+      <span class="hidden text-xs font-semibold whitespace-nowrap group-hover/add:inline">
+        {t('addToCart', lang)}
+      </span>
     </button>
   );
 }

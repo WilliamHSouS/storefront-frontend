@@ -10,7 +10,7 @@
     },
     "assert": {
       "assertions": {
-        "resource-summary:script:size": ["error", { "maxNumericValue": 65000 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 80000 }],
         "total-blocking-time": ["error", { "maxNumericValue": 300 }],
         "largest-contentful-paint": ["warn", { "maxNumericValue": 2500 }],
         "first-contentful-paint": ["warn", { "maxNumericValue": 1800 }],

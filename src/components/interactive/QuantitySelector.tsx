@@ -32,12 +32,12 @@ export default function QuantitySelector({
 
   return (
     <>
-      <div class="inline-flex items-center rounded-md border border-border bg-background">
+      <div class="inline-flex items-center rounded-[10px] bg-muted">
         <button
           type="button"
           onClick={handleDecrement}
           disabled={quantity <= min && min > 0}
-          class="relative inline-flex h-9 w-9 items-center justify-center rounded-l-md text-foreground transition-colors hover:bg-accent disabled:opacity-50 before:absolute before:inset-[-4px]"
+          class="relative inline-flex h-9 w-9 items-center justify-center rounded-l-[10px] text-foreground transition-colors hover:bg-muted-foreground/10 disabled:opacity-50 before:absolute before:inset-[-4px]"
           aria-label={quantity <= 1 ? t('removeItem', lang) : t('decreaseQuantity', lang)}
         >
           {quantity <= 1 && min === 0 ? (
@@ -81,7 +81,7 @@ export default function QuantitySelector({
         <button
           type="button"
           onClick={onIncrement}
-          class="relative inline-flex h-9 w-9 items-center justify-center rounded-r-md text-foreground transition-colors hover:bg-accent before:absolute before:inset-[-4px]"
+          class="relative inline-flex h-9 w-9 items-center justify-center rounded-r-[10px] text-foreground transition-colors hover:bg-muted-foreground/10 before:absolute before:inset-[-4px]"
           aria-label={t('increaseQuantity', lang)}
         >
           <svg
