@@ -163,7 +163,23 @@ export function AddressBar({ lang }: Props) {
     );
   }
 
-  // Compact state: no address, no fulfillment choice
+  // Compact state: delivery chosen but no address yet — show postcode prompt
+  if (fulfillment === 'delivery' && !expanded) {
+    return (
+      <button
+        type="button"
+        onClick={handleExpand}
+        class="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+        aria-expanded="false"
+        aria-label={t('enterPostcode', lang)}
+      >
+        {pinIcon}
+        <span>{t('enterPostcode', lang)}</span>
+      </button>
+    );
+  }
+
+  // Compact state: no fulfillment choice yet
   if (!expanded) {
     return (
       <button

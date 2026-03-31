@@ -25,6 +25,17 @@ export async function resetMockApi(page: Page) {
     headers['x-test-cart-id'] = cartId;
     await route.continue({ headers });
   });
+
+  // Pre-set fulfillment choice so the first-visit modal doesn't block tests.
+  // addInitScript runs before page JS on every navigation.
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('sous_fulfillment_choice')) {
+      localStorage.setItem(
+        'sous_fulfillment_choice',
+        JSON.stringify({ choice: 'delivery', storedAt: Date.now() }),
+      );
+    }
+  });
 }
 
 // ── URL helpers ──────────────────────────────────────────────────
