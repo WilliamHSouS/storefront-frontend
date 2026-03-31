@@ -985,7 +985,10 @@ function ProductDetail({ lang }: Props) {
                 <div class="space-y-2">
                   <button
                     type="button"
-                    onClick={close}
+                    onClick={() => {
+                      close();
+                      $isCartOpen.set(true);
+                    }}
                     class="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
                     {t('done', lang)}

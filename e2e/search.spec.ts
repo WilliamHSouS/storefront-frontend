@@ -124,14 +124,16 @@ test.describe('Search', () => {
 
     await openSearchOverlay(page);
 
-    // Wait for featured products to load
+    // Wait for featured products to load and keyboard handlers to attach
     const popularList = page.getByRole('listbox', { name: 'Populaire items' });
     await expect(popularList.getByRole('option').first()).toBeVisible({ timeout: 5_000 });
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- keyboard handler attaches after render; settle time needed on CI
+    await page.waitForTimeout(500);
 
     // Press ArrowDown — first item should be highlighted
     await page.keyboard.press('ArrowDown');
     const firstOption = popularList.getByRole('option').first();
-    await expect(firstOption).toHaveAttribute('aria-selected', 'true');
+    await expect(firstOption).toHaveAttribute('aria-selected', 'true', { timeout: 3_000 });
 
     // Press ArrowDown again — second item highlighted, first deselected
     await page.keyboard.press('ArrowDown');
