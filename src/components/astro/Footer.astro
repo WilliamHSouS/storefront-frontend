@@ -216,14 +216,25 @@ function displayHost(url: string): string {
   </div>
 
   <div
-    class="mx-auto mt-8 max-w-[1160px] border-t border-border px-4 pt-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8"
+    class="mx-auto mt-8 max-w-[1160px] border-t border-border px-4 pt-4 text-center sm:px-6 lg:px-8"
   >
-    {t('poweredBy', lang)}
     <a
       href={`https://poweredbysous.com?utm_source=storefront&utm_medium=footer&utm_campaign=powered_by&utm_content=${merchant.slug}`}
-      class="underline hover:text-foreground"
+      class="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
       target="_blank"
-      rel="noopener noreferrer">SOUS</a
+      rel="noopener noreferrer"
     >
+      <span>{t('poweredBy', lang)}</span>
+      <svg width="52" height="14" viewBox="0 0 52 14" fill="currentColor" aria-label="SOUS">
+        <text
+          x="0"
+          y="11"
+          font-family="inherit"
+          font-size="12"
+          font-weight="700"
+          letter-spacing="0.5">SOUS</text
+        >
+      </svg>
+    </a>
   </div>
 </footer>
