@@ -1,0 +1,27 @@
+e2e/checkout.spec.ts
+  57a82ee1a36197ad 71-72,86
+e2e/checkout-recovery.spec.ts
+  57a82ee1a36197ad 98,153-155
+e2e/checkout-flow.spec.ts
+  57a82ee1a36197ad 79,90-91,208,211,214,601,605,616
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "21432b35d8f259ca4064274f455a306365d38a41",
+  "prompts": {
+    "57a82ee1a36197ad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d64be609-da95-4220-bd85-7310f322d229",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 20,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
