@@ -81,6 +81,7 @@ function cartDefaults(): Pick<
   | 'shipping_estimate'
   | 'discount'
   | 'promotion'
+  | 'service_fees'
   | 'expires_at'
   | 'created_at'
   | 'updated_at'
@@ -94,6 +95,7 @@ function cartDefaults(): Pick<
     shipping_estimate: null,
     discount: null,
     promotion: null,
+    service_fees: { total: '0.00', estimated: false, items: [] },
     expires_at: new Date(Date.now() + 86400000).toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

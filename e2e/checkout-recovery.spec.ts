@@ -95,6 +95,7 @@ test.describe('Checkout error recovery', () => {
     await goToCheckoutWithItem(page);
 
     // Fill contact + delivery to trigger the delivery PATCH → delivery_set → payment init chain
+    await page.getByText('Delivery', { exact: true }).click();
     await page.getByLabel('Email').fill('test@example.com');
     await page.getByLabel('Phone number').fill('+31612345678');
     await page.getByLabel('First name').fill('Jan');
@@ -149,8 +150,9 @@ test.describe('Checkout error recovery', () => {
     });
 
     // Contact fields are deliberately left empty.
-    // Click the Pickup toggle — fulfillment type change alone must not fire a PATCH.
-    await page.getByText('Pickup').click();
+    // Switch to Delivery first, then back to Pickup — fulfillment type change alone must not fire a PATCH.
+    await page.getByText('Delivery', { exact: true }).click();
+    await page.getByText('Pickup', { exact: true }).click();
 
     // Wait long enough for any debounced PATCH (debounce is 500ms) to have fired.
     // eslint-disable-next-line playwright/no-wait-for-timeout -- deliberate pause to confirm no debounced PATCH fires
