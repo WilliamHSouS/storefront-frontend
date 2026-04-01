@@ -220,47 +220,16 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   await addButton.click();
   await responsePromise;
 
-  // After adding a product, either an upsell dialog or the cart drawer opens.
-  // Dismiss whatever appears so subsequent test steps start from a clean state.
-  //
-  // Path A: product has suggestions → upsell dialog appears → Escape closes it → cart opens
-  // Path B: no suggestions → cart drawer opens directly
-  //
-  // In both cases we end up needing to close the cart drawer.
-
-  // Wait for any dialog to appear (upsell or cart)
-  const anyDialog = page.locator('[role="dialog"]').first();
-  await anyDialog.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {});
-
-  // Check if it's an upsell dialog (contains "Toegevoegd"/"Added")
-  const upsellLabel: Record<string, string> = { nl: 'Toegevoegd', en: 'Added', de: 'Hinzugefügt' };
-  const upsellDialog = page
-    .locator(
-      '[role="dialog"]:not([aria-label="Winkelwagen"]):not([aria-label="Cart"]):not([aria-label="Warenkorb"])',
-    )
-    .filter({ hasText: upsellLabel[lang] ?? 'Toegevoegd' });
-
-  if (await upsellDialog.isVisible().catch(() => false)) {
+  // After adding, either upsell dialog or cart drawer opens automatically.
+  // Dismiss all overlays by pressing Escape until no dialogs remain.
+  // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for async state update to render dialogs
+  await page.waitForTimeout(1000);
+  for (let i = 0; i < 3; i++) {
+    const dialog = page.locator('[role="dialog"]').first();
+    if (!(await dialog.isVisible().catch(() => false))) break;
     await page.keyboard.press('Escape');
-    await upsellDialog.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
-    // Cart drawer opens after upsell dismiss — wait for it
-    // eslint-disable-next-line playwright/no-wait-for-timeout -- cart opens asynchronously after upsell dismiss
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for close animation + potential next dialog
     await page.waitForTimeout(500);
-  }
-
-  // Close the cart drawer if it's open
-  const cartLabel: Record<string, string> = {
-    nl: 'Winkelwagen',
-    en: 'Cart',
-    de: 'Warenkorb',
-  };
-  const cartDrawer = page.locator(
-    `[role="dialog"][aria-label="${cartLabel[lang] ?? 'Winkelwagen'}"]`,
-  );
-  await cartDrawer.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
-  if (await cartDrawer.isVisible().catch(() => false)) {
-    await page.keyboard.press('Escape');
-    await cartDrawer.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
   }
 }
 
