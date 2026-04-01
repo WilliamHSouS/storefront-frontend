@@ -38,6 +38,18 @@ export interface CartLineItem {
   notes?: string;
 }
 
+export interface ServiceFeeItem {
+  type: string;
+  label: string;
+  amount: string;
+}
+
+export interface ServiceFees {
+  total: string;
+  estimated: boolean;
+  items: ServiceFeeItem[];
+}
+
 export interface Cart {
   id: string;
   line_items: CartLineItem[];
@@ -51,6 +63,7 @@ export interface Cart {
   surcharge_total?: string;
   shipping_cost?: string;
   shipping_estimate?: ShippingEstimate;
+  service_fees?: ServiceFees;
   discount_amount?: string;
   promotion_discount_amount?: string;
   applied_discount?: {

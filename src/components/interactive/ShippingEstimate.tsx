@@ -51,17 +51,18 @@ export function ShippingEstimate({ lang, currency, shippingEstimate }: Props) {
   const allPending = groups.every((g) => g.status === 'pending');
 
   // Single group or all pending: simple one-line display
+  // Use total_shipping (customer portion after delivery fee split), not group.estimated_cost (full provider rate)
   if (groups.length <= 1 && !ships_in_parts) {
     const group = groups[0];
     return (
       <div class="mb-1 flex items-center justify-between text-sm">
         <span class="text-muted-foreground">{t('shippingEstimate', lang)}</span>
         <span class="text-card-foreground">
-          {!group || group.status === 'pending' || group.estimated_cost === null
+          {!group || group.status === 'pending' || total_shipping == null
             ? t('shippingAtCheckout', lang)
             : group.status === 'unavailable'
               ? t('shippingUnavailable', lang)
-              : formatShippingCost(group.estimated_cost, currency, locale, lang)}
+              : formatShippingCost(total_shipping, currency, locale, lang)}
         </span>
       </div>
     );

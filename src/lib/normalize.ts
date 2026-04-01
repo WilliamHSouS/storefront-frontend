@@ -368,5 +368,6 @@ export function normalizeCart(raw: Record<string, unknown>): Cart {
     applied_discount: (r.applied_discount ?? r.discount) as Cart['applied_discount'],
     promotion: r.promotion as Cart['promotion'],
     shipping_estimate: normalizeShippingEstimate(r.shipping_estimate),
+    service_fees: r.service_fees as Cart['service_fees'],
   };
 }

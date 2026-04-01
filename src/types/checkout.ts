@@ -34,6 +34,19 @@ export interface CheckoutLineItem {
   gift_card_details?: unknown;
 }
 
+export interface ServiceFeeItem {
+  type: string;
+  label: string;
+  amount: string;
+  display_amount?: string;
+}
+
+export interface ServiceFees {
+  total: string;
+  estimated: boolean;
+  items: ServiceFeeItem[];
+}
+
 export interface Checkout {
   id: string;
   cart_id: string;
@@ -65,7 +78,9 @@ export interface Checkout {
   display_shipping_cost: string;
   display_discount_amount: string;
   display_promotion_discount_amount: string;
+  display_service_fees_total?: string;
   display_total: string;
+  service_fees?: ServiceFees;
   fulfillment_slot_id: string | null;
   gift_card_details: unknown | null;
   order_number: string | null;

@@ -145,6 +145,7 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
         surchargeTotal={cart.surcharge_total}
         promotionDiscount={cart.promotion_discount_amount}
         productSavings={savings ?? undefined}
+        serviceFees={cart.service_fees}
         taxIncluded={taxIncluded}
         showShippingFree={hasAddress}
         shippingSlot={

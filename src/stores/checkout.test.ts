@@ -109,6 +109,7 @@ describe('$checkoutTotals', () => {
       tax: '0.00',
       shipping: '0.00',
       discount: '0.00',
+      serviceFees: '0.00',
       total: '0.00',
     });
   });
@@ -121,6 +122,7 @@ describe('$checkoutTotals', () => {
       tax: '1.53',
       shipping: '4.95',
       discount: '0.00',
+      serviceFees: '0.00',
       total: '23.48',
     });
   });
