@@ -54,6 +54,11 @@ export interface CartFixture {
   discount_amount?: string;
   promotion_discount_amount?: string;
   promotion?: { id: number; name: string; discount_amount: string } | null;
+  service_fees?: {
+    total: string;
+    estimated: boolean;
+    items: Array<{ type: string; label: string; amount: string }>;
+  };
   expires_at?: string;
   created_at?: string;
   updated_at?: string;

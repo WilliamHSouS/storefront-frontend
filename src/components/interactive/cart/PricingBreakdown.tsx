@@ -1,6 +1,20 @@
 import type { ComponentChildren } from 'preact';
+import { useState } from 'preact/hooks';
 import { formatPrice } from '@/lib/currency';
 import { t } from '@/i18n/client';
+import type { ServiceFees } from '@/stores/cart';
+
+/** Map fee type to i18n key, fall back to backend label for unknown types. */
+const FEE_TYPE_KEYS: Record<string, string> = {
+  platform_fee: 'serviceFeePlatformFee',
+  delivery_fee: 'serviceFeeDeliveryFee',
+};
+
+function feeLabel(type: string, fallbackLabel: string, lang: string): string {
+  const key = FEE_TYPE_KEYS[type];
+  if (key) return t(key as Parameters<typeof t>[0], lang);
+  return fallbackLabel;
+}
 
 export interface PricingBreakdownProps {
   lang: 'nl' | 'en' | 'de';
@@ -16,6 +30,7 @@ export interface PricingBreakdownProps {
   surchargeTotal?: string;
   promotionDiscount?: string;
   productSavings?: string; // "You save" amount
+  serviceFees?: ServiceFees;
   taxIncluded?: boolean;
   // Display options
   showShippingFree?: boolean; // whether to show "Free" or hide when 0
@@ -36,6 +51,7 @@ export function PricingBreakdown({
   surchargeTotal,
   promotionDiscount,
   productSavings,
+  serviceFees,
   taxIncluded = true,
   showShippingFree = false,
   shippingSlot,
@@ -45,6 +61,8 @@ export function PricingBreakdown({
   const surchargeNum = surchargeTotal ? parseFloat(surchargeTotal) : 0;
   const promoNum = promotionDiscount ? parseFloat(promotionDiscount) : 0;
   const savingsNum = productSavings ? parseFloat(productSavings) : 0;
+  const serviceFeesTotal = serviceFees ? parseFloat(serviceFees.total) : 0;
+  const [feesExpanded, setFeesExpanded] = useState(false);
 
   return (
     <>
@@ -68,6 +86,54 @@ export function PricingBreakdown({
         <div class="mb-1 flex items-center justify-between text-sm">
           <span class="text-muted-foreground">{t('surcharges', lang)}</span>
           <span class="text-card-foreground">{formatPrice(surchargeTotal!, currency, locale)}</span>
+        </div>
+      )}
+
+      {/* Service Fees — single fee: plain line; multiple fees: expandable */}
+      {serviceFeesTotal > 0 && serviceFees!.items.length === 1 && (
+        <div class="mb-1 flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">
+            {feeLabel(serviceFees!.items[0].type, serviceFees!.items[0].label, lang)}
+          </span>
+          <span class="text-card-foreground">
+            {formatPrice(serviceFees!.total, currency, locale)}
+          </span>
+        </div>
+      )}
+      {serviceFeesTotal > 0 && serviceFees!.items.length > 1 && (
+        <div class="mb-1">
+          <button
+            type="button"
+            onClick={() => setFeesExpanded(!feesExpanded)}
+            class="flex w-full items-center justify-between text-sm"
+          >
+            <span class="text-muted-foreground">{t('serviceFees', lang)}</span>
+            <span class="flex items-center gap-1 text-card-foreground">
+              {formatPrice(serviceFees!.total, currency, locale)}
+              <svg
+                class={`h-3.5 w-3.5 transition-transform ${feesExpanded ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </button>
+          {feesExpanded && (
+            <div class="mt-0.5 space-y-0.5 pl-2">
+              {serviceFees!.items.map((item) => (
+                <div
+                  key={item.type}
+                  class="flex items-center justify-between text-xs text-muted-foreground"
+                >
+                  <span>{feeLabel(item.type, item.label, lang)}</span>
+                  <span>{formatPrice(item.amount, currency, locale)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
