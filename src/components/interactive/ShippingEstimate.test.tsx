@@ -49,7 +49,7 @@ describe('ShippingEstimate', () => {
     const { getByText } = render(
       <ShippingEstimate lang="en" currency="EUR" shippingEstimate={estimate} />,
     );
-    expect(getByText(/shipping/i)).toBeTruthy();
+    expect(getByText(/delivery/i)).toBeTruthy();
   });
 
   it('shows "calculated at checkout" for pending groups', () => {
