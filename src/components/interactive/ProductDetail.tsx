@@ -239,8 +239,7 @@ function ProductDetail({ lang }: Props) {
   // Fetch product detail + suggestions when selected
   const selectedProductId = selectedProduct?.id;
   useEffect(() => {
-    // Always reset state (handles both null and product-to-product transitions)
-    setProduct(null);
+    // Reset interaction state (handles both null and product-to-product transitions)
     setSelections({});
     setQuantities({});
     setQuantity(1);
@@ -252,7 +251,22 @@ function ProductDetail({ lang }: Props) {
     setSuggestions([]);
     setAddedSuggestions(new Set());
 
-    if (!selectedProduct) return;
+    if (!selectedProduct) {
+      setProduct(null);
+      return;
+    }
+
+    // Check cache synchronously — if hit, set product in the same render batch
+    // to avoid a flash of the skeleton/null state.
+    const cached = getCached(String(selectedProduct.id));
+    if (cached) {
+      setProduct(toProductData(cached.product));
+      setSuggestions(cached.suggestions as Suggestion[]);
+      setLoadingProduct(false);
+      return;
+    }
+
+    setProduct(null);
 
     const controller = new AbortController();
     const { signal } = controller;
@@ -539,7 +553,7 @@ function ProductDetail({ lang }: Props) {
     <div class="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
-        class="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
+        class="absolute inset-0 bg-foreground/20 backdrop-blur-sm animate-[fadeIn_150ms_ease-out]"
         onClick={close}
         aria-hidden="true"
       />
@@ -550,7 +564,7 @@ function ProductDetail({ lang }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={product?.name ?? ''}
-        class="absolute bottom-0 left-0 right-0 flex max-h-[95vh] flex-col overflow-hidden rounded-t-2xl bg-card shadow-xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl"
+        class="absolute inset-0 flex flex-col overflow-hidden bg-card shadow-xl animate-[slideUp_200ms_ease-out] md:inset-auto md:bottom-auto md:left-1/2 md:top-1/2 md:max-h-[85vh] md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:animate-[scaleIn_200ms_ease-out]"
       >
         {loadingProduct ? (
           <div role="status" aria-label={t('loading', lang)} class="animate-pulse">
@@ -654,6 +668,8 @@ function ProductDetail({ lang }: Props) {
                           class="h-full w-full object-cover"
                           width="512"
                           height="384"
+                          decoding="sync"
+                          fetchpriority="high"
                         />
                       );
                     })()}

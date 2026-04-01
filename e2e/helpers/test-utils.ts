@@ -220,17 +220,16 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   await addButton.click();
   await responsePromise;
 
-  // Dismiss the upsell dialog if it appears (added by upsells feature).
-  // The dialog has "Klaar" and "Bekijk winkelwagen" buttons; pressing Escape
-  // is the most reliable way to close it without side effects.
-  const upsellLabel: Record<string, string> = { nl: 'Toegevoegd', en: 'Added', de: 'Hinzugefügt' };
-  const upsellDialog = page
-    .getByRole('dialog')
-    .filter({ hasText: upsellLabel[lang] ?? 'Toegevoegd' });
-  await upsellDialog.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
-  if (await upsellDialog.isVisible()) {
+  // After adding, either upsell dialog or cart drawer opens automatically.
+  // Dismiss all overlays by pressing Escape until no dialogs remain.
+  // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for async state update to render dialogs
+  await page.waitForTimeout(1000);
+  for (let i = 0; i < 3; i++) {
+    const dialog = page.locator('[role="dialog"]').first();
+    if (!(await dialog.isVisible().catch(() => false))) break;
     await page.keyboard.press('Escape');
-    await upsellDialog.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for close animation + potential next dialog
+    await page.waitForTimeout(500);
   }
 }
 
