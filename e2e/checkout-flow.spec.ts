@@ -76,7 +76,7 @@ async function fillContactForm(
   await page.getByLabel('Last name').fill(lastName);
 }
 
-/** Fill the delivery address fields. */
+/** Fill the delivery address fields (switches to Delivery if needed). */
 async function fillDeliveryAddress(
   page: Page,
   data: {
@@ -87,6 +87,8 @@ async function fillDeliveryAddress(
 ) {
   const { street = 'Damstraat 1', city = 'Amsterdam', postalCode = '1015AB' } = data;
 
+  // Ensure delivery is selected (checkout may default to pickup)
+  await page.getByText('Delivery', { exact: true }).click();
   await page.getByLabel('Street and number').fill(street);
   await page.getByLabel('City').fill(city);
   await page.getByLabel('Postal code').fill(postalCode);
@@ -203,16 +205,13 @@ test.describe('Scenario 2: Pickup order — happy path', () => {
   }) => {
     await goToCheckoutWithItem(page);
 
-    // 1. Switch to pickup
-    await page.getByText('Pickup').click();
-
-    // 2. Verify address fields are hidden
+    // 1. Pickup is the default (no address data) — verify address fields are hidden
     await expect(page.getByLabel('Street and number')).toBeHidden();
 
-    // 3. Wait for pickup locations to load (from /api/v1/pickup-locations/)
+    // 2. Wait for pickup locations to load (from /api/v1/pickup-locations/)
     await expect(page.getByText('Pickup location')).toBeVisible({ timeout: 5_000 });
 
-    // 4. Fill contact info
+    // 3. Fill contact info
     await fillContactForm(page);
 
     // 5. Set up PATCH listener before blur
@@ -599,11 +598,11 @@ test.describe('Scenario 10: Fulfillment toggle state preservation', () => {
     });
 
     // 2. Switch to pickup
-    await page.getByText('Pickup').click();
+    await page.getByText('Pickup', { exact: true }).click();
     await expect(page.getByLabel('Street and number')).toBeHidden();
 
     // 3. Switch back to delivery
-    await page.getByText('Delivery').click();
+    await page.getByText('Delivery', { exact: true }).click();
 
     // 4. Address fields should retain their values
     await expect(page.getByLabel('Street and number')).toHaveValue('Keizersgracht 100');
@@ -614,10 +613,7 @@ test.describe('Scenario 10: Fulfillment toggle state preservation', () => {
   test('pickup order sends no shipping address in PATCH', async ({ page }) => {
     await goToCheckoutWithItem(page);
 
-    // Switch to pickup first
-    await page.getByText('Pickup').click();
-
-    // Wait for pickup location section to appear (label + combobox)
+    // Pickup is the default — wait for pickup location section to appear
     await expect(page.getByText('Pickup location')).toBeVisible({ timeout: 5_000 });
 
     // Fill contact info

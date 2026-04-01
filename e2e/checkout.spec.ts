@@ -68,7 +68,8 @@ test.describe('Checkout page', () => {
     await page.goto('/en/checkout');
     await waitForHydration(page);
 
-    // Delivery is the default fulfillment method
+    // Checkout defaults to pickup — switch to delivery
+    await page.getByText('Delivery', { exact: true }).click();
     await expect(page.getByLabel('Street and number')).toBeVisible();
     await expect(page.getByLabel('City')).toBeVisible();
     await expect(page.getByLabel('Postal code')).toBeVisible();
@@ -82,10 +83,7 @@ test.describe('Checkout page', () => {
     await page.goto('/en/checkout');
     await waitForHydration(page);
 
-    // Click pickup option
-    await page.getByText('Pickup').click();
-
-    // Address fields should be hidden
+    // Pickup is the default — address fields should be hidden
     await expect(page.getByLabel('Street and number')).toBeHidden();
 
     // Pickup location selector should be visible
