@@ -232,6 +232,22 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
     await page.keyboard.press('Escape');
     await upsellDialog.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
   }
+
+  // After adding a product, the cart drawer auto-opens (no upsells) or opens
+  // after upsell dismiss. Close it so subsequent test steps start from a clean state.
+  const cartLabel: Record<string, string> = {
+    nl: 'Winkelwagen',
+    en: 'Cart',
+    de: 'Warenkorb',
+  };
+  const cartDrawer = page.locator(
+    `[role="dialog"][aria-label="${cartLabel[lang] ?? 'Winkelwagen'}"]`,
+  );
+  await cartDrawer.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
+  if (await cartDrawer.isVisible()) {
+    await page.keyboard.press('Escape');
+    await cartDrawer.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
+  }
 }
 
 /**
