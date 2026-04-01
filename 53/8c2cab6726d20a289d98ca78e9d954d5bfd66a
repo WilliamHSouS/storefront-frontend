@@ -1,0 +1,25 @@
+e2e/fixtures/cart.ts
+  57a82ee1a36197ad 84,98
+src/components/interactive/ShippingEstimate.test.tsx
+  57a82ee1a36197ad 52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "538c2cab6726d20a289d98ca78e9d954d5bfd66a",
+  "prompts": {
+    "57a82ee1a36197ad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d64be609-da95-4220-bd85-7310f322d229",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 1,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
