@@ -220,25 +220,35 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   await addButton.click();
   await responsePromise;
 
-  // Dismiss the upsell dialog if it appears (added by upsells feature).
-  // The dialog has "Klaar" and "Bekijk winkelwagen" buttons; pressing Escape
-  // is the most reliable way to close it without side effects.
+  // After adding a product, either an upsell dialog or the cart drawer opens.
+  // Dismiss whatever appears so subsequent test steps start from a clean state.
+  //
+  // Path A: product has suggestions → upsell dialog appears → Escape closes it → cart opens
+  // Path B: no suggestions → cart drawer opens directly
+  //
+  // In both cases we end up needing to close the cart drawer.
+
+  // Wait for any dialog to appear (upsell or cart)
+  const anyDialog = page.locator('[role="dialog"]').first();
+  await anyDialog.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {});
+
+  // Check if it's an upsell dialog (contains "Toegevoegd"/"Added")
   const upsellLabel: Record<string, string> = { nl: 'Toegevoegd', en: 'Added', de: 'Hinzugefügt' };
   const upsellDialog = page
-    .getByRole('dialog')
+    .locator(
+      '[role="dialog"]:not([aria-label="Winkelwagen"]):not([aria-label="Cart"]):not([aria-label="Warenkorb"])',
+    )
     .filter({ hasText: upsellLabel[lang] ?? 'Toegevoegd' });
-  await upsellDialog.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
-  if (await upsellDialog.isVisible()) {
+
+  if (await upsellDialog.isVisible().catch(() => false)) {
     await page.keyboard.press('Escape');
     await upsellDialog.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
+    // Cart drawer opens after upsell dismiss — wait for it
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- cart opens asynchronously after upsell dismiss
+    await page.waitForTimeout(500);
   }
 
-  // After adding a product, the cart drawer auto-opens (no upsells) or opens
-  // after upsell dismiss. Wait for it to appear, then close it so subsequent
-  // test steps start from a clean state. The cart open is asynchronous (state
-  // update after API response), so we need an explicit wait.
-  // eslint-disable-next-line playwright/no-wait-for-timeout -- cart opens asynchronously after state update
-  await page.waitForTimeout(500);
+  // Close the cart drawer if it's open
   const cartLabel: Record<string, string> = {
     nl: 'Winkelwagen',
     en: 'Cart',
@@ -248,7 +258,7 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
     `[role="dialog"][aria-label="${cartLabel[lang] ?? 'Winkelwagen'}"]`,
   );
   await cartDrawer.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
-  if (await cartDrawer.isVisible()) {
+  if (await cartDrawer.isVisible().catch(() => false)) {
     await page.keyboard.press('Escape');
     await cartDrawer.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
   }
