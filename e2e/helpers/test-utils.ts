@@ -234,7 +234,11 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   }
 
   // After adding a product, the cart drawer auto-opens (no upsells) or opens
-  // after upsell dismiss. Close it so subsequent test steps start from a clean state.
+  // after upsell dismiss. Wait for it to appear, then close it so subsequent
+  // test steps start from a clean state. The cart open is asynchronous (state
+  // update after API response), so we need an explicit wait.
+  // eslint-disable-next-line playwright/no-wait-for-timeout -- cart opens asynchronously after state update
+  await page.waitForTimeout(500);
   const cartLabel: Record<string, string> = {
     nl: 'Winkelwagen',
     en: 'Cart',
