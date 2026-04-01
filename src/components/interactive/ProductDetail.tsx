@@ -550,7 +550,7 @@ function ProductDetail({ lang }: Props) {
   if (!selectedProduct) return <div />;
 
   return (
-    <div class="fixed inset-0 z-50">
+    <div class="fixed inset-0 z-50 md:flex md:items-center md:justify-center">
       {/* Backdrop */}
       <div
         class="absolute inset-0 bg-foreground/20 backdrop-blur-sm animate-[fadeIn_150ms_ease-out]"
@@ -564,7 +564,7 @@ function ProductDetail({ lang }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={product?.name ?? ''}
-        class="absolute inset-0 flex flex-col overflow-hidden bg-card shadow-xl animate-[slideUp_200ms_ease-out] md:inset-auto md:bottom-auto md:left-1/2 md:top-1/2 md:max-h-[85vh] md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:animate-[scaleIn_200ms_ease-out]"
+        class="absolute inset-0 flex flex-col overflow-hidden bg-card shadow-xl animate-[slideUp_200ms_ease-out] md:relative md:inset-auto md:max-h-[85vh] md:w-full md:max-w-lg md:rounded-2xl md:animate-[scaleIn_200ms_ease-out]"
       >
         {loadingProduct ? (
           <div role="status" aria-label={t('loading', lang)} class="animate-pulse">

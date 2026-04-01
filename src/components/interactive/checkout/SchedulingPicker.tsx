@@ -48,7 +48,6 @@ export default function SchedulingPicker({
   onSlotSelect,
   loading,
 }: SchedulingPickerProps) {
-  const [showAll, setShowAll] = useState(false);
   const dates = buildDateStrip();
   const [scrollOffset, setScrollOffset] = useState(0);
   const listboxRef = useRef<HTMLDivElement>(null);
@@ -91,7 +90,7 @@ export default function SchedulingPicker({
     [dates, selectedDate, handleDateSelect, scrollOffset, maxOffset],
   );
 
-  const slotsToShow = showAll ? timeSlots : timeSlots.filter((s) => s.available);
+  const slotsToShow = timeSlots;
 
   return (
     <section>
@@ -215,12 +214,6 @@ export default function SchedulingPicker({
               </div>
             )}
 
-            <label
-              class="block text-sm font-medium text-foreground mb-1.5"
-              htmlFor="time-slot-select"
-            >
-              {t('selectTime', lang)}
-            </label>
             <select
               id="time-slot-select"
               class="w-full min-h-[48px] rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%236d6b64%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m4%206%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-10 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -243,16 +236,6 @@ export default function SchedulingPicker({
                 </option>
               ))}
             </select>
-
-            {timeSlots.some((s) => !s.available) && (
-              <button
-                type="button"
-                class="mt-2 text-sm text-primary underline"
-                onClick={() => setShowAll(!showAll)}
-              >
-                {showAll ? t('selectTime', lang) : t('showAllTimes', lang)}
-              </button>
-            )}
           </div>
         </>
       )}

@@ -30,6 +30,7 @@ function StripePaymentFormInner({
   onError,
 }: StripePaymentFormProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const elementsRef = useRef<StripeElements | null>(null);
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(false);
 
@@ -91,6 +92,7 @@ function StripePaymentFormInner({
 
         paymentElement.on('ready', () => {
           setLoading(false);
+          elementsRef.current = elements;
           onStripeReady?.(stripe, elements!);
         });
 
@@ -117,6 +119,15 @@ function StripePaymentFormInner({
       }
     };
   }, [clientSecret, publishableKey, stripeAccount]);
+
+  // Update billing name on the Payment Element when it changes
+  useEffect(() => {
+    const pe = elementsRef.current?.getElement('payment');
+    if (!pe) return;
+    pe.update({
+      defaultValues: { billingDetails: { name: billingName || '' } },
+    });
+  }, [billingName]);
 
   return (
     <div class="relative min-h-[200px]">

@@ -11,6 +11,7 @@ import { $addressCoords } from '@/stores/address';
 interface Props {
   lang: 'nl' | 'en' | 'de';
   currency: string;
+  fulfillmentMethod?: 'delivery' | 'pickup';
 }
 
 const COLLAPSE_THRESHOLD = 4;
@@ -55,7 +56,7 @@ function LineItem({
   );
 }
 
-export function OrderSummary({ lang, currency }: Props) {
+export function OrderSummary({ lang, currency, fulfillmentMethod }: Props) {
   const cart = useStore($cart);
   const cartTotal = useStore($cartTotal);
   const [expanded, setExpanded] = useState(false);
@@ -70,10 +71,12 @@ export function OrderSummary({ lang, currency }: Props) {
   const subtotal = cart?.subtotal ?? '0.00';
   const tax = cart?.tax_total ?? '0.00';
   const discount = cart?.discount_amount;
+  const promotionDiscount = cart?.promotion_discount_amount;
   const surchargeTotal = cart?.surcharge_total;
   const serviceFees = cart?.service_fees;
+  const isPickup = fulfillmentMethod === 'pickup';
   const hasAddress = !!$addressCoords.get();
-  const shipping = cart?.shipping_estimate?.total_shipping ?? null;
+  const shipping = isPickup ? null : (cart?.shipping_estimate?.total_shipping ?? null);
   const total = cartTotal;
 
   const discountNum = discount ? parseFloat(discount) : 0;
@@ -116,11 +119,12 @@ export function OrderSummary({ lang, currency }: Props) {
           shipping={shipping}
           tax={tax}
           discount={discountNum > 0 ? discount! : null}
+          promotionDiscount={promotionDiscount}
           surchargeTotal={surchargeTotal}
           serviceFees={serviceFees}
           total={total}
           taxIncluded={true}
-          showShippingFree={hasAddress}
+          showShippingFree={!isPickup && hasAddress}
         />
       </div>
     </div>
