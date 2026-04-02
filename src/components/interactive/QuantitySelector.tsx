@@ -37,7 +37,7 @@ export default function QuantitySelector({
           type="button"
           onClick={handleDecrement}
           disabled={quantity <= min && min > 0}
-          class="relative inline-flex h-9 w-9 items-center justify-center rounded-l-[10px] text-foreground transition-colors hover:bg-muted-foreground/10 disabled:opacity-50 before:absolute before:inset-[-4px]"
+          class="relative inline-flex h-12 w-10 items-center justify-center rounded-l-[10px] text-foreground transition-colors hover:bg-muted-foreground/10 disabled:opacity-50 before:absolute before:inset-[-4px]"
           aria-label={quantity <= 1 ? t('removeItem', lang) : t('decreaseQuantity', lang)}
         >
           {quantity <= 1 && min === 0 ? (
@@ -81,7 +81,7 @@ export default function QuantitySelector({
         <button
           type="button"
           onClick={onIncrement}
-          class="relative inline-flex h-9 w-9 items-center justify-center rounded-r-[10px] text-foreground transition-colors hover:bg-muted-foreground/10 before:absolute before:inset-[-4px]"
+          class="relative inline-flex h-12 w-10 items-center justify-center rounded-r-[10px] text-foreground transition-colors hover:bg-muted-foreground/10 before:absolute before:inset-[-4px]"
           aria-label={t('increaseQuantity', lang)}
         >
           <svg
