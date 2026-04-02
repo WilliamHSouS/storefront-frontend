@@ -125,11 +125,10 @@ export default function CheckoutFormOrchestrator({
   }, [pickupLocations.length]);
 
   // ── Fetch time slots for a date ────────────────────────────────
-  // Uses the location-based /fulfillment/locations/{id}/slots/ endpoint.
-  // Falls back to the first pickup location ID. Does not require a checkout.
+  // Uses /api/v1/pickup-locations/{location_id}/time-slots/ from the SDK.
+  // Does not require a checkout — only needs a pickup location ID.
   const fetchTimeSlots = useCallback(
     async (date: string) => {
-      // Need at least one pickup location to get a fulfillment location ID
       const locationId = pickupLocations[0]?.id;
       if (!locationId) {
         setTimeSlots([]);
@@ -139,8 +138,13 @@ export default function CheckoutFormOrchestrator({
       const client = getClient();
 
       try {
-        const { data } = await client.GET('/api/v1/fulfillment/locations/{location_id}/slots/', {
-          params: { path: { location_id: String(locationId) }, query: { date } },
+        // SDK types don't include `date` query param — use opts override
+        const { data } = await client.GET('/api/v1/pickup-locations/{location_id}/time-slots/', {
+          params: {
+            path: { location_id: locationId },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- date query param not in SDK types yet
+            query: { date } as any,
+          },
         });
 
         if (!data) {
