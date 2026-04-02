@@ -1,0 +1,23 @@
+package.json
+  6822979088393528 67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "cc37ccb6b5bdb62bae57ad67e2b3a36b87545a98",
+  "prompts": {
+    "6822979088393528": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1cf446c0-aa6f-4129-9c49-0acd3f5795e6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
