@@ -1,0 +1,40 @@
+src/components/interactive/ProductDetail.tsx
+  57a82ee1a36197ad 379-391,580
+src/stores/ui.ts
+  57a82ee1a36197ad 11-12
+src/components/interactive/AddToCartButton.tsx
+  57a82ee1a36197ad 86-90,92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "a681fa7a2f61ec57108489e5c65ada2840677d95",
+  "prompts": {
+    "57a82ee1a36197ad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d64be609-da95-4220-bd85-7310f322d229",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 18,
+      "total_deletions": 3,
+      "accepted_lines": 22,
+      "overriden_lines": 1
+    },
+    "6822979088393528": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1cf446c0-aa6f-4129-9c49-0acd3f5795e6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
