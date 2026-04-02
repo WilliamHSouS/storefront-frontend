@@ -866,7 +866,7 @@ function ProductDetail({ lang }: Props) {
                                   <div key={opt.id} class="flex items-center justify-between">
                                     {group.type === 'radio' || group.type === 'checkbox' ? (
                                       <div
-                                        class="flex flex-1 cursor-pointer items-center justify-between py-1"
+                                        class="flex flex-1 cursor-pointer items-center justify-between py-4"
                                         onClick={() => {
                                           if (group.type === 'radio') {
                                             handleRadioSelect(group.id, opt.id);
