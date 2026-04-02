@@ -1,0 +1,25 @@
+e2e/search.spec.ts
+  57a82ee1a36197ad 145,172
+src/components/interactive/ProductDetail.tsx
+  57a82ee1a36197ad 821,864,871,884,887-894,896-906,908-929
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "07bb04dbcde24573d0d930d617013fac133f38e7",
+  "prompts": {
+    "57a82ee1a36197ad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d64be609-da95-4220-bd85-7310f322d229",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 81,
+      "total_deletions": 42,
+      "accepted_lines": 67,
+      "overriden_lines": 0
+    }
+  }
+}
