@@ -818,7 +818,7 @@ function ProductDetail({ lang }: Props) {
                       <div
                         key={group.id}
                         id={`modifier-group-${group.id}`}
-                        class={`mt-4 rounded-2xl bg-muted/50 p-4 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
+                        class={`mt-4 rounded-2xl bg-card p-4 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
                       >
                         <div class="flex items-center justify-between">
                           <h3 class="text-sm font-semibold text-card-foreground">{group.name}</h3>
@@ -861,14 +861,14 @@ function ProductDetail({ lang }: Props) {
                             return (
                               <div key={opt.id} class="flex items-center justify-between">
                                 {group.type === 'radio' || group.type === 'checkbox' ? (
-                                  <label class="flex flex-1 cursor-pointer items-center gap-2">
+                                  <label class="flex flex-1 cursor-pointer items-center justify-between py-1">
                                     {group.type === 'radio' ? (
                                       <input
                                         type="radio"
                                         name={group.id}
                                         checked={isSelected}
                                         onChange={() => handleRadioSelect(group.id, opt.id)}
-                                        class="h-4 w-4 accent-primary"
+                                        class="sr-only"
                                       />
                                     ) : (
                                       <input
@@ -881,13 +881,52 @@ function ProductDetail({ lang }: Props) {
                                             group.max_selections,
                                           )
                                         }
-                                        class="h-4 w-4 accent-primary"
+                                        class="sr-only"
                                       />
                                     )}
-                                    <span class="text-sm text-card-foreground">{opt.name}</span>
-                                    {optPrice > 0 && (
-                                      <span class="ml-auto text-xs text-muted-foreground">
-                                        +{formatPrice(opt.price, currency, locale)}
+                                    <div class="flex flex-col">
+                                      <span class="text-sm text-foreground">{opt.name}</span>
+                                      {optPrice > 0 && (
+                                        <span class="text-xs text-muted-foreground">
+                                          + {formatPrice(opt.price, currency, locale)}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {group.type === 'radio' ? (
+                                      <span
+                                        class={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                                          isSelected
+                                            ? 'border-primary bg-primary'
+                                            : 'border-muted-foreground/30'
+                                        }`}
+                                      >
+                                        {isSelected && (
+                                          <span class="h-2 w-2 rounded-full bg-primary-foreground" />
+                                        )}
+                                      </span>
+                                    ) : (
+                                      <span
+                                        class={`flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors ${
+                                          isSelected
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'border-2 border-muted-foreground/30'
+                                        }`}
+                                      >
+                                        {isSelected && (
+                                          <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="14"
+                                            height="14"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="3"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                          >
+                                            <path d="M20 6 9 17l-5-5" />
+                                          </svg>
+                                        )}
                                       </span>
                                     )}
                                   </label>
