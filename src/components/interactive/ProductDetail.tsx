@@ -815,7 +815,7 @@ function ProductDetail({ lang }: Props) {
 
                     {/* Modifier groups — muted background behind the cards */}
                     {(product.modifier_groups ?? []).length > 0 && (
-                      <div class="-mx-4 mt-4 bg-muted/40 px-4 py-2">
+                      <div class="-mx-4 mt-4 bg-muted px-4 py-2">
                         {(product.modifier_groups ?? []).map((group) => (
                           <div
                             key={group.id}
