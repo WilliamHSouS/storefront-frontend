@@ -61,9 +61,22 @@ function CartLineItem({
         <div class="min-w-0">
           <h3 class="text-sm font-medium text-card-foreground">{item.product_title}</h3>
           {item.selected_options && item.selected_options.length > 0 && (
-            <p class="truncate text-xs text-muted-foreground">
-              {item.selected_options.map((opt) => opt.name).join(', ')}
-            </p>
+            <div class="mt-0.5 text-xs text-muted-foreground">
+              {item.selected_options.map((opt, i) => (
+                <span key={String(opt.id)}>
+                  {opt.group_name ? (
+                    <>
+                      <span class="font-medium text-muted-foreground/80">
+                        {opt.group_name}:
+                      </span>{' '}
+                    </>
+                  ) : null}
+                  {opt.name}
+                  {opt.quantity > 1 ? ` x${opt.quantity}` : ''}
+                  {i < item.selected_options!.length - 1 ? ' · ' : ''}
+                </span>
+              ))}
+            </div>
           )}
           <span class="text-sm text-muted-foreground">
             {formatPrice(item.line_total, currency, locale)}
