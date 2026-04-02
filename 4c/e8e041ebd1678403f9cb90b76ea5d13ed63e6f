@@ -1,0 +1,36 @@
+src/components/interactive/CartDrawer.tsx
+  57a82ee1a36197ad 129,377-386,391,393-394,396-404
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "4ce8e041ebd1678403f9cb90b76ea5d13ed63e6f",
+  "prompts": {
+    "57a82ee1a36197ad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d64be609-da95-4220-bd85-7310f322d229",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 19,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    },
+    "6822979088393528": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1cf446c0-aa6f-4129-9c49-0acd3f5795e6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
