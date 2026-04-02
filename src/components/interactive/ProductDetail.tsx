@@ -856,7 +856,7 @@ function ProductDetail({ lang }: Props) {
                               )}
                             </div>
 
-                            <div class="mt-2 space-y-2">
+                            <div class="mt-2 divide-y divide-border">
                               {group.options.map((opt) => {
                                 const isSelected = (selections[group.id] ?? []).includes(opt.id);
                                 const optQty = quantities[group.id]?.[opt.id] ?? 0;
