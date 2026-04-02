@@ -90,7 +90,15 @@ export default function SchedulingPicker({
     [dates, selectedDate, handleDateSelect, scrollOffset, maxOffset],
   );
 
-  const slotsToShow = timeSlots;
+  // Hide past time slots when the selected date is today
+  const isToday = selectedDate === dates[0];
+  const slotsToShow = isToday
+    ? timeSlots.filter((s) => {
+        const [h, m] = s.start_time.split(':').map(Number);
+        const now = new Date();
+        return h > now.getHours() || (h === now.getHours() && m > now.getMinutes());
+      })
+    : timeSlots;
 
   return (
     <section>
