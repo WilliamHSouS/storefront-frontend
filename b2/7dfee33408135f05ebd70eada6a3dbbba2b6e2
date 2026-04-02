@@ -1,0 +1,92 @@
+src/components/astro/HeroSection.astro
+  57a82ee1a36197ad 69
+src/components/interactive/ProductDetail.tsx
+  57a82ee1a36197ad 821,864,871,884,887-894,896-906,908-929
+e2e/search.spec.ts
+  57a82ee1a36197ad 145,172
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "b27dfee33408135f05ebd70eada6a3dbbba2b6e2",
+  "prompts": {
+    "0bbaa7408bd77114": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4af36f00-8a5c-4c91-b8f6-527112f3a778",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "57a82ee1a36197ad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d64be609-da95-4220-bd85-7310f322d229",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 81,
+      "total_deletions": 42,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    },
+    "818b3cc85b03eac6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8ba4f13a-924f-40c1-87e3-58f83327f876",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1646,
+      "total_deletions": 425,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "cc338c1a894cf22f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8c6089ce-bd63-461d-994e-e2687aaa0171",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 69,
+      "total_deletions": 9,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "d545c629d3dd72a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "691042d3-6640-49a9-a058-cf4959e91213",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 2,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "e9ada3820a653b06": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa10a65e-c8e1-41a9-b9bb-6ca64bc01986",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst <william@eatsous.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 39,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
