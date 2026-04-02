@@ -125,12 +125,12 @@ export default function CheckoutFormOrchestrator({
   }, [pickupLocations.length]);
 
   // ── Fetch time slots for a date ────────────────────────────────
-  // Uses the unified /fulfillment/time-slots/ endpoint which returns granular
-  // slots (split by slot_interval_minutes). Requires merchant_shipping_provider_id
-  // from the checkout's shipping groups.
+  // Uses /api/v1/pickup-locations/{location_id}/time-slots/ from the SDK.
+  // Does not require a checkout — only needs a pickup location ID.
   const fetchTimeSlots = useCallback(
     async (date: string) => {
-      if (!checkoutId) {
+      const locationId = pickupLocations[0]?.id;
+      if (!locationId) {
         setTimeSlots([]);
         return;
       }
@@ -138,34 +138,20 @@ export default function CheckoutFormOrchestrator({
       const client = getClient();
 
       try {
-        // First, get the merchant_shipping_provider_id from checkout shipping groups
-        const { data: shippingData } = await client.GET(
-          '/api/v1/checkout/{checkout_id}/shipping/',
-          { params: { path: { checkout_id: checkoutId } } },
-        );
-
-        const groups = shippingData as unknown as Array<{
-          merchant_shipping_provider_id?: number;
-        }> | null;
-        const mspId = groups?.[0]?.merchant_shipping_provider_id;
-
-        if (!mspId) {
-          // No shipping provider configured — fall back to empty slots
-          setTimeSlots([]);
-          setTimeSlotsLoading(false);
-          return;
-        }
-
-        // Fetch granular time slots from the unified endpoint
-        const slotsUrl = `/api/v1/fulfillment/time-slots/?merchant_shipping_provider_id=${mspId}&date=${date}`;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unified time-slots endpoint not yet in SDK types; remove after SDK regeneration
-        const { data } = await client.GET(slotsUrl as any);
+        // SDK types don't include `date` query param — use opts override
+        const { data } = await client.GET('/api/v1/pickup-locations/{location_id}/time-slots/', {
+          params: {
+            path: { location_id: locationId },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- date query param not in SDK types yet
+            query: { date } as any,
+          },
+        });
 
         if (!data) {
           setTimeSlots([]);
           return;
         }
-        const response = data as {
+        const response = data as unknown as {
           time_slots?: Array<{
             id?: string;
             start_time: string;
@@ -176,7 +162,6 @@ export default function CheckoutFormOrchestrator({
             remaining_capacity?: number;
           }>;
         };
-        // Generate IDs from time window if backend doesn't provide them
         const slots = (response.time_slots ?? []).map((s) => ({
           ...s,
           id: s.id ?? `${s.start_time}-${s.end_time}`,
@@ -192,17 +177,15 @@ export default function CheckoutFormOrchestrator({
         setTimeSlotsLoading(false);
       }
     },
-    [checkoutId],
+    [pickupLocations],
   );
 
   // ── Auto-fetch time slots when in "scheduled" mode ──────────────
   // Fires when: (1) user toggles to "Schedule for later", or (2) page loads
-  // with schedulingMode restored as 'scheduled' and checkoutId becomes available.
-  // fetchTimeSlots requires checkoutId to get the merchant_shipping_provider_id,
-  // so we also depend on checkoutId to retry once it's set.
+  // with schedulingMode restored as 'scheduled' and pickup locations load.
   useEffect(() => {
     if (form.schedulingMode !== 'scheduled') return;
-    if (!checkoutId) return; // checkout not ready yet — will retry when it is
+    if (pickupLocations.length === 0) return; // locations not loaded yet
     if (timeSlots.length > 0) return; // already have slots
 
     const today = new Date();
@@ -212,7 +195,7 @@ export default function CheckoutFormOrchestrator({
     const defaultDate = form.scheduledDate ?? `${yyyy}-${mm}-${dd}`;
 
     fetchTimeSlots(defaultDate);
-  }, [form.schedulingMode, checkoutId]);
+  }, [form.schedulingMode, pickupLocations.length]);
 
   // ── Field-level validation (on blur) ─────────────────────────────
   const validateFieldsForPatch = useCallback((): boolean => {
