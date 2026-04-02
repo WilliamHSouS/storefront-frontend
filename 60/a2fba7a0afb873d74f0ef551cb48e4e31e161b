@@ -1,0 +1,23 @@
+src/components/interactive/checkout/CheckoutFormOrchestrator.tsx
+  57a82ee1a36197ad 128-129,141-145,147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "60a2fba7a0afb873d74f0ef551cb48e4e31e161b",
+  "prompts": {
+    "57a82ee1a36197ad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d64be609-da95-4220-bd85-7310f322d229",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 6,
+      "accepted_lines": 8,
+      "overriden_lines": 2
+    }
+  }
+}
