@@ -44,54 +44,55 @@ function CartLineItem({
   onRemove,
 }: CartLineItemProps) {
   return (
-    <li class="flex gap-3 py-3">
+    <li class="flex items-center gap-3 py-3">
       {item.product_image && (
-        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-card-image">
+        <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-card-image">
           <img
             src={optimizedImageUrl(item.product_image, { width: 128 })}
             alt=""
             class="h-full w-full object-cover"
-            width="64"
-            height="64"
+            width="56"
+            height="56"
             loading="lazy"
           />
         </div>
       )}
-      <div class="flex flex-1 flex-col justify-between">
-        <div>
+      <div class="flex flex-1 items-center justify-between gap-2">
+        <div class="min-w-0">
           <h3 class="text-sm font-medium text-card-foreground">{item.product_title}</h3>
           {item.selected_options && item.selected_options.length > 0 && (
-            <div class="mt-0.5 space-y-0.5">
-              {item.selected_options.map((opt) => (
-                <p key={String(opt.id)} class="text-xs text-muted-foreground">
-                  {opt.group_name ? `${opt.group_name}: ` : ''}
+            <div class="mt-0.5 text-xs text-muted-foreground">
+              {item.selected_options.map((opt, i) => (
+                <span key={String(opt.id)}>
+                  {opt.group_name ? (
+                    <>
+                      <span class="font-medium text-muted-foreground/80">
+                        {opt.group_name}:
+                      </span>{' '}
+                    </>
+                  ) : null}
                   {opt.name}
                   {opt.quantity > 1 ? ` x${opt.quantity}` : ''}
-                  {parseFloat(opt.price) > 0
-                    ? ` (+${formatPrice(opt.price, currency, locale)})`
-                    : ''}
-                </p>
+                  {i < item.selected_options!.length - 1 ? ' · ' : ''}
+                </span>
               ))}
             </div>
           )}
+          <span class="text-sm text-muted-foreground">
+            {formatPrice(item.line_total, currency, locale)}
+          </span>
+          {item.discount && (
+            <span class="ml-1 text-xs text-destructive">{item.discount.label}</span>
+          )}
         </div>
-        <div class="mt-1 flex items-center justify-between">
-          <QuantitySelector
-            quantity={item.quantity}
-            onIncrement={() => onUpdateQuantity(item.id, item.quantity + 1)}
-            onDecrement={() => onUpdateQuantity(item.id, item.quantity - 1)}
-            onRemove={() => onRemove(item.id)}
-            lang={lang}
-          />
-          <div class="text-right">
-            <span class="text-sm font-semibold text-card-foreground">
-              {formatPrice(item.line_total, currency, locale)}
-            </span>
-            {item.discount && (
-              <span class="block text-xs text-destructive">{item.discount.label}</span>
-            )}
-          </div>
-        </div>
+        <QuantitySelector
+          quantity={item.quantity}
+          onIncrement={() => onUpdateQuantity(item.id, item.quantity + 1)}
+          onDecrement={() => onUpdateQuantity(item.id, item.quantity - 1)}
+          onRemove={() => onRemove(item.id)}
+          lang={lang}
+          compact
+        />
       </div>
     </li>
   );
@@ -107,7 +108,7 @@ interface CartFooterProps {
   style?: Record<string, string>;
 }
 
-function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }: CartFooterProps) {
+function CartFooter({ cart, cartTotal, currency, locale, lang, style }: CartFooterProps) {
   const taxIncluded = cart.tax_included ?? true;
   const discountNum = cart.discount_amount ? parseFloat(cart.discount_amount) : 0;
   const promoNum = cart.promotion_discount_amount ? parseFloat(cart.promotion_discount_amount) : 0;
@@ -126,10 +127,7 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
   const legacyShipping = !cart.shipping_estimate && cart.shipping_cost ? cart.shipping_cost : null;
 
   return (
-    <div
-      class="max-h-[50vh] shrink-0 overflow-y-auto border-t border-border/60 px-5 py-3 md:px-6"
-      style={style}
-    >
+    <div class="shrink-0 px-5 py-3 md:px-6" style={style}>
       <DiscountCodeInput cart={cart} lang={lang} />
       <CartSuggestions lang={lang} />
 
@@ -156,14 +154,6 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
           />
         }
       />
-
-      <a
-        href={`/${lang}/checkout`}
-        class={`flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
-        aria-disabled={loading}
-      >
-        {t('nextCheckout', lang)}
-      </a>
     </div>
   );
 }
@@ -385,21 +375,34 @@ function CartDrawerInner({ lang, inline = false }: Props) {
                   />
                 ))}
               </ul>
+
+              {/* Pricing & suggestions — inside scroll area */}
+              <CartFooter
+                cart={cart!}
+                cartTotal={cartTotal}
+                currency={currency}
+                locale={locale}
+                lang={lang}
+                loading={loading}
+              />
             </>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Sticky checkout button */}
         {lineItems.length > 0 && (
-          <CartFooter
-            cart={cart!}
-            cartTotal={cartTotal}
-            currency={currency}
-            locale={locale}
-            lang={lang}
-            loading={loading}
+          <div
+            class="shrink-0 border-t border-border/60 px-5 py-3 md:px-6"
             style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
-          />
+          >
+            <a
+              href={`/${lang}/checkout`}
+              class={`flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+              aria-disabled={loading}
+            >
+              {t('nextCheckout', lang)}
+            </a>
+          </div>
         )}
       </div>
     </div>

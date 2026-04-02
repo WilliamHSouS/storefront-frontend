@@ -10,6 +10,7 @@ interface Props {
   onRemove: () => void;
   lang: string;
   min?: number;
+  compact?: boolean;
 }
 
 export default function QuantitySelector({
@@ -19,6 +20,7 @@ export default function QuantitySelector({
   onRemove,
   lang,
   min = 0,
+  compact = false,
 }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -30,14 +32,18 @@ export default function QuantitySelector({
     }
   };
 
+  const btnClass = compact
+    ? 'relative inline-flex h-8 w-8 items-center justify-center text-foreground transition-colors hover:bg-muted-foreground/10 disabled:opacity-50 before:absolute before:inset-[-4px]'
+    : 'relative inline-flex h-12 w-10 items-center justify-center text-foreground transition-colors hover:bg-muted-foreground/10 disabled:opacity-50 before:absolute before:inset-[-4px]';
+
   return (
     <>
-      <div class="inline-flex items-center rounded-[10px] bg-muted">
+      <div class={`inline-flex items-center rounded-[10px] bg-muted ${compact ? 'gap-0' : ''}`}>
         <button
           type="button"
           onClick={handleDecrement}
           disabled={quantity <= min && min > 0}
-          class="relative inline-flex h-9 w-9 items-center justify-center rounded-l-[10px] text-foreground transition-colors hover:bg-muted-foreground/10 disabled:opacity-50 before:absolute before:inset-[-4px]"
+          class={`${btnClass} rounded-l-[10px]`}
           aria-label={quantity <= 1 ? t('removeItem', lang) : t('decreaseQuantity', lang)}
         >
           {quantity <= 1 && min === 0 ? (
@@ -74,14 +80,16 @@ export default function QuantitySelector({
           )}
         </button>
 
-        <span class="inline-flex min-w-[2rem] items-center justify-center text-sm font-medium text-foreground">
+        <span
+          class={`inline-flex items-center justify-center text-foreground ${compact ? 'min-w-[1.5rem] text-xs font-medium' : 'min-w-[2rem] text-sm font-medium'}`}
+        >
           <AnimatedNumber value={quantity} />
         </span>
 
         <button
           type="button"
           onClick={onIncrement}
-          class="relative inline-flex h-9 w-9 items-center justify-center rounded-r-[10px] text-foreground transition-colors hover:bg-muted-foreground/10 before:absolute before:inset-[-4px]"
+          class={`${btnClass} rounded-r-[10px]`}
           aria-label={t('increaseQuantity', lang)}
         >
           <svg

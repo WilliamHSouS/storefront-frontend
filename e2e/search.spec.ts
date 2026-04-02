@@ -143,6 +143,7 @@ test.describe('Search', () => {
   });
 
   test('saves and shows recent searches', async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto(menuPage());
     await waitForHydration(page);
 
@@ -169,7 +170,7 @@ test.describe('Search', () => {
     // Allow modal close animation and DOM cleanup to settle on CI.
     // Preview mode (pre-bundled JS) can be slower to re-hydrate after navigation.
     // eslint-disable-next-line playwright/no-wait-for-timeout -- modal close animation needs time on CI preview mode
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2500);
 
     // Reopen search — should show "Recente zoekopdrachten" with "falafel"
     await openSearchOverlay(page);

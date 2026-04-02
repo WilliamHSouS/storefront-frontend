@@ -813,128 +813,188 @@ function ProductDetail({ lang }: Props) {
                       </div>
                     )}
 
-                    {/* Modifier groups */}
-                    {(product.modifier_groups ?? []).map((group) => (
-                      <div
-                        key={group.id}
-                        id={`modifier-group-${group.id}`}
-                        class={`mt-4 rounded-2xl bg-muted/50 p-4 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
-                      >
-                        <div class="flex items-center justify-between">
-                          <h3 class="text-sm font-semibold text-card-foreground">{group.name}</h3>
-                          {group.required && (
-                            <span
-                              class={`inline-flex items-center gap-1 text-xs font-medium transition-colors duration-300 ${
-                                isGroupFilled(group.id)
-                                  ? 'text-emerald-600'
-                                  : triedSubmit
-                                    ? 'text-destructive'
-                                    : 'text-muted-foreground'
-                              }`}
-                            >
-                              {isGroupFilled(group.id) && (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2.5"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
+                    {/* Modifier groups — muted background behind the cards */}
+                    {(product.modifier_groups ?? []).length > 0 && (
+                      <div class="-mx-4 mt-4 bg-muted px-4 py-2">
+                        {(product.modifier_groups ?? []).map((group) => (
+                          <div
+                            key={group.id}
+                            id={`modifier-group-${group.id}`}
+                            class={`mt-4 rounded-2xl bg-card p-4 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
+                          >
+                            <div class="flex items-center justify-between">
+                              <h3 class="text-sm font-semibold text-card-foreground">
+                                {group.name}
+                              </h3>
+                              {group.required && (
+                                <span
+                                  class={`inline-flex items-center gap-1 text-xs font-medium transition-colors duration-300 ${
+                                    isGroupFilled(group.id)
+                                      ? 'text-emerald-600'
+                                      : triedSubmit
+                                        ? 'text-destructive'
+                                        : 'text-muted-foreground'
+                                  }`}
                                 >
-                                  <path d="M20 6 9 17l-5-5" />
-                                </svg>
+                                  {isGroupFilled(group.id) && (
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2.5"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                    >
+                                      <path d="M20 6 9 17l-5-5" />
+                                    </svg>
+                                  )}
+                                  {isGroupFilled(group.id) ? t('done', lang) : t('required', lang)}
+                                </span>
                               )}
-                              {isGroupFilled(group.id) ? t('done', lang) : t('required', lang)}
-                            </span>
-                          )}
-                        </div>
+                            </div>
 
-                        <div class="mt-2 space-y-2">
-                          {group.options.map((opt) => {
-                            const isSelected = (selections[group.id] ?? []).includes(opt.id);
-                            const optQty = quantities[group.id]?.[opt.id] ?? 0;
-                            const optPrice = Number(opt.price);
+                            <div class="mt-2 divide-y divide-border">
+                              {group.options.map((opt) => {
+                                const isSelected = (selections[group.id] ?? []).includes(opt.id);
+                                const optQty = quantities[group.id]?.[opt.id] ?? 0;
+                                const optPrice = Number(opt.price);
 
-                            return (
-                              <div key={opt.id} class="flex items-center justify-between">
-                                {group.type === 'radio' || group.type === 'checkbox' ? (
-                                  <label class="flex flex-1 cursor-pointer items-center gap-2">
-                                    {group.type === 'radio' ? (
-                                      <input
-                                        type="radio"
-                                        name={group.id}
-                                        checked={isSelected}
-                                        onChange={() => handleRadioSelect(group.id, opt.id)}
-                                        class="h-4 w-4 accent-primary"
-                                      />
-                                    ) : (
-                                      <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() =>
-                                          handleCheckboxToggle(
-                                            group.id,
-                                            opt.id,
-                                            group.max_selections,
-                                          )
-                                        }
-                                        class="h-4 w-4 accent-primary"
-                                      />
-                                    )}
-                                    <span class="text-sm text-card-foreground">{opt.name}</span>
-                                    {optPrice > 0 && (
-                                      <span class="ml-auto text-xs text-muted-foreground">
-                                        +{formatPrice(opt.price, currency, locale)}
-                                      </span>
-                                    )}
-                                  </label>
-                                ) : (
-                                  <>
-                                    <span class="text-sm text-card-foreground">{opt.name}</span>
-                                    <div class="flex items-center gap-2">
-                                      {optPrice > 0 && (
-                                        <span class="text-xs text-muted-foreground">
-                                          +{formatPrice(opt.price, currency, locale)}
-                                        </span>
-                                      )}
+                                return (
+                                  <div key={opt.id} class="flex items-center justify-between">
+                                    {group.type === 'radio' || group.type === 'checkbox' ? (
                                       <div
-                                        class="inline-flex items-center gap-1"
-                                        role="group"
-                                        aria-label={opt.name}
+                                        class="flex flex-1 cursor-pointer items-center justify-between py-4"
+                                        onClick={() => {
+                                          if (group.type === 'radio') {
+                                            handleRadioSelect(group.id, opt.id);
+                                          } else {
+                                            handleCheckboxToggle(
+                                              group.id,
+                                              opt.id,
+                                              group.max_selections,
+                                            );
+                                          }
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            if (group.type === 'radio') {
+                                              handleRadioSelect(group.id, opt.id);
+                                            } else {
+                                              handleCheckboxToggle(
+                                                group.id,
+                                                opt.id,
+                                                group.max_selections,
+                                              );
+                                            }
+                                          }
+                                        }}
+                                        role={group.type === 'radio' ? 'radio' : 'checkbox'}
+                                        aria-checked={isSelected}
+                                        tabIndex={0}
                                       >
-                                        <button
-                                          type="button"
-                                          onClick={() => handleQuantityChange(group.id, opt.id, -1)}
-                                          disabled={optQty === 0}
-                                          aria-label={`${t('remove', lang)} ${opt.name}`}
-                                          class="relative inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-sm disabled:opacity-30 before:absolute before:inset-[-4px]"
-                                        >
-                                          −
-                                        </button>
-                                        <span class="w-6 text-center text-sm" aria-live="polite">
-                                          {optQty}
-                                        </span>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleQuantityChange(group.id, opt.id, 1)}
-                                          aria-label={`${t('addToCart', lang)} ${opt.name}`}
-                                          class="relative inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-sm before:absolute before:inset-[-4px]"
-                                        >
-                                          +
-                                        </button>
+                                        <div class="flex flex-col">
+                                          <span class="text-sm text-foreground">{opt.name}</span>
+                                          {optPrice > 0 && (
+                                            <span class="text-xs text-muted-foreground">
+                                              + {formatPrice(opt.price, currency, locale)}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {group.type === 'radio' ? (
+                                          <span
+                                            class={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                                              isSelected
+                                                ? 'border-primary bg-primary'
+                                                : 'border-muted-foreground/30'
+                                            }`}
+                                          >
+                                            {isSelected && (
+                                              <span class="h-2 w-2 rounded-full bg-primary-foreground" />
+                                            )}
+                                          </span>
+                                        ) : (
+                                          <span
+                                            class={`flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors ${
+                                              isSelected
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'border-2 border-muted-foreground/30'
+                                            }`}
+                                          >
+                                            {isSelected && (
+                                              <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="14"
+                                                height="14"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="3"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                              >
+                                                <path d="M20 6 9 17l-5-5" />
+                                              </svg>
+                                            )}
+                                          </span>
+                                        )}
                                       </div>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                                    ) : (
+                                      <>
+                                        <span class="text-sm text-card-foreground">{opt.name}</span>
+                                        <div class="flex items-center gap-2">
+                                          {optPrice > 0 && (
+                                            <span class="text-xs text-muted-foreground">
+                                              +{formatPrice(opt.price, currency, locale)}
+                                            </span>
+                                          )}
+                                          <div
+                                            class="inline-flex items-center gap-1"
+                                            role="group"
+                                            aria-label={opt.name}
+                                          >
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                handleQuantityChange(group.id, opt.id, -1)
+                                              }
+                                              disabled={optQty === 0}
+                                              aria-label={`${t('remove', lang)} ${opt.name}`}
+                                              class="relative inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-sm disabled:opacity-30 before:absolute before:inset-[-4px]"
+                                            >
+                                              −
+                                            </button>
+                                            <span
+                                              class="w-6 text-center text-sm"
+                                              aria-live="polite"
+                                            >
+                                              {optQty}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                handleQuantityChange(group.id, opt.id, 1)
+                                              }
+                                              aria-label={`${t('addToCart', lang)} ${opt.name}`}
+                                              class="relative inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-sm before:absolute before:inset-[-4px]"
+                                            >
+                                              +
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
 
                     {/* Suggestions (PDP surface) */}
                     {suggestions.length > 0 && (
