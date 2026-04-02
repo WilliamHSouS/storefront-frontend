@@ -142,7 +142,8 @@ test.describe('Search', () => {
     await expect(firstOption).toHaveAttribute('aria-selected', 'false');
   });
 
-  test('saves and shows recent searches', { timeout: 60_000 }, async ({ page }) => {
+  test('saves and shows recent searches', async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto(menuPage());
     await waitForHydration(page);
 
