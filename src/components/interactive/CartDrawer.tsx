@@ -107,7 +107,7 @@ interface CartFooterProps {
   style?: Record<string, string>;
 }
 
-function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }: CartFooterProps) {
+function CartFooter({ cart, cartTotal, currency, locale, lang, style }: CartFooterProps) {
   const taxIncluded = cart.tax_included ?? true;
   const discountNum = cart.discount_amount ? parseFloat(cart.discount_amount) : 0;
   const promoNum = cart.promotion_discount_amount ? parseFloat(cart.promotion_discount_amount) : 0;
@@ -126,10 +126,7 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
   const legacyShipping = !cart.shipping_estimate && cart.shipping_cost ? cart.shipping_cost : null;
 
   return (
-    <div
-      class="max-h-[50vh] shrink-0 overflow-y-auto border-t border-border/60 px-5 py-3 md:px-6"
-      style={style}
-    >
+    <div class="shrink-0 px-5 py-3 md:px-6" style={style}>
       <DiscountCodeInput cart={cart} lang={lang} />
       <CartSuggestions lang={lang} />
 
@@ -156,14 +153,6 @@ function CartFooter({ cart, cartTotal, currency, locale, lang, loading, style }:
           />
         }
       />
-
-      <a
-        href={`/${lang}/checkout`}
-        class={`flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
-        aria-disabled={loading}
-      >
-        {t('nextCheckout', lang)}
-      </a>
     </div>
   );
 }
@@ -385,21 +374,34 @@ function CartDrawerInner({ lang, inline = false }: Props) {
                   />
                 ))}
               </ul>
+
+              {/* Pricing & suggestions — inside scroll area */}
+              <CartFooter
+                cart={cart!}
+                cartTotal={cartTotal}
+                currency={currency}
+                locale={locale}
+                lang={lang}
+                loading={loading}
+              />
             </>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Sticky checkout button */}
         {lineItems.length > 0 && (
-          <CartFooter
-            cart={cart!}
-            cartTotal={cartTotal}
-            currency={currency}
-            locale={locale}
-            lang={lang}
-            loading={loading}
+          <div
+            class="shrink-0 border-t border-border/60 px-5 py-3 md:px-6"
             style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
-          />
+          >
+            <a
+              href={`/${lang}/checkout`}
+              class={`flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${loading ? 'pointer-events-none opacity-50' : ''}`}
+              aria-disabled={loading}
+            >
+              {t('nextCheckout', lang)}
+            </a>
+          </div>
         )}
       </div>
     </div>
