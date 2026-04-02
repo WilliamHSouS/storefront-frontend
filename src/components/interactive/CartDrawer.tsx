@@ -44,54 +44,42 @@ function CartLineItem({
   onRemove,
 }: CartLineItemProps) {
   return (
-    <li class="flex gap-3 py-3">
+    <li class="flex items-center gap-3 py-3">
       {item.product_image && (
-        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-card-image">
+        <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-card-image">
           <img
             src={optimizedImageUrl(item.product_image, { width: 128 })}
             alt=""
             class="h-full w-full object-cover"
-            width="64"
-            height="64"
+            width="56"
+            height="56"
             loading="lazy"
           />
         </div>
       )}
-      <div class="flex flex-1 flex-col justify-between">
-        <div>
+      <div class="flex flex-1 items-center justify-between gap-2">
+        <div class="min-w-0">
           <h3 class="text-sm font-medium text-card-foreground">{item.product_title}</h3>
           {item.selected_options && item.selected_options.length > 0 && (
-            <div class="mt-0.5 space-y-0.5">
-              {item.selected_options.map((opt) => (
-                <p key={String(opt.id)} class="text-xs text-muted-foreground">
-                  {opt.group_name ? `${opt.group_name}: ` : ''}
-                  {opt.name}
-                  {opt.quantity > 1 ? ` x${opt.quantity}` : ''}
-                  {parseFloat(opt.price) > 0
-                    ? ` (+${formatPrice(opt.price, currency, locale)})`
-                    : ''}
-                </p>
-              ))}
-            </div>
+            <p class="truncate text-xs text-muted-foreground">
+              {item.selected_options.map((opt) => opt.name).join(', ')}
+            </p>
+          )}
+          <span class="text-sm text-muted-foreground">
+            {formatPrice(item.line_total, currency, locale)}
+          </span>
+          {item.discount && (
+            <span class="ml-1 text-xs text-destructive">{item.discount.label}</span>
           )}
         </div>
-        <div class="mt-1 flex items-center justify-between">
-          <QuantitySelector
-            quantity={item.quantity}
-            onIncrement={() => onUpdateQuantity(item.id, item.quantity + 1)}
-            onDecrement={() => onUpdateQuantity(item.id, item.quantity - 1)}
-            onRemove={() => onRemove(item.id)}
-            lang={lang}
-          />
-          <div class="text-right">
-            <span class="text-sm font-semibold text-card-foreground">
-              {formatPrice(item.line_total, currency, locale)}
-            </span>
-            {item.discount && (
-              <span class="block text-xs text-destructive">{item.discount.label}</span>
-            )}
-          </div>
-        </div>
+        <QuantitySelector
+          quantity={item.quantity}
+          onIncrement={() => onUpdateQuantity(item.id, item.quantity + 1)}
+          onDecrement={() => onUpdateQuantity(item.id, item.quantity - 1)}
+          onRemove={() => onRemove(item.id)}
+          lang={lang}
+          compact
+        />
       </div>
     </li>
   );
