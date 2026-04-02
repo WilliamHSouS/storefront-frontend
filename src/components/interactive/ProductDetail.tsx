@@ -820,7 +820,7 @@ function ProductDetail({ lang }: Props) {
                           <div
                             key={group.id}
                             id={`modifier-group-${group.id}`}
-                            class={`mt-4 rounded-2xl bg-muted/50 p-4 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
+                            class={`mt-4 rounded-2xl bg-card p-4 ${shakeGroup === group.id ? 'animate-shake' : ''}`}
                           >
                             <div class="flex items-center justify-between">
                               <h3 class="text-sm font-semibold text-card-foreground">
