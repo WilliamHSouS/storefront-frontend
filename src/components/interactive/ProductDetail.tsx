@@ -376,6 +376,19 @@ function ProductDetail({ lang }: Props) {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
+  // Auto-scroll to first modifier group when opened via "Add" button
+  useEffect(() => {
+    if (!selectedProduct?.scrollToOptions || !product?.modifier_groups?.length) return;
+    const firstGroup = product.modifier_groups[0];
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`modifier-group-${firstGroup.id}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 350); // Wait for modal open animation
+    return () => clearTimeout(timer);
+  }, [selectedProduct?.scrollToOptions, product?.modifier_groups]);
+
   const handleRadioSelect = (groupId: string, optionId: string) => {
     setSelections((prev) => ({ ...prev, [groupId]: [optionId] }));
   };
@@ -564,7 +577,7 @@ function ProductDetail({ lang }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={product?.name ?? ''}
-        class="absolute inset-0 flex flex-col overflow-hidden bg-card shadow-xl animate-[slideUp_200ms_ease-out] md:relative md:inset-auto md:max-h-[85vh] md:w-full md:max-w-lg md:rounded-2xl md:animate-[scaleIn_200ms_ease-out]"
+        class="absolute bottom-0 left-0 right-0 flex max-h-[90vh] flex-col overflow-hidden rounded-t-2xl bg-card shadow-xl animate-[slideUp_200ms_ease-out] md:relative md:bottom-auto md:inset-auto md:max-h-[85vh] md:w-full md:max-w-lg md:rounded-2xl md:animate-[scaleIn_200ms_ease-out]"
       >
         {loadingProduct ? (
           <div role="status" aria-label={t('loading', lang)} class="animate-pulse">

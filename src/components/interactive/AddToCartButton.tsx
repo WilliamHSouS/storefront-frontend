@@ -83,8 +83,13 @@ export default function AddToCartButton({
       if (error) {
         $cart.set(prevCart);
         if ('status' in error && error.status === 400) {
-          // Product likely requires modifiers — open the detail modal
-          $selectedProduct.set({ id: productId, name: productName, slug: productSlug });
+          // Product likely requires modifiers — open the detail modal and scroll to options
+          $selectedProduct.set({
+            id: productId,
+            name: productName,
+            slug: productSlug,
+            scrollToOptions: true,
+          });
         } else {
           log.error('AddToCart', 'Failed to add to cart:', error);
           showToast(t('toastAddToCartFailed', lang));
