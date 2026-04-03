@@ -110,24 +110,9 @@ jobs:
         if: always()
         with: { name: e2e-report, path: e2e/.report/, retention-days: 7 }
 
-  bundle-size:
-    name: Bundle Size
-    needs: lint
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: pnpm }
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-        env:
-          API_BASE_URL: https://api.example.com
-          PUBLIC_API_BASE_URL: https://api.example.com
-          DEFAULT_MERCHANT: bar-sumac
-          CUSTOM_DOMAINS: '{}'
-      - run: pnpm size:check
+  # Bundle size is checked by Lighthouse CI (resource-summary:script:size assertion).
+  # Removed redundant size-limit CI job — Lighthouse measures the actual deployed page
+  # which is more meaningful than raw build output.
 
   dep-audit:
     name: Dependency Audit

@@ -121,12 +121,11 @@ export default function CheckoutPaymentSection({
         }
       })
       .catch((err) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        $checkoutError.set(`Payment initialization failed: ${msg}`);
+        $checkoutError.set(t('paymentInitFailed', lang));
         log.error('checkout', 'Failed to initiate payment:', err);
         if (mountedRef.current) {
-          setPaymentError(t('paymentRetry', lang));
-          onError?.(`Payment initialization failed: ${msg}`);
+          setPaymentError(t('paymentInitFailed', lang));
+          onError?.(t('paymentInitFailed', lang));
         }
       });
   }, [
@@ -189,6 +188,7 @@ export default function CheckoutPaymentSection({
           <h2 class="text-base font-semibold mb-3">{t('payment', lang)}</h2>
           <Suspense fallback={<div class="animate-pulse rounded-lg bg-muted h-[200px]" />}>
             <StripePaymentForm
+              lang={lang}
               clientSecret={stripeConfig.clientSecret}
               publishableKey={stripeConfig.publishableKey}
               stripeAccount={stripeConfig.stripeAccount}

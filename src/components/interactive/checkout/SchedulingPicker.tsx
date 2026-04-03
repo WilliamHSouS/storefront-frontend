@@ -48,7 +48,6 @@ export default function SchedulingPicker({
   onSlotSelect,
   loading,
 }: SchedulingPickerProps) {
-  const [showAll, setShowAll] = useState(false);
   const dates = buildDateStrip();
   const [scrollOffset, setScrollOffset] = useState(0);
   const listboxRef = useRef<HTMLDivElement>(null);
@@ -91,7 +90,15 @@ export default function SchedulingPicker({
     [dates, selectedDate, handleDateSelect, scrollOffset, maxOffset],
   );
 
-  const slotsToShow = showAll ? timeSlots : timeSlots.filter((s) => s.available);
+  // Hide past time slots when the selected date is today
+  const isToday = selectedDate === dates[0];
+  const slotsToShow = isToday
+    ? timeSlots.filter((s) => {
+        const [h, m] = s.start_time.split(':').map(Number);
+        const now = new Date();
+        return h > now.getHours() || (h === now.getHours() && m > now.getMinutes());
+      })
+    : timeSlots;
 
   return (
     <section>
@@ -142,7 +149,7 @@ export default function SchedulingPicker({
             <button
               type="button"
               class="p-2 rounded-full hover:bg-muted flex-shrink-0"
-              aria-label="Previous dates"
+              aria-label={t('previousDates', lang)}
               disabled={scrollOffset === 0}
               onClick={() => setScrollOffset(Math.max(0, scrollOffset - 1))}
             >
@@ -191,7 +198,7 @@ export default function SchedulingPicker({
             <button
               type="button"
               class="p-2 rounded-full hover:bg-muted flex-shrink-0"
-              aria-label="Next dates"
+              aria-label={t('nextDates', lang)}
               disabled={scrollOffset >= maxOffset}
               onClick={() => setScrollOffset(Math.min(maxOffset, scrollOffset + 1))}
             >
@@ -207,7 +214,7 @@ export default function SchedulingPicker({
             </button>
           </div>
 
-          {/* Time slots */}
+          {/* Time slot dropdown */}
           <div class="relative">
             {loading && (
               <div class="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg z-10">
@@ -215,85 +222,28 @@ export default function SchedulingPicker({
               </div>
             )}
 
-            <div
-              role="radiogroup"
-              aria-label={t('selectTime', lang)}
-              class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"
+            <select
+              id="time-slot-select"
+              class="w-full min-h-[48px] rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%236d6b64%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m4%206%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-10 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              value={form.selectedSlotId ?? ''}
+              onChange={(e) => {
+                const val = (e.target as HTMLSelectElement).value;
+                if (val) {
+                  dispatch({ type: 'SET_FIELD', field: 'selectedSlotId', value: val });
+                  onSlotSelect(val);
+                }
+              }}
             >
-              {slotsToShow.map((slot) => {
-                const selected =
-                  form.selectedSlotId != null && form.selectedSlotId === String(slot.id);
-                const disabled = !slot.available;
-                return (
-                  <div
-                    key={slot.id}
-                    role="radio"
-                    aria-checked={selected}
-                    aria-disabled={disabled ? 'true' : undefined}
-                    tabIndex={disabled ? -1 : 0}
-                    class={`px-4 py-3 rounded-lg border text-sm cursor-pointer transition-colors select-none ${
-                      disabled
-                        ? 'opacity-50 cursor-not-allowed border-input'
-                        : selected
-                          ? 'border-primary bg-primary/5 font-medium'
-                          : 'border-input hover:border-primary/50'
-                    }`}
-                    onClick={() => {
-                      if (!disabled) {
-                        dispatch({
-                          type: 'SET_FIELD',
-                          field: 'selectedSlotId',
-                          value: String(slot.id),
-                        });
-                        onSlotSelect(slot.id);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-                        e.preventDefault();
-                        dispatch({
-                          type: 'SET_FIELD',
-                          field: 'selectedSlotId',
-                          value: String(slot.id),
-                        });
-                        onSlotSelect(slot.id);
-                      }
-                    }}
-                  >
-                    <span class="flex items-center justify-between">
-                      <span>
-                        {slot.start_time}–{slot.end_time}
-                        {disabled && (
-                          <span class="ml-2 text-muted-foreground">({t('slotFull', lang)})</span>
-                        )}
-                      </span>
-                      {selected && (
-                        <svg
-                          class="w-4 h-4 text-primary"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          stroke-width={3}
-                        >
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Show all times toggle */}
-            {timeSlots.some((s) => !s.available) && (
-              <button
-                type="button"
-                class="mt-2 text-sm text-primary underline"
-                onClick={() => setShowAll(!showAll)}
-              >
-                {showAll ? t('selectTime', lang) : t('showAllTimes', lang)}
-              </button>
-            )}
+              <option value="" disabled>
+                {t('selectTime', lang)}
+              </option>
+              {slotsToShow.map((slot) => (
+                <option key={slot.id} value={String(slot.id)} disabled={!slot.available}>
+                  {slot.start_time}–{slot.end_time}
+                  {!slot.available ? ` (${t('slotFull', lang)})` : ''}
+                </option>
+              ))}
+            </select>
           </div>
         </>
       )}

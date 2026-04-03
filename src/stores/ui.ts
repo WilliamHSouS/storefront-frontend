@@ -8,6 +8,8 @@ export interface SelectedProduct {
   slug?: string;
   /** When true, skip the detail view and show the upsell step directly. */
   skipToUpsell?: boolean;
+  /** When true, auto-scroll to the first modifier group after the modal opens. */
+  scrollToOptions?: boolean;
 }
 
 export const $activeCategory = atom<string>('');

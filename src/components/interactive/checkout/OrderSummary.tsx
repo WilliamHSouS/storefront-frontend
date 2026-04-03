@@ -2,15 +2,16 @@ import { useState } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
 import { $cart, $cartTotal } from '@/stores/cart';
 import type { CartLineItem } from '@/stores/cart';
-import { $checkout, $checkoutTotals } from '@/stores/checkout';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { optimizedImageUrl } from '@/lib/image';
 import { t } from '@/i18n/client';
 import { PricingBreakdown } from '../cart/PricingBreakdown';
+import { $addressCoords } from '@/stores/address';
 
 interface Props {
   lang: 'nl' | 'en' | 'de';
   currency: string;
+  fulfillmentMethod?: 'delivery' | 'pickup';
 }
 
 const COLLAPSE_THRESHOLD = 4;
@@ -55,32 +56,28 @@ function LineItem({
   );
 }
 
-export function OrderSummary({ lang, currency }: Props) {
+export function OrderSummary({ lang, currency, fulfillmentMethod }: Props) {
   const cart = useStore($cart);
   const cartTotal = useStore($cartTotal);
-  const checkout = useStore($checkout);
-  const totals = useStore($checkoutTotals);
   const [expanded, setExpanded] = useState(false);
 
   const locale = langToLocale(lang);
   const lineItems = cart?.line_items ?? [];
   const itemCount = lineItems.length;
 
-  // Use checkout totals if available, fall back to cart
-  const subtotal = checkout ? totals.subtotal : cart?.subtotal;
-  const tax = checkout ? totals.tax : cart?.tax_total;
-  const discount = checkout ? totals.discount : cart?.discount_amount;
-  const surchargeTotal = checkout ? checkout.surcharge_total : cart?.surcharge_total;
-
-  // Shipping: use checkout's shipping after delivery_set (authoritative), otherwise cart estimate.
-  // Before delivery_set, checkout.display_shipping_cost is "0.00" which means "not calculated",
-  // not "free" — so we only trust it after the status advances.
-  const checkoutShippingKnown = checkout && checkout.status !== 'created' ? totals.shipping : null;
-  const cartShipping = cart?.shipping_estimate?.total_shipping ?? null;
-  const shipping = checkoutShippingKnown ?? cartShipping;
-
-  // Total: use cartTotal (which prefers estimated_total including shipping)
-  const total = checkout ? totals.total : cartTotal;
+  // Single source of truth: the cart. The backend computes all values
+  // (subtotal, fees, shipping, discounts, estimated_total) on the cart.
+  // No need to switch between cart and checkout — the cart is always current.
+  const subtotal = cart?.subtotal ?? '0.00';
+  const tax = cart?.tax_total ?? '0.00';
+  const discount = cart?.discount_amount;
+  const promotionDiscount = cart?.promotion_discount_amount;
+  const surchargeTotal = cart?.surcharge_total;
+  const serviceFees = cart?.service_fees;
+  const isPickup = fulfillmentMethod === 'pickup';
+  const hasAddress = !!$addressCoords.get();
+  const shipping = isPickup ? null : (cart?.shipping_estimate?.total_shipping ?? null);
+  const total = cartTotal;
 
   const discountNum = discount ? parseFloat(discount) : 0;
 
@@ -118,14 +115,16 @@ export function OrderSummary({ lang, currency }: Props) {
           lang={lang}
           currency={currency}
           locale={locale}
-          subtotal={subtotal ?? '0.00'}
-          shipping={shipping ?? null}
-          tax={tax ?? '0.00'}
+          subtotal={subtotal}
+          shipping={shipping}
+          tax={tax}
           discount={discountNum > 0 ? discount! : null}
+          promotionDiscount={promotionDiscount}
           surchargeTotal={surchargeTotal}
-          total={total ?? '0.00'}
+          serviceFees={serviceFees}
+          total={total}
           taxIncluded={true}
-          showShippingFree={shipping != null}
+          showShippingFree={!isPickup && hasAddress}
         />
       </div>
     </div>

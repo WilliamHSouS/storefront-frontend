@@ -25,6 +25,17 @@ export async function resetMockApi(page: Page) {
     headers['x-test-cart-id'] = cartId;
     await route.continue({ headers });
   });
+
+  // Pre-set fulfillment choice so the first-visit modal doesn't block tests.
+  // addInitScript runs before page JS on every navigation.
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('sous_fulfillment_choice')) {
+      localStorage.setItem(
+        'sous_fulfillment_choice',
+        JSON.stringify({ choice: 'delivery', storedAt: Date.now() }),
+      );
+    }
+  });
 }
 
 // ── URL helpers ──────────────────────────────────────────────────
@@ -209,17 +220,16 @@ export async function addSimpleProductToCart(page: Page, productId: string) {
   await addButton.click();
   await responsePromise;
 
-  // Dismiss the upsell dialog if it appears (added by upsells feature).
-  // The dialog has "Klaar" and "Bekijk winkelwagen" buttons; pressing Escape
-  // is the most reliable way to close it without side effects.
-  const upsellLabel: Record<string, string> = { nl: 'Toegevoegd', en: 'Added', de: 'Hinzugefügt' };
-  const upsellDialog = page
-    .getByRole('dialog')
-    .filter({ hasText: upsellLabel[lang] ?? 'Toegevoegd' });
-  await upsellDialog.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
-  if (await upsellDialog.isVisible()) {
+  // After adding, either upsell dialog or cart drawer opens automatically.
+  // Dismiss all overlays by pressing Escape until no dialogs remain.
+  // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for async state update to render dialogs
+  await page.waitForTimeout(1000);
+  for (let i = 0; i < 3; i++) {
+    const dialog = page.locator('[role="dialog"]').first();
+    if (!(await dialog.isVisible().catch(() => false))) break;
     await page.keyboard.press('Escape');
-    await upsellDialog.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- wait for close animation + potential next dialog
+    await page.waitForTimeout(500);
   }
 }
 
@@ -255,7 +265,11 @@ export async function openProductDetailModal(page: Page, productId: string) {
   const card = page.locator(`[data-product-id="${productId}"]`).first();
   await card.scrollIntoViewIfNeeded();
 
-  const modal = page.getByRole('dialog');
+  // Use a locator that excludes the cart drawer (aria-label="Winkelwagen")
+  // so it doesn't match when the cart opens after upsell dismiss.
+  const modal = page.locator(
+    '[role="dialog"]:not([aria-label="Winkelwagen"]):not([aria-label="Cart"])',
+  );
 
   for (let attempt = 0; attempt < 3; attempt++) {
     // Check again before each click — the modal can appear between retries

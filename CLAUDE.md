@@ -191,6 +191,30 @@ Always normalize API responses at the boundary (`src/lib/normalize.ts`):
 - `flattenCategories()` — flattens hierarchical categories to leaf nodes
 - `parseMetadataMap()` — converts `[{key, value}]` arrays to `Map`
 
+### Translation Management (Lokalise)
+
+Translations are managed via [Lokalise](https://app.lokalise.com). JSON files in `src/i18n/messages/` are the source of truth in the repo.
+
+**Workflow:**
+
+1. Developers add new keys to `en.json` / `nl.json` / `de.json` and commit
+2. Upload to Lokalise: `lokalise2 file upload --config .lokalise.yml --file src/i18n/messages/en.json --lang-iso en`
+3. Translators work in the Lokalise UI
+4. A weekly GitHub Actions workflow pulls updates and opens a PR
+
+**Adding new translation keys:**
+
+- Add the key to ALL 3 locale files (`en.json`, `nl.json`, `de.json`)
+- Use `camelCase` key names
+- Use `{param}` for interpolation (e.g. `"greeting": "Hello {name}"`)
+- Use `_one` / `_other` suffixes for plurals (e.g. `items_one`, `items_other`)
+- Source language is `nl` (Dutch) — the TypeScript `MessageKey` type is derived from `nl.json`
+
+**Environment variables for CI:**
+
+- `LOKALISE_API_TOKEN` — set in GitHub repository secrets
+- `LOKALISE_PROJECT_ID` — set in GitHub repository secrets
+
 ### Caching
 
 Middleware applies cache headers after page execution:

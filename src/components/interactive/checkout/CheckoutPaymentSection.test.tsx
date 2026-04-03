@@ -282,7 +282,7 @@ describe('CheckoutPaymentSection', () => {
       const { getByText } = render(<CheckoutPaymentSection {...defaultProps} />);
 
       await waitFor(() => {
-        expect(getByText('Payment failed. Please try again.')).toBeTruthy();
+        expect(getByText('Payment setup failed. Please try again.')).toBeTruthy();
         expect(getByText('Try again')).toBeTruthy();
       });
     });
@@ -301,7 +301,7 @@ describe('CheckoutPaymentSection', () => {
       render(<CheckoutPaymentSection {...defaultProps} />);
 
       await waitFor(() => {
-        expect($checkoutError.get()).toBe('Payment initialization failed: Server down');
+        expect($checkoutError.get()).toBe('Payment setup failed. Please try again.');
       });
     });
 
@@ -320,7 +320,7 @@ describe('CheckoutPaymentSection', () => {
       render(<CheckoutPaymentSection {...defaultProps} onError={onError} />);
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith('Payment initialization failed: Timeout');
+        expect(onError).toHaveBeenCalledWith('Payment setup failed. Please try again.');
       });
     });
 
@@ -346,7 +346,7 @@ describe('CheckoutPaymentSection', () => {
       fireEvent.click(getByText('Try again'));
 
       await waitFor(() => {
-        expect(queryByText('Payment failed. Please try again.')).toBeNull();
+        expect(queryByText('Payment setup failed. Please try again.')).toBeNull();
       });
     });
   });
@@ -440,7 +440,7 @@ describe('CheckoutPaymentSection', () => {
       const { queryByTestId, getByText } = render(<CheckoutPaymentSection {...defaultProps} />);
 
       await waitFor(() => {
-        expect(getByText('Payment failed. Please try again.')).toBeTruthy();
+        expect(getByText('Payment setup failed. Please try again.')).toBeTruthy();
       });
 
       expect(queryByTestId('stripe-payment-form')).toBeNull();

@@ -111,6 +111,11 @@ export default function CheckoutPage({ lang }: Props) {
         dispatch({ type: 'SET_FIELD', field: 'postalCode', value: coords.postalCode });
         dispatch({ type: 'SET_FIELD', field: 'countryCode', value: coords.country || 'NL' });
       }
+
+      // Default to pickup when no delivery address data exists (fresh checkout only)
+      if (!saved && !coords?.postalCode) {
+        dispatch({ type: 'SET_FULFILLMENT', method: 'pickup' });
+      }
     });
   }, []);
 
@@ -263,7 +268,11 @@ export default function CheckoutPage({ lang }: Props) {
         <div class="flex-1 md:max-w-xl w-full">
           {/* Mobile order summary (above form) */}
           <div class="px-4 py-4 md:hidden">
-            <OrderSummary lang={typedLang} currency={currency} />
+            <OrderSummary
+              lang={typedLang}
+              currency={currency}
+              fulfillmentMethod={form.fulfillmentMethod}
+            />
           </div>
 
           {/* Error banner */}
@@ -318,7 +327,11 @@ export default function CheckoutPage({ lang }: Props) {
         {/* ── Right column: sticky order summary (desktop) ───── */}
         <div class="hidden md:block md:w-80 lg:w-96">
           <div class="sticky top-6">
-            <OrderSummary lang={typedLang} currency={currency} />
+            <OrderSummary
+              lang={typedLang}
+              currency={currency}
+              fulfillmentMethod={form.fulfillmentMethod}
+            />
           </div>
         </div>
       </div>

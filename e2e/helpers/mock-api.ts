@@ -50,6 +50,11 @@ interface CheckoutState {
   discount_amount: string;
   total: string;
   order_number: string | null;
+  service_fees?: {
+    total: string;
+    estimated: boolean;
+    items: Array<{ type: string; label: string; amount: string }>;
+  };
 }
 
 const checkoutStates = new Map<string, CheckoutState>();
@@ -76,7 +81,9 @@ function checkoutToResponse(checkout: CheckoutState) {
     display_shipping_cost: checkout.shipping_cost,
     display_discount_amount: checkout.discount_amount,
     display_promotion_discount_amount: '0.00',
+    display_service_fees_total: checkout.service_fees?.total ?? '0.00',
     display_total: checkout.total,
+    service_fees: checkout.service_fees ?? { total: '0.00', estimated: false, items: [] },
     available_payment_gateways: [
       {
         id: 'stripe',
@@ -170,7 +177,22 @@ function recalcCart(cart: CartFixture) {
     2,
   );
   cart.item_count = count;
-  cart.estimated_total = cart.cart_total;
+  // Service fees: simulate a platform fee when cart has items
+  const platformFeeAmount = count > 0 ? '0.50' : '0.00';
+  const deliveryFeeAmount = count > 0 ? '1.00' : '0.00';
+  const serviceFeesTotal = count > 0 ? '1.50' : '0.00';
+  cart.service_fees = {
+    total: serviceFeesTotal,
+    estimated: true,
+    items:
+      count > 0
+        ? [
+            { type: 'platform_fee', label: 'Service Fee', amount: platformFeeAmount },
+            { type: 'delivery_fee', label: 'Delivery Fee', amount: deliveryFeeAmount },
+          ]
+        : [],
+  };
+  cart.estimated_total = (parseFloat(cart.cart_total) + parseFloat(serviceFeesTotal)).toFixed(2);
 
   // Auto-apply promotions: Buy 2 Falafel Wraps get 1 free
   const falafelItem = cart.line_items.find((li) => li.product_id === 'prod-1');
@@ -687,6 +709,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       discount_amount: discount.toFixed(2),
       total: (subtotal - discount).toFixed(2),
       order_number: null,
+      service_fees: state.cart.service_fees
+        ? { ...state.cart.service_fees, estimated: false }
+        : { total: '0.00', estimated: false, items: [] },
     };
 
     checkoutStates.set(checkout.id, checkout);

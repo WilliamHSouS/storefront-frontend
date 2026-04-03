@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, memo } from 'preact/compat';
 import { loadStripe } from '@/lib/stripe-loader';
 import type { Stripe, StripeElements, Appearance } from '@stripe/stripe-js';
+import { t } from '@/i18n/client';
 
 interface StripePaymentFormProps {
+  lang: 'nl' | 'en' | 'de';
   clientSecret: string;
   publishableKey: string;
   stripeAccount: string;
@@ -18,6 +20,7 @@ interface StripePaymentFormProps {
 }
 
 function StripePaymentFormInner({
+  lang,
   clientSecret,
   publishableKey,
   stripeAccount,
@@ -27,6 +30,7 @@ function StripePaymentFormInner({
   onError,
 }: StripePaymentFormProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const elementsRef = useRef<StripeElements | null>(null);
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(false);
 
@@ -45,7 +49,7 @@ function StripePaymentFormInner({
         const stripe = await loadStripe(publishableKey, { stripeAccount });
 
         if (!stripe) {
-          onError?.('Failed to load Stripe.js. Please check your network connection.');
+          onError?.(t('stripeLoadFailed', lang));
           return;
         }
 
@@ -88,15 +92,16 @@ function StripePaymentFormInner({
 
         paymentElement.on('ready', () => {
           setLoading(false);
+          elementsRef.current = elements;
           onStripeReady?.(stripe, elements!);
         });
 
         paymentElement.on('loaderror', (event) => {
-          const message = event.error?.message ?? 'Payment form failed to load. Please try again.';
+          const message = event.error?.message ?? t('paymentFormLoadFailed', lang);
           onError?.(message);
         });
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'An unexpected error occurred.';
+        const message = err instanceof Error ? err.message : t('unexpectedError', lang);
         onError?.(message);
       }
     }
@@ -114,6 +119,15 @@ function StripePaymentFormInner({
       }
     };
   }, [clientSecret, publishableKey, stripeAccount]);
+
+  // Update billing name on the Payment Element when it changes
+  useEffect(() => {
+    const pe = elementsRef.current?.getElement('payment');
+    if (!pe) return;
+    pe.update({
+      defaultValues: { billingDetails: { name: billingName || '' } },
+    });
+  }, [billingName]);
 
   return (
     <div class="relative min-h-[200px]">

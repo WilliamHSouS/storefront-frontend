@@ -95,6 +95,7 @@ test.describe('Checkout error recovery', () => {
     await goToCheckoutWithItem(page);
 
     // Fill contact + delivery to trigger the delivery PATCH → delivery_set → payment init chain
+    await page.getByText('Delivery', { exact: true }).click();
     await page.getByLabel('Email').fill('test@example.com');
     await page.getByLabel('Phone number').fill('+31612345678');
     await page.getByLabel('First name').fill('Jan');
@@ -116,10 +117,10 @@ test.describe('Checkout error recovery', () => {
     );
 
     // The payment error message and "Try again" button should appear
-    await expect(page.getByText('Payment failed. Please try again.')).toBeVisible({
+    await expect(page.getByText('Payment setup failed. Please try again.').first()).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Try again' }).first()).toBeVisible();
 
     // Click retry — the second payment call should succeed and mount the payment form
     await page.getByRole('button', { name: 'Try again' }).click();
@@ -149,8 +150,9 @@ test.describe('Checkout error recovery', () => {
     });
 
     // Contact fields are deliberately left empty.
-    // Click the Pickup toggle — fulfillment type change alone must not fire a PATCH.
-    await page.getByText('Pickup').click();
+    // Switch to Delivery first, then back to Pickup — fulfillment type change alone must not fire a PATCH.
+    await page.getByText('Delivery', { exact: true }).click();
+    await page.getByText('Pickup', { exact: true }).click();
 
     // Wait long enough for any debounced PATCH (debounce is 500ms) to have fired.
     // eslint-disable-next-line playwright/no-wait-for-timeout -- deliberate pause to confirm no debounced PATCH fires

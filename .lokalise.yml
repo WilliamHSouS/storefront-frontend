@@ -1,0 +1,13 @@
+# Lokalise CLI configuration
+# Docs: https://docs.lokalise.com/en/articles/lokalise-cli-2-0
+#
+# Usage:
+#   lokalise2 file upload --config .lokalise.yml
+#   lokalise2 file download --config .lokalise.yml
+#
+# Environment variables required:
+#   LOKALISE_API_TOKEN — personal API token or CI service token
+#   LOKALISE_PROJECT_ID — Lokalise project ID
+
+token: env:LOKALISE_API_TOKEN
+project_id: env:LOKALISE_PROJECT_ID

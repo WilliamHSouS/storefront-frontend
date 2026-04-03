@@ -46,3 +46,4 @@ tsx-*/
 npm-debug.log*
 pnpm-debug.log*
 .vercel
+bin/

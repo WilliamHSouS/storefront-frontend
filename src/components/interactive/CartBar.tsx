@@ -8,7 +8,6 @@ import { t } from '@/i18n/client';
 import { formatPrice, langToLocale } from '@/lib/currency';
 import { getClient } from '@/lib/api';
 import { normalizeCart } from '@/lib/normalize';
-import { CartIcon } from './icons';
 import { withErrorBoundary } from './ErrorBoundary';
 
 interface Props {
@@ -66,23 +65,23 @@ function CartBar({ lang }: Props) {
 
   return (
     <div
-      class="fixed bottom-0 left-0 right-0 z-40 md:hidden"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      class="fixed bottom-0 left-0 right-0 z-40 px-4 pb-3 md:hidden"
+      style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
     >
       <button
         type="button"
         onClick={() => $isCartOpen.set(true)}
-        class="flex w-full items-center justify-between bg-[#1C1C1E] px-4 py-3 text-white"
+        class="flex w-full items-center justify-between rounded-2xl bg-primary px-5 py-3.5 text-primary-foreground shadow-xl"
         data-cart-trigger
         aria-label={`${t('cart', lang)}: ${itemLabel}, ${formatPrice(cartTotal, currency, locale)}`}
       >
-        <div class="flex items-center gap-2">
-          <CartIcon />
-          <span class="text-sm font-medium">
-            {t('cart', lang)} &middot; {itemLabel}
-          </span>
+        <div class="flex items-center gap-2.5">
+          <div class="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary-foreground/20 text-xs font-bold">
+            {itemCount}
+          </div>
+          <span class="text-sm font-semibold">{t('viewCart', lang)}</span>
         </div>
-        <span class="text-sm font-semibold">{formatPrice(cartTotal, currency, locale)}</span>
+        <span class="text-sm font-bold">{formatPrice(cartTotal, currency, locale)}</span>
       </button>
     </div>
   );

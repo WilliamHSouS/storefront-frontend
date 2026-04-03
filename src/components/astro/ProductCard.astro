@@ -41,6 +41,7 @@ const showStrikethrough = hasUnitDiscount(pricedItem);
 const hasModifiers = (product.modifier_groups?.length ?? 0) > 0;
 const cardDescription = product.description || product.intro || null;
 const isGrid = variant === 'grid';
+const hasImage = !!product.image;
 const imgAttrs = product.image
   ? responsiveImage(
       product.image,
@@ -52,7 +53,7 @@ const imgAttrs = product.image
 
 <article
   class:list={[
-    'group relative cursor-pointer overflow-hidden rounded-[16px] bg-card p-2 sm:pt-2 sm:px-2 sm:pb-1.5',
+    'group relative cursor-pointer overflow-hidden rounded-2xl bg-card p-2 pb-1.5',
     isGrid ? 'flex flex-col' : 'flex flex-row',
   ]}
   data-product-id={product.id}
@@ -61,7 +62,11 @@ const imgAttrs = product.image
   <div
     class:list={[
       'relative shrink-0 overflow-hidden',
-      isGrid ? 'aspect-square w-full' : 'h-[104px] w-[104px]',
+      isGrid
+        ? hasImage
+          ? 'aspect-square w-full'
+          : 'aspect-[2/1] w-full sm:aspect-square'
+        : 'h-[104px] w-[104px]',
     ]}
   >
     <div class="absolute inset-0 overflow-hidden rounded-[10px] bg-card-image animate-shimmer">
@@ -72,22 +77,22 @@ const imgAttrs = product.image
             srcset={imgAttrs.srcset}
             sizes={imgAttrs.sizes}
             alt={product.name}
-            class="h-full w-full object-cover transition-transform group-hover:scale-105"
+            class="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
             loading="lazy"
             width={isGrid ? 300 : 104}
             height={isGrid ? 300 : 104}
             onload="this.parentElement.classList.remove('animate-shimmer')"
           />
         ) : (
-          <div class="flex h-full w-full items-center justify-center text-muted-foreground/30">
+          <div class="flex h-full w-full items-center justify-center text-muted-foreground/20">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
+              width="48"
+              height="48"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="1.5"
+              stroke-width="1"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
@@ -120,12 +125,12 @@ const imgAttrs = product.image
   <div
     class:list={[
       'flex flex-1 flex-col justify-between',
-      isGrid ? 'gap-2 pt-2 sm:gap-4 sm:px-3 sm:pt-4 sm:pb-3' : 'gap-2 pl-3',
+      isGrid ? 'px-3 pt-3 sm:px-3' : 'gap-2 pl-3',
     ]}
   >
     <div>
       <div class="flex items-start justify-between gap-2">
-        <h3 class="text-base font-medium leading-tight text-card-foreground sm:text-base">
+        <h3 class="mb-1 text-base font-semibold leading-normal text-foreground">
           <a
             href={`/${lang}/product/${product.slug}`}
             class="after:absolute after:inset-0"
@@ -140,14 +145,12 @@ const imgAttrs = product.image
       </div>
       {
         cardDescription && (
-          <p class="mt-0.5 line-clamp-2 text-sm font-normal leading-relaxed text-muted-foreground">
-            {cardDescription}
-          </p>
+          <p class="line-clamp-2 text-sm leading-5 text-muted-foreground">{cardDescription}</p>
         )
       }
     </div>
 
-    <div class="mt-auto flex items-center justify-between gap-2 sm:pb-1">
+    <div class="mt-5 flex items-center justify-between gap-2 pb-3 pt-1">
       <div class="flex items-baseline gap-1.5">
         {
           showStrikethrough && (
@@ -158,8 +161,8 @@ const imgAttrs = product.image
         }
         <span
           class:list={[
-            'text-sm font-medium sm:text-base',
-            showStrikethrough ? 'text-destructive' : 'text-card-foreground/70',
+            'text-base font-medium',
+            showStrikethrough ? 'text-destructive' : 'text-foreground/70',
           ]}
         >
           {formatPrice(String(effectivePrice), currency, locale)}
