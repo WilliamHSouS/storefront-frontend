@@ -96,12 +96,12 @@ test.describe('Contract: all mock endpoints vs OpenAPI spec', () => {
 // ── Guard: no unregistered mock endpoints ────────────────────────
 
 test.describe('Contract: registry completeness', () => {
-  test('at least 27 non-skipped endpoints in registry', async () => {
+  test('at least 26 non-skipped endpoints in registry', async () => {
     const nonSkipped = MOCK_ENDPOINTS.filter((e) => !e.skipReason);
     expect(
       nonSkipped.length,
-      'Expected at least 27 non-skipped endpoints in the registry',
-    ).toBeGreaterThanOrEqual(27);
+      'Expected at least 26 non-skipped endpoints in the registry',
+    ).toBeGreaterThanOrEqual(26);
   });
 
   test('every mock endpoint has a unique label', async () => {

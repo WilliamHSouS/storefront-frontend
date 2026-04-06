@@ -33,6 +33,9 @@ test.describe('Shipping rate selection', () => {
     await page.fill('input[name="lastName"]', 'User');
     await page.fill('input[name="phone"]', '+31612345678');
 
+    // Switch to delivery (checkout defaults to pickup when no address is saved)
+    await page.getByText('Delivery', { exact: true }).click();
+
     // Fill in delivery address
     await page.fill('#checkout-street', 'Keizersgracht 1');
     await page.fill('#checkout-city', 'Amsterdam');
