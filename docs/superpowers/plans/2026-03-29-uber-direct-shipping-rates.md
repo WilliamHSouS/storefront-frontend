@@ -12,26 +12,27 @@
 
 ## File Structure
 
-| File | Action | Responsibility |
-|------|--------|---------------|
-| `src/stores/checkout-actions.ts` | Modify | Add `fetchShippingGroups()` and `selectShippingRate()` actions |
-| `src/stores/checkout.ts` | Modify | Add `$shippingGroups` atom + `$shippingGroupsLoading` |
-| `src/types/checkout.ts` | Modify (verify only) | `ShippingRate` already has `expires_at` — no changes needed |
-| `src/components/interactive/checkout/ShippingRateSelector.tsx` | Create | Rate picker UI with expiry indicator |
-| `src/components/interactive/checkout/ShippingRateSelector.test.tsx` | Create | Unit tests for rate selector |
-| `src/components/interactive/checkout/CheckoutFormOrchestrator.tsx` | Modify | Wire shipping groups fetch + rate selector into form flow |
-| `src/components/interactive/checkout/CheckoutFormOrchestrator.test.tsx` | Modify | Add shipping groups integration tests |
-| `src/i18n/messages/en.json` | Modify | Add shipping rate i18n keys |
-| `src/i18n/messages/nl.json` | Modify | Add shipping rate i18n keys |
-| `src/i18n/messages/de.json` | Modify | Add shipping rate i18n keys |
-| `e2e/helpers/mock-api.ts` | Modify | Update shipping endpoint path, add Uber rate, add select-rate + 410 |
-| `e2e/checkout.spec.ts` | Modify | Add shipping rate selection E2E test |
+| File                                                                    | Action               | Responsibility                                                      |
+| ----------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------- |
+| `src/stores/checkout-actions.ts`                                        | Modify               | Add `fetchShippingGroups()` and `selectShippingRate()` actions      |
+| `src/stores/checkout.ts`                                                | Modify               | Add `$shippingGroups` atom + `$shippingGroupsLoading`               |
+| `src/types/checkout.ts`                                                 | Modify (verify only) | `ShippingRate` already has `expires_at` — no changes needed         |
+| `src/components/interactive/checkout/ShippingRateSelector.tsx`          | Create               | Rate picker UI with expiry indicator                                |
+| `src/components/interactive/checkout/ShippingRateSelector.test.tsx`     | Create               | Unit tests for rate selector                                        |
+| `src/components/interactive/checkout/CheckoutFormOrchestrator.tsx`      | Modify               | Wire shipping groups fetch + rate selector into form flow           |
+| `src/components/interactive/checkout/CheckoutFormOrchestrator.test.tsx` | Modify               | Add shipping groups integration tests                               |
+| `src/i18n/messages/en.json`                                             | Modify               | Add shipping rate i18n keys                                         |
+| `src/i18n/messages/nl.json`                                             | Modify               | Add shipping rate i18n keys                                         |
+| `src/i18n/messages/de.json`                                             | Modify               | Add shipping rate i18n keys                                         |
+| `e2e/helpers/mock-api.ts`                                               | Modify               | Update shipping endpoint path, add Uber rate, add select-rate + 410 |
+| `e2e/checkout.spec.ts`                                                  | Modify               | Add shipping rate selection E2E test                                |
 
 ---
 
 ### Task 1: Add shipping groups state atoms
 
 **Files:**
+
 - Modify: `src/stores/checkout.ts`
 
 - [ ] **Step 1: Add `$shippingGroups` and `$shippingGroupsLoading` atoms**
@@ -71,6 +72,7 @@ git commit -m "feat(checkout): add shipping groups state atoms"
 ### Task 2: Add `fetchShippingGroups` and `selectShippingRate` actions
 
 **Files:**
+
 - Modify: `src/stores/checkout-actions.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -132,10 +134,9 @@ describe('fetchShippingGroups', () => {
     const { fetchShippingGroups } = await import('./checkout-actions');
     const groups = await fetchShippingGroups('chk-1', mockClient as any);
 
-    expect(mockClient.GET).toHaveBeenCalledWith(
-      '/api/v1/checkout/{checkout_id}/shipping-groups/',
-      { params: { path: { checkout_id: 'chk-1' } } },
-    );
+    expect(mockClient.GET).toHaveBeenCalledWith('/api/v1/checkout/{checkout_id}/shipping-groups/', {
+      params: { path: { checkout_id: 'chk-1' } },
+    });
     expect(groups).toEqual(mockGroups);
     expect($shippingGroups.get()).toEqual(mockGroups);
     expect($shippingGroupsLoading.get()).toBe(false);
@@ -247,10 +248,9 @@ export async function fetchShippingGroups(
   $shippingGroupsLoading.set(true);
   try {
     const sdk = client ?? getClient();
-    const { data, error } = await sdk.GET(
-      '/api/v1/checkout/{checkout_id}/shipping-groups/',
-      { params: { path: { checkout_id: checkoutId } } },
-    );
+    const { data, error } = await sdk.GET('/api/v1/checkout/{checkout_id}/shipping-groups/', {
+      params: { path: { checkout_id: checkoutId } },
+    });
 
     if (error || !data) {
       log.error('checkout', 'fetchShippingGroups failed:', error);
@@ -311,7 +311,7 @@ Note: The SDK may not yet have the `/shipping-groups/` and `/select-rate/` paths
 
 ```typescript
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shipping-groups endpoint not yet in SDK types; remove after SDK regeneration
-'/api/v1/checkout/{checkout_id}/shipping-groups/' as any
+'/api/v1/checkout/{checkout_id}/shipping-groups/' as any;
 ```
 
 And similarly for the select-rate POST.
@@ -333,6 +333,7 @@ git commit -m "feat(checkout): add fetchShippingGroups and selectShippingRate ac
 ### Task 3: Add i18n keys for shipping rate selection
 
 **Files:**
+
 - Modify: `src/i18n/messages/en.json`
 - Modify: `src/i18n/messages/nl.json`
 - Modify: `src/i18n/messages/de.json`
@@ -385,6 +386,7 @@ git commit -m "feat(i18n): add shipping rate selection translation keys"
 ### Task 4: Create ShippingRateSelector component
 
 **Files:**
+
 - Create: `src/components/interactive/checkout/ShippingRateSelector.tsx`
 - Create: `src/components/interactive/checkout/ShippingRateSelector.test.tsx`
 
@@ -475,8 +477,8 @@ describe('ShippingRateSelector', () => {
         loading={false}
       />,
     );
-    // Single rate = auto-selected, no picker needed
-    expect(container.querySelectorAll('[data-rate-id]')).toHaveLength(0);
+    // Single rate = no picker rendered (component returns null)
+    expect(container.innerHTML).toBe('');
   });
 
   it('renders rate options when multiple rates exist', async () => {
@@ -617,9 +619,7 @@ function RateOption({
       data-rate-id={rate.id}
       onClick={() => onSelect(groupId, rate.id)}
       class={`w-full flex items-center justify-between rounded-lg border p-3 text-left transition-colors ${
-        selected
-          ? 'border-primary bg-primary/5'
-          : 'border-border hover:border-primary/50'
+        selected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
       }`}
     >
       <div>
@@ -649,9 +649,7 @@ export function ShippingRateSelector({
 }: Props) {
   if (loading) {
     return (
-      <div class="text-sm text-muted-foreground py-2">
-        {t('shippingRateRefreshing', lang)}
-      </div>
+      <div class="text-sm text-muted-foreground py-2">{t('shippingRateRefreshing', lang)}</div>
     );
   }
 
@@ -670,9 +668,7 @@ export function ShippingRateSelector({
 
   return (
     <div>
-      <h3 class="text-sm font-medium text-card-foreground mb-2">
-        {t('shippingMethod', lang)}
-      </h3>
+      <h3 class="text-sm font-medium text-card-foreground mb-2">{t('shippingMethod', lang)}</h3>
       <div class="space-y-2">
         {allRates.map(({ rate, groupId }) => (
           <RateOption
@@ -709,6 +705,7 @@ git commit -m "feat(checkout): add ShippingRateSelector component with expiry in
 ### Task 5: Wire ShippingRateSelector into CheckoutFormOrchestrator
 
 **Files:**
+
 - Modify: `src/components/interactive/checkout/CheckoutFormOrchestrator.tsx`
 - Modify: `src/components/interactive/checkout/CheckoutFormOrchestrator.test.tsx`
 
@@ -746,7 +743,14 @@ describe('shipping rate selection', () => {
       display_currency: 'EUR',
       fx_rate_to_display: '1.00',
       email: 'test@example.com',
-      shipping_address: { first_name: 'J', last_name: 'D', street_address_1: 'St 1', city: 'A', postal_code: '1012AB', country_code: 'NL' },
+      shipping_address: {
+        first_name: 'J',
+        last_name: 'D',
+        street_address_1: 'St 1',
+        city: 'A',
+        postal_code: '1012AB',
+        country_code: 'NL',
+      },
       billing_address: null,
       shipping_method: null,
       payment_method: null,
@@ -798,7 +802,7 @@ Modify `CheckoutFormOrchestrator.tsx`:
 **Add imports** (at top):
 
 ```typescript
-import { fetchShippingGroups, selectShippingRate } from '@/stores/checkout-actions';
+import { fetchShippingGroups, selectShippingRate, fetchCheckout } from '@/stores/checkout-actions';
 import { $shippingGroups, $shippingGroupsLoading } from '@/stores/checkout';
 import { ShippingRateSelector } from './ShippingRateSelector';
 import type { ShippingGroup } from '@/types/checkout';
@@ -840,7 +844,7 @@ const handleRateSelect = useCallback(
       // Rate expired — re-fetch shipping groups for fresh quotes
       dispatch({ type: 'SET_FIELD', field: 'selectedShippingRateId', value: null });
       await fetchShippingGroups(checkoutId);
-      showToast(t('shippingRateExpired', lang), 'warning');
+      showToast(t('shippingRateExpired', lang), 'error');
       return;
     }
 
@@ -850,7 +854,6 @@ const handleRateSelect = useCallback(
     }
 
     // Re-fetch checkout to get updated shipping_cost
-    const { fetchCheckout } = await import('@/stores/checkout-actions');
     await fetchCheckout(checkoutId);
   },
   [checkoutId, lang, dispatch],
@@ -866,19 +869,23 @@ import { showToast } from '@/stores/toast';
 **Add ShippingRateSelector to JSX** — insert between the delivery address/pickup section and the SchedulingPicker:
 
 ```tsx
-{/* Shipping rate selection (visible only for delivery with multiple rates) */}
-{form.fulfillmentMethod === 'delivery' && (
-  <div class="px-4 py-3">
-    <ShippingRateSelector
-      lang={lang}
-      currency={checkout?.currency ?? 'EUR'}
-      groups={shippingGroups}
-      selectedRateId={form.selectedShippingRateId}
-      onRateSelect={handleRateSelect}
-      loading={shippingGroupsLoading}
-    />
-  </div>
-)}
+{
+  /* Shipping rate selection (visible only for delivery with multiple rates) */
+}
+{
+  form.fulfillmentMethod === 'delivery' && (
+    <div class="px-4 py-3">
+      <ShippingRateSelector
+        lang={lang}
+        currency={checkout?.currency ?? 'EUR'}
+        groups={shippingGroups}
+        selectedRateId={form.selectedShippingRateId}
+        onRateSelect={handleRateSelect}
+        loading={shippingGroupsLoading}
+      />
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -898,6 +905,7 @@ git commit -m "feat(checkout): wire ShippingRateSelector into checkout form orch
 ### Task 6: Update mock API for E2E tests
 
 **Files:**
+
 - Modify: `e2e/helpers/mock-api.ts`
 
 - [ ] **Step 1: Update the shipping groups endpoint path**
@@ -980,7 +988,9 @@ if (method === 'POST' && selectRateMatch) {
   // Simulate expired rate if rate_id starts with 'expired_'
   if (rate_id === 'expired_rate') {
     res.writeHead(410, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: { code: 'shipping_rate_expired', message: 'Rate has expired' } }));
+    res.end(
+      JSON.stringify({ error: { code: 'shipping_rate_expired', message: 'Rate has expired' } }),
+    );
     return;
   }
 
@@ -1002,21 +1012,24 @@ The `fetchTimeSlots` callback in `CheckoutFormOrchestrator.tsx` currently calls 
 
 ```typescript
 // BEFORE (inside fetchTimeSlots):
-const { data: shippingData } = await client.GET(
-  '/api/v1/checkout/{checkout_id}/shipping/',
-  { params: { path: { checkout_id: checkoutId } } },
-);
+const { data: shippingData } = await client.GET('/api/v1/checkout/{checkout_id}/shipping/', {
+  params: { path: { checkout_id: checkoutId } },
+});
 const groups = shippingData as unknown as Array<{
   merchant_shipping_provider_id?: number;
 }> | null;
 const mspId = groups?.[0]?.merchant_shipping_provider_id;
 
-// AFTER:
-const groups = $shippingGroups.get();
+// AFTER — read from atom, but fetch if empty (handles race where
+// user picks "Schedule for later" before shipping groups have loaded):
+let groups = $shippingGroups.get();
+if (groups.length === 0 && checkoutId) {
+  groups = await fetchShippingGroups(checkoutId);
+}
 const mspId = groups[0]?.merchant_shipping_provider_id;
 ```
 
-This avoids a redundant API call since shipping groups are already fetched.
+This avoids a redundant API call when shipping groups are already fetched, but falls back to fetching them directly if the atom is still empty (e.g. user toggles scheduling before the shipping groups effect has run).
 
 - [ ] **Step 5: Commit**
 
@@ -1030,6 +1043,7 @@ git commit -m "feat(e2e): update mock API for shipping-groups + select-rate + Ub
 ### Task 7: Add E2E test for shipping rate selection
 
 **Files:**
+
 - Modify: `e2e/checkout.spec.ts` (or create `e2e/shipping-rates.spec.ts` if checkout.spec.ts is already large)
 
 - [ ] **Step 1: Write the E2E test**
