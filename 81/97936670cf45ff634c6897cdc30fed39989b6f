@@ -1,0 +1,29 @@
+e2e/contract.spec.ts
+  5cc836f75e1b8153 99,103-104
+e2e/helpers/mock-api-contract-guard.ts
+  5cc836f75e1b8153 330,333,415
+e2e/shipping-rates.spec.ts
+  5cc836f75e1b8153 36-38
+package.json
+  5cc836f75e1b8153 76-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "8197936670cf45ff634c6897cdc30fed39989b6f",
+  "prompts": {
+    "5cc836f75e1b8153": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dcbbc370-cdc4-42ac-8d48-f070e9522218",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "William Hurst",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 6,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
